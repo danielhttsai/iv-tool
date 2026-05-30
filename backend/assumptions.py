@@ -100,7 +100,7 @@ def check_a2_exclusion(df, Y, A, Z):
         "id": "A2",
         "title": "A2・這個外力是不是只走「一條路」?",
         "status": "info",
-        "headline": "這題資料算不出來,要靠你對這個領域的了解來判斷。",
+        "headline": "這題資料沒辦法正面證明,要靠你對這個領域的了解來判斷;但下方的「反證法」會試著從資料推翻它。",
         "plain": ("我們需要這個外力(免費接種提醒)『只透過』讓人去接種疫苗,來影響健康;"
                   "不能還偷偷走別條路。舉例來說,如果收到接種提醒的社區剛好同時加發了健康補助、"
                   "或醫療資源也比較多,那健康變好就不全是疫苗的功勞——外力走了別條路,結論就會被汙染。"
@@ -119,9 +119,10 @@ def check_a2_exclusion(df, Y, A, Z):
 # ---------------------------------------------------------------------------
 # A3 — Independence / exchangeability (instrument vs covariates balance)
 # ---------------------------------------------------------------------------
-def check_a3_independence(df, Z, covariates):
+def check_a3_independence(df, Z, covariates, A=None):
     rows = []
     max_smd = 0.0
+    worst_cov = None
     for c in covariates:
         x = np.asarray(df[c], dtype=float)
         g1 = x[np.asarray(df[Z]) == 1]
@@ -130,12 +131,32 @@ def check_a3_independence(df, Z, covariates):
             continue
         pooled_sd = np.sqrt((g1.var(ddof=1) + g0.var(ddof=1)) / 2)
         smd = abs(g1.mean() - g0.mean()) / pooled_sd if pooled_sd > 0 else 0.0
-        max_smd = max(max_smd, smd)
+        if smd > max_smd:
+            max_smd = smd
+            worst_cov = c
         rows.append({
             "name": c,
             "value": round(smd, 3),
             "note": f"有外力組均值 {g1.mean():.2f} / 沒有組 {g0.mean():.2f}（差距越小越好）",
         })
+
+    # 偏誤放大(bias amplification):一個小小的不平衡,會被「外力推動的力道」倒數放大。
+    # 放大倍數 = 1 / |處置在有/沒有外力兩組的盛行率差| = 1 / |第一階段係數|。
+    amp_note = None
+    if A is not None and _binary(df.get(A, [])) and covariates:
+        a = np.asarray(df[A], dtype=float)
+        z = np.asarray(df[Z], dtype=float)
+        prev_diff = abs(a[z == 1].mean() - a[z == 0].mean()) if (z == 1).any() and (z == 0).any() else 0.0
+        if prev_diff > 1e-6:
+            amp = 1.0 / prev_diff
+            rows.append({
+                "name": f"⚠ 偏誤放大倍數（最大不平衡：{worst_cov or '—'}）",
+                "value": f"約 {amp:.0f} 倍",
+                "note": (f"最大不平衡 {max_smd:.3f} 被「外力力道」倒數放大後 ≈ {max_smd*amp:.2f}；"
+                         "外力越弱(推動的人越少),同樣的小不平衡造成的偏誤越大"),
+            })
+            amp_note = max_smd * amp
+
     if max_smd < 0.1:
         status = "green"
         head = "有外力和沒外力的兩群人,其他條件都很接近,看起來像隨機分配,很好。"
@@ -155,6 +176,8 @@ def check_a3_independence(df, Z, covariates):
                   "代表這個外力比較可信;如果某些特徵差很多,就要懷疑它其實不是隨機的。"),
         "term": ("📖 專有名詞:這一步在檢查工具的「獨立性 / 可交換性(independence / exchangeability)」。"
                  "比較兩群人差異的數字叫「標準化均值差(SMD)」,通常小於 0.1 就算夠接近。"
+                 "另外列出的「偏誤放大(bias amplification)」是 Homayra 等人特別提醒的陷阱:"
+                 "IV 會把共變項的不平衡『除以外力的力道』來放大,所以外力越弱、一點點不平衡就可能造成很大的偏誤。"
                  "提醒:這只能比『有量到』的特徵,沒量到的干擾因子無法保證也平衡。"),
         "metrics": rows or [{"name": "(沒有選共變項)", "value": "-", "note": "請在分析頁選一些共變項"}],
     }
@@ -236,21 +259,102 @@ def check_a4b_homogeneity(df, Y, A, Z, covariates):
     }
 
 
+# ---------------------------------------------------------------------------
+# 反證法 — Instrumental inequalities (Balke–Pearl / Pearl) falsification test
+#   核心精神:IV 假設沒辦法正面「證明」,但可以設計檢驗去「試著推翻」。
+#   資料如果違反了這組不等式,代表 A2(只走一條路)或 A3(像抽籤)其中至少一個
+#   一定被打破了 —— 等於資料直接「反證」了這個外力的資格。
+#   推不翻不代表合格,只代表「通過了這一關」。
+# ---------------------------------------------------------------------------
+def check_falsification_inequalities(df, Y, A, Z):
+    if not (_binary(df[A]) and _binary(df[Z])):
+        return {
+            "id": "FALS",
+            "title": "反證法・能不能用資料直接「抓包」這個外力?",
+            "status": "info",
+            "headline": "這個反證檢驗需要外力和處置都是「有/沒有」的二元,目前資料不符合,先略過。",
+            "plain": ("有一種很強的檢查方式:不去正面證明假設成立,而是反過來『試著用資料抓破綻』。"
+                      "如果抓到破綻,就能確定這個外力不合格;如果抓不到,至少先過一關。"
+                      "不過這個方法需要外力(Z)和處置(A)都是二元的『有/沒有』才能算。"),
+            "term": ("📖 專有名詞:這套檢驗叫「工具不等式(instrumental inequalities)」,"
+                     "屬於「反證 / 否證檢定(falsification test)」的一種。"),
+            "metrics": [{"name": "目前能不能跑這個反證?", "value": "不能", "note": "需要 Z 與 A 都是二元"}],
+        }
+
+    a = np.asarray(df[A], dtype=int)
+    z = np.asarray(df[Z], dtype=int)
+    yraw = np.asarray(df[Y], dtype=float)
+    if _binary(df[Y]):
+        y = yraw.astype(int)
+        ybin_note = "結果本來就是二元,直接使用"
+    else:
+        thr = float(np.median(yraw))
+        y = (yraw > thr).astype(int)
+        ybin_note = f"結果是連續的,先以中位數 {thr:.2f} 切成「高/低」兩組再檢查"
+
+    def P(yy, aa, zz):
+        denom = int(np.sum(z == zz))
+        if denom == 0:
+            return 0.0
+        return float(np.sum((y == yy) & (a == aa) & (z == zz))) / denom
+
+    # Pearl 工具不等式:對每一個處置值 a,Σ_y max_z P(y,a|z) ≤ 1
+    lhs = []
+    for aa in (0, 1):
+        s = max(P(0, aa, 0), P(0, aa, 1)) + max(P(1, aa, 0), P(1, aa, 1))
+        lhs.append(s)
+    worst = max(lhs)
+    margin = worst - 1.0
+
+    metrics = [
+        {"name": "把結果怎麼分組", "value": "—", "note": ybin_note},
+        {"name": "不等式左邊最大值", "value": round(worst, 3),
+         "note": "理論上限是 1.000,超過就代表被推翻"},
+        {"name": "離上限還有多少", "value": f"{-margin:+.3f}" if margin <= 0 else f"超出 {margin:.3f}",
+         "note": "負/有餘裕=還沒被抓到破綻;正=被抓包"},
+    ]
+    if worst > 1.0 + 1e-9:
+        status = "red"
+        head = "資料直接抓到破綻了!這個外力違反了工具不等式,代表它一定不合格——必須換工具或重想設計。"
+    elif worst > 0.99:
+        status = "amber"
+        head = "數字非常貼近上限,可能只是抽樣誤差,但很接近被推翻的邊緣,要謹慎。"
+    else:
+        status = "green"
+        head = "資料沒抓到破綻,這個外力通過了這道反證。注意:通過不等於「保證合格」,只是「沒被推翻」。"
+    return {
+        "id": "FALS",
+        "title": "反證法・能不能用資料直接「抓包」這個外力?",
+        "status": status, "headline": head,
+        "plain": ("前面幾項(尤其是 A2『只走一條路』)很多時候沒辦法用資料正面證明。這裡換個思路:"
+                  "與其證明它對,不如『試著用資料推翻它』。如果一個外力真的合格(只透過處置影響結果、"
+                  "又像抽籤一樣分配),那資料裡某些比例的組合就『不可能』超過一個上限。"
+                  "我們把這些上限算出來:只要有任何一個被超過,就等於資料親口說『這個外力不合格』,"
+                  "直接出局;如果通通沒超過,代表它撐過了這場反證——但這只是『沒被抓到』,"
+                  "不能當成『已經證明清白』。"),
+        "term": ("📖 專有名詞:這套上限叫「工具不等式(instrumental inequalities,Balke–Pearl / Pearl)」,"
+                 "是一種「反證 / 否證檢定(falsification test)」。它能否證的是「排除限制(A2)」與"
+                 "「獨立性(A3)」這組假設:違反 → IV 一定不成立;沒違反 → 通過這關,但無法反推它一定成立。"),
+        "metrics": metrics,
+    }
+
+
 def check_all(df, Y, A, Z, covariates=()):
     covariates = list(covariates)
     checks = [
         check_a1_strength(df, A, Z),
         check_a2_exclusion(df, Y, A, Z),
-        check_a3_independence(df, Z, covariates),
+        check_a3_independence(df, Z, covariates, A),
+        check_falsification_inequalities(df, Y, A, Z),
         check_a4a_monotonicity(df, A, Z),
         check_a4b_homogeneity(df, Y, A, Z, covariates),
     ]
     order = {"red": 0, "amber": 1, "info": 2, "green": 3}
     worst = min((c["status"] for c in checks), key=lambda s: order[s])
     summary = {
-        "green": "整體來說:能用資料檢查的項目都過關了。剩下「外力有沒有走別條路」這題,要再靠你的專業判斷。",
+        "green": "整體來說:能用資料檢查、以及試著「反證推翻」的項目都過關了。剩下「外力有沒有走別條路」這題,要再靠你的專業判斷。",
         "amber": "整體來說:有項目亮了黃燈,IV 的結論請保守一點看。",
-        "red": "整體來說:有項目亮了紅燈,IV 的結論可能不可靠,要先處理問題。",
+        "red": "整體來說:有項目亮了紅燈(甚至被資料直接反證推翻),IV 的結論可能不可靠,要先處理問題。",
         "info": "整體來說:有些項目資料算不出來,需要你的專業判斷才能下結論。",
     }[worst]
     return {"checks": checks, "overall_status": worst, "overall_headline": summary}
