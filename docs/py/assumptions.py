@@ -100,7 +100,7 @@ def check_a2_exclusion(df, Y, A, Z):
         "id": "A2",
         "title": "A2・這個外力是不是只走「一條路」?",
         "status": "info",
-        "headline": "這題資料沒辦法正面證明,要靠你對這個領域的了解來判斷;但下方的「反證法」會試著從資料推翻它。",
+        "headline": "這題資料沒辦法正面證明,要靠你對這個領域的了解來判斷;但下面那道「抓包測試」會試著從資料戳破它。",
         "plain": ("我們需要這個外力(免費接種提醒)『只透過』讓人去接種疫苗,來影響健康;"
                   "不能還偷偷走別條路。舉例來說,如果收到接種提醒的社區剛好同時加發了健康補助、"
                   "或醫療資源也比較多,那健康變好就不全是疫苗的功勞——外力走了別條路,結論就會被汙染。"
@@ -270,15 +270,16 @@ def check_falsification_inequalities(df, Y, A, Z):
     if not (_binary(df[A]) and _binary(df[Z])):
         return {
             "id": "FALS",
-            "title": "反證法・能不能用資料直接「抓包」這個外力?",
+            "title": "抓包測試・能不能用資料當場戳破這個外力?",
             "status": "info",
-            "headline": "這個反證檢驗需要外力和處置都是「有/沒有」的二元,目前資料不符合,先略過。",
-            "plain": ("有一種很強的檢查方式:不去正面證明假設成立,而是反過來『試著用資料抓破綻』。"
-                      "如果抓到破綻,就能確定這個外力不合格;如果抓不到,至少先過一關。"
-                      "不過這個方法需要外力(Z)和處置(A)都是二元的『有/沒有』才能算。"),
-            "term": ("📖 專有名詞:這套檢驗叫「工具不等式(instrumental inequalities)」,"
-                     "屬於「反證 / 否證檢定(falsification test)」的一種。"),
-            "metrics": [{"name": "目前能不能跑這個反證?", "value": "不能", "note": "需要 Z 與 A 都是二元"}],
+            "headline": "這個抓包測試需要外力和處置都是「有/沒有」的二元,目前資料不符合,先略過。",
+            "plain": ("這是上一題(A2)的好搭檔。A2 那種「外力只走一條路」沒辦法用資料正面證明,"
+                      "所以我們換個玩法:不去證明它對,而是『反過來挑它毛病、想辦法當場戳破它』。"
+                      "如果真的戳破了,就確定這個外力不合格;戳不破,至少先過一關。"
+                      "不過這招需要外力(Z)和處置(A)都是二元的『有/沒有』才能算。"),
+            "term": ("📖 專有名詞:這套檢查叫「工具不等式(instrumental inequalities)」,"
+                     "屬於「反證 / 否證檢定(falsification test)」——不證明假設成立,而是試著推翻它。"),
+            "metrics": [{"name": "目前能不能做這個抓包?", "value": "不能", "note": "需要 Z 與 A 都是二元"}],
         }
 
     a = np.asarray(df[A], dtype=int)
@@ -308,29 +309,29 @@ def check_falsification_inequalities(df, Y, A, Z):
 
     metrics = [
         {"name": "把結果怎麼分組", "value": "—", "note": ybin_note},
-        {"name": "不等式左邊最大值", "value": round(worst, 3),
-         "note": "理論上限是 1.000,超過就代表被推翻"},
+        {"name": "資料算出來的最大值", "value": round(worst, 3),
+         "note": "合格的外力不會超過 1.000,超過就是被戳破"},
         {"name": "離上限還有多少", "value": f"{-margin:+.3f}" if margin <= 0 else f"超出 {margin:.3f}",
-         "note": "負/有餘裕=還沒被抓到破綻;正=被抓包"},
+         "note": "有餘裕(負)=目前挑不出毛病;正=當場被抓包"},
     ]
     if worst > 1.0 + 1e-9:
         status = "red"
-        head = "資料直接抓到破綻了!這個外力違反了工具不等式,代表它一定不合格——必須換工具或重想設計。"
+        head = "當場被抓包了!這個外力違反了資料該守的上限,代表它一定不合格——必須換工具或重想設計。"
     elif worst > 0.99:
         status = "amber"
-        head = "數字非常貼近上限,可能只是抽樣誤差,但很接近被推翻的邊緣,要謹慎。"
+        head = "數字非常貼近上限,可能只是抽樣誤差,但很接近被戳破的邊緣,要謹慎。"
     else:
         status = "green"
-        head = "資料沒抓到破綻,這個外力通過了這道反證。注意:通過不等於「保證合格」,只是「沒被推翻」。"
+        head = "戳不破,這個外力通過了這道抓包測試。注意:通過不等於「保證合格」,只是「目前抓不到毛病」。"
     return {
         "id": "FALS",
-        "title": "反證法・能不能用資料直接「抓包」這個外力?",
+        "title": "抓包測試・能不能用資料當場戳破這個外力?",
         "status": status, "headline": head,
-        "plain": ("前面幾項(尤其是 A2『只走一條路』)很多時候沒辦法用資料正面證明。這裡換個思路:"
-                  "與其證明它對,不如『試著用資料推翻它』。如果一個外力真的合格(只透過處置影響結果、"
+        "plain": ("上一題(A2『外力只走一條路』)沒辦法用資料正面證明。這裡換個思路:"
+                  "與其證明它對,不如『反過來挑它毛病、試著戳破它』。如果一個外力真的合格(只透過處置影響結果、"
                   "又像抽籤一樣分配),那資料裡某些比例的組合就『不可能』超過一個上限。"
-                  "我們把這些上限算出來:只要有任何一個被超過,就等於資料親口說『這個外力不合格』,"
-                  "直接出局;如果通通沒超過,代表它撐過了這場反證——但這只是『沒被抓到』,"
+                  "我們把這些上限算出來:只要有任何一個被超過,就等於資料當場說『這個外力不合格』,"
+                  "直接出局;如果通通沒超過,代表它被你挑不出毛病——但這只是『目前沒被抓到』,"
                   "不能當成『已經證明清白』。"),
         "term": ("📖 專有名詞:這套上限叫「工具不等式(instrumental inequalities,Balke–Pearl / Pearl)」,"
                  "是一種「反證 / 否證檢定(falsification test)」。它能否證的是「排除限制(A2)」與"
@@ -344,17 +345,17 @@ def check_all(df, Y, A, Z, covariates=()):
     checks = [
         check_a1_strength(df, A, Z),
         check_a2_exclusion(df, Y, A, Z),
-        check_a3_independence(df, Z, covariates, A),
         check_falsification_inequalities(df, Y, A, Z),
+        check_a3_independence(df, Z, covariates, A),
         check_a4a_monotonicity(df, A, Z),
         check_a4b_homogeneity(df, Y, A, Z, covariates),
     ]
     order = {"red": 0, "amber": 1, "info": 2, "green": 3}
     worst = min((c["status"] for c in checks), key=lambda s: order[s])
     summary = {
-        "green": "整體來說:能用資料檢查、以及試著「反證推翻」的項目都過關了。剩下「外力有沒有走別條路」這題,要再靠你的專業判斷。",
+        "green": "整體來說:能用資料檢查、以及試著「抓包戳破」的項目都過關了。剩下「外力有沒有走別條路」這題,要再靠你的專業判斷。",
         "amber": "整體來說:有項目亮了黃燈,IV 的結論請保守一點看。",
-        "red": "整體來說:有項目亮了紅燈(甚至被資料直接反證推翻),IV 的結論可能不可靠,要先處理問題。",
+        "red": "整體來說:有項目亮了紅燈(甚至被資料當場抓包戳破),IV 的結論可能不可靠,要先處理問題。",
         "info": "整體來說:有些項目資料算不出來,需要你的專業判斷才能下結論。",
     }[worst]
     return {"checks": checks, "overall_status": worst, "overall_headline": summary}

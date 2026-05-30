@@ -56,7 +56,7 @@ def test_check_all_includes_falsification():
     df = _df()
     out = assumptions.check_all(df, Y, A, Z, COVARIATES)
     ids = [c["id"] for c in out["checks"]]
-    assert ids == ["A1", "A2", "A3", "FALS", "A4a", "A4b"]
+    assert ids == ["A1", "A2", "FALS", "A3", "A4a", "A4b"]
     assert out["overall_status"] in ("green", "amber", "red", "info")
 
 
