@@ -411,6 +411,28 @@
       </div>
     </div>
 
+    <div class="card info">
+      <h3 data-en="How wide a window? And two ways to justify it: continuity vs local randomization">「視窗」要多寬？兩種講法：連續性 vs 局部隨機化</h3>
+      <p data-en="RDD only looks at people <b>near</b> the cutoff — but how near is &quot;near&quot;? That range is the <b>window (bandwidth)</b>. Too narrow and there are too few people, so the estimate jumps around; too wide and you pull in people far from 65 who are <b>not really alike</b>, adding bias. So the same data can give different answers at different bandwidths — a good RDD should not hinge on one window.">
+        RDD 只看斷點<b>附近</b>的人——但「附近」要畫多大？這個範圍就叫<b>視窗（頻寬，bandwidth）</b>。
+        窗開太窄，人太少、估計很跳；開太寬，會把離 65 歲很遠、其實<b>不太像</b>的人也算進來，帶進偏誤。
+        所以同一份資料，換個頻寬可能得到不同答案——好的 RDD 不該只靠某一個頻寬（這正是 ④ 假設檢驗的 R5）。
+      </p>
+      <p data-en="Why are people near the cutoff trustworthy at all? There are <b>two ways</b> to argue it:">
+        為什麼斷點附近就可信？學界有<b>兩種講法</b>：
+      </p>
+      <ul>
+        <li data-en="<b>Continuity</b>: assume that, without the threshold, the outcome would vary <b>smoothly</b> with age and never jump exactly at 65. Then the jump at 65 can only come from eligibility. This is the usual story, paired with a local-linear fit and a bandwidth (it underpins R1 in the ④ dashboard).">
+          <b>連續性（continuity）</b>：假設「如果沒有門檻，結果會隨年齡<b>平滑</b>變化、不會剛好在 65 歲跳一下」。
+          於是 65 歲的跳幅就只能來自資格。這是最常見的講法，搭配局部線性與頻寬（對應 ④ 的 R1）。
+        </li>
+        <li data-en="<b>Local randomization</b>: treat a <b>very narrow window</b> around the cutoff as a tiny &quot;as-if randomized&quot; experiment — within that window, who lands just inside vs. just outside eligibility is close to random. Recipe ① in <b>⑤ Boost with AI</b> uses exactly this idea to make the estimate more robust to the bandwidth.">
+          <b>局部隨機化（local randomization）</b>：把斷點附近一個<b>很窄的窗</b>，當成「像隨機分組的小實驗」——
+          窗內誰落在資格邊內、邊外，近似隨機。<b>⑤ 用 AI 強化</b> 的「藥方一」正是用這個想法，讓估計對頻寬更穩。
+        </li>
+      </ul>
+    </div>
+
     <details class="term">
       <summary data-en="How does RDD differ from the IV in tabs IV ①–⑤?">RDD 和 IV ①–⑤ 有什麼不同？</summary>
       <p data-en="Both recover a LATE for compliers, but the <b>source of the &quot;as-good-as-random&quot; variation differs</b>. IV needs a <b>genuinely random instrument</b> (the reminder). RDD instead leans on a <b>sharp rule at a cutoff</b>: people just on either side are comparable, so it handles the same unseen confounder <b>without</b> any random instrument. The trade-off: RDD only speaks about people <b>near the cutoff</b> (here, near age 65), and depends on the <b>bandwidth</b> choice. The dedicated <b>&quot;IV vs RDD&quot;</b> tab works through this in detail.">

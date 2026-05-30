@@ -52,9 +52,14 @@ def check_r1_continuity(lang="zh"):
         "term": t(
             lang,
             "專有名詞：潛在結果的連續性（continuity of potential outcomes）。意思是，如果沒有資格門檻，"
-            "結果會是年齡的平滑函數、不會在 65 歲忽然跳一下。",
+            "結果會是年齡的平滑函數、不會在 65 歲忽然跳一下。另一種等價講法是「局部隨機化"
+            "（local randomization）」：把斷點附近一個很窄的窗，當成像隨機分組的小實驗——⑤ 用 AI 強化"
+            "的「藥方一」正是用這個想法，讓估計對視窗（頻寬）更穩。",
             "Term: continuity of potential outcomes — absent the threshold, the outcome would be a "
-            "smooth function of age with no sudden jump exactly at 65.",
+            "smooth function of age with no sudden jump exactly at 65. An equivalent alternative is "
+            "'local randomization': treat a very narrow window around the cutoff as a tiny as-if-randomized "
+            "experiment — Recipe ① in '⑤ Boost with AI' uses exactly this idea to make the estimate more "
+            "robust to the window (bandwidth).",
         ),
         "metrics": [],
     }
@@ -99,10 +104,16 @@ def check_r2_manipulation(x, c, lang="zh"):
             lang,
             "如果大家能控制自己的跑分變數（這裡是年齡，沒辦法操弄），就可能把自己擠到有資格那一側，"
             "破壞「兩側相似」。我們數一數斷點兩側的人數密度，看有沒有不正常的堆積。年齡無法造假，"
-            "所以這裡預期會通過——這正是用年齡當斷點的好處。",
-            "If people could control their running variable they might push themselves onto the eligible side, "
+            "所以這裡預期會通過——這正是用年齡當斷點的好處。"
+            "那如果這項沒過（密度在斷點不對稱、像有人挑邊），整個 RDD 就完全不能用嗎？不一定——"
+            "可以改用「甜甜圈 RDD」把緊貼斷點的人先拿掉、或改報一個區間範圍（界限）、"
+            "或縮到一個更窄、更像隨機的窗重估；但結論要更保守，把它當「參考」而非「定論」。",
             "breaking the 'both sides alike' premise. We count the density of subjects on each side and look for "
-            "an abnormal pile-up. Age cannot be faked, so we expect this to pass — that is a strength of using age as the cutoff.",
+            "an abnormal pile-up. Age cannot be faked, so we expect this to pass — that is a strength of using age as the cutoff. "
+            "And if this check fails (an asymmetric density at the cutoff, as if people sorted themselves), is the whole RDD "
+            "useless? Not necessarily — you can switch to a 'donut-hole RDD' that drops points hugging the cutoff, report "
+            "bounds instead of a single point, or re-estimate inside a narrower, more random-like window; but treat the result "
+            "as suggestive rather than definitive.",
         ),
         "term": t(lang, "專有名詞：McCrary 密度檢定（操弄/分類排序檢定）。",
                   "Term: McCrary density test (manipulation / sorting test)."),

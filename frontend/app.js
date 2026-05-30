@@ -859,7 +859,7 @@ const CITE = {
   titleZh: "工具變數 IV － 斷點回歸 RDD 線上工具",
   titleEn: "Instrumental Variables (IV) & Regression Discontinuity (RDD) — Online Teaching Tool",
   year: "2026",
-  url: "https://danielhttsai.github.io/iv-tool/",
+  url: "https://danielhttsai.github.io/iv-rdd-tool/",
 };
 const MONTHS = ["January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"];
@@ -885,7 +885,7 @@ function citationText() {
 function bibtex() {
   const a = accessDates();
   return [
-    "@misc{phdc-iv-tool-2026,",
+    "@misc{phdc-iv-rdd-tool-2026,",
     "  author       = {{Methodology Working Group, Population Health Data Center, National Cheng Kung University} and Tsai, DH-T and Lai, EC-C},",
     `  title        = {${CITE.titleEn}},`,
     `  year         = {${CITE.year}},`,
@@ -945,7 +945,7 @@ document.getElementById("dlRis").addEventListener("click", () => {
   const blob = new Blob([risText()], { type: "application/x-research-info-systems" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = "iv-tool.ris";
+  a.href = url; a.download = "iv-rdd-tool.ris";
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
