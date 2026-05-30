@@ -12,7 +12,7 @@
 
   // Pyodide 套件版本需與 index.html 載入的 pyodide.js 相符
   var PYODIDE_INDEX = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
-  var PY_MODULES = ["iv_core", "assumptions", "ml_iv", "gen_data", "api"];
+  var PY_MODULES = ["i18n", "iv_core", "assumptions", "ml_iv", "gen_data", "api"];
 
   var pyodide = null;
   var routeFn = null;

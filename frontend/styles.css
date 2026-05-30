@@ -33,7 +33,16 @@ b { color: #0b1020; }
   position: sticky; top: 0; z-index: 10;
   background: #fff; border-bottom: 1px solid var(--line);
   padding: .7rem 1.5rem; box-shadow: var(--shadow);
+  display: grid; grid-template-columns: 1fr auto; align-items: start; column-gap: 1rem;
 }
+.topbar .tabs { grid-column: 1 / -1; }
+.lang-toggle {
+  grid-column: 2; grid-row: 1; align-self: center;
+  border: 1px solid var(--z); background: #fff; color: var(--z);
+  padding: .35rem .8rem; border-radius: 999px; cursor: pointer;
+  font-size: .85rem; font-weight: 700; white-space: nowrap; transition: .15s;
+}
+.lang-toggle:hover { background: var(--z); color: #fff; }
 .brand { font-weight: 800; font-size: 1.15rem; letter-spacing: .5px; }
 .brand span { color: var(--z); }
 .tabs { display: flex; gap: .4rem; margin-top: .6rem; flex-wrap: wrap; }
@@ -143,6 +152,19 @@ select { padding: .45rem; border: 1px solid var(--line); border-radius: 8px; fon
 .term p { font-size: .85rem; color: var(--muted); margin: .5rem 0 0; line-height: 1.7; }
 
 .hidden { display: none !important; }
+
+/* references / citation footer */
+.refs {
+  max-width: 920px; margin: 2rem auto 3rem; padding: 1.4rem 1.5rem;
+  background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow);
+}
+.refs h2 { margin-top: 0; }
+.refs .cite {
+  background: #f7f9fd; border-left: 4px solid var(--z); border-radius: 8px;
+  padding: .7rem .9rem; font-size: .95rem; color: #2b3849;
+}
+.refs .reflist { margin: .8rem 0 0; padding-left: 1.2rem; }
+.refs .reflist li { font-size: .88rem; color: #404a60; margin: .4rem 0; line-height: 1.6; }
 
 @media (max-width: 720px) {
   .controls, .colmap, .play-grid { grid-template-columns: 1fr; }

@@ -9,37 +9,38 @@
 </head>
 <body>
 <header class="topbar">
-  <div class="brand">工具變數 <span>IV</span> 線上工具</div>
+  <div class="brand">工具變數 <span>IV</span> <span data-en="Online Tool">線上工具</span></div>
   <nav class="tabs">
-    <button class="tab active" data-tab="learn">① IV 是什麼</button>
-    <button class="tab" data-tab="play">② 互動講解</button>
-    <button class="tab" data-tab="analyze">③ 資料分析</button>
-    <button class="tab" data-tab="assume">④ 假設檢驗</button>
-    <button class="tab" data-tab="ml">⑤ 用 AI 強化</button>
+    <button class="tab active" data-tab="learn" data-en="① What is IV">① IV 是什麼</button>
+    <button class="tab" data-tab="play" data-en="② Interactive">② 互動講解</button>
+    <button class="tab" data-tab="analyze" data-en="③ Analyse data">③ 資料分析</button>
+    <button class="tab" data-tab="assume" data-en="④ Assumptions">④ 假設檢驗</button>
+    <button class="tab" data-tab="ml" data-en="⑤ Boost with AI">⑤ 用 AI 強化</button>
   </nav>
+  <button id="langToggle" class="lang-toggle" type="button" title="切換中／英文" aria-label="Language">EN</button>
 </header>
 
 <main>
   <!-- ===================== 1. 教學 ===================== -->
   <section id="learn" class="panel active">
-    <div class="banner">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
-    <h1>用「隨機接種提醒」的故事看懂工具變數</h1>
-    <p class="lead">
+    <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1 data-en="Understanding instrumental variables through a &quot;random vaccination reminder&quot; story">用「隨機接種提醒」的故事看懂工具變數</h1>
+    <p class="lead" data-en="We want to answer a causal question: <b>does getting vaccinated really improve health?</b> The most intuitive approach — &quot;just compare vaccinated people with unvaccinated people&quot; — is misleading.">
       我們想知道一個因果問題：<b>去接種疫苗，真的能改善健康嗎？</b>
       最直覺的做法是「把有打疫苗的人和沒打的人直接比較」——但這會被誤導。
     </p>
 
     <div class="card warn">
-      <h3>為什麼不能直接比較？</h3>
-      <p>
+      <h3 data-en="Why can't we just compare them?">為什麼不能直接比較？</h3>
+      <p data-en="People who go and get vaccinated on their own may already be more health-conscious, more willing to exercise, and more likely to see a doctor regularly. So if they end up healthier, it is <b>not necessarily thanks to the vaccine</b> — an unseen <b>confounder</b>, &quot;health consciousness&quot;, affects both sides at once. A direct comparison <b>overstates</b> the true effect.">
         會主動去打疫苗的人，可能本來就比較注重健康、平常也更願意運動、按時看醫生。
         於是他們後來比較健康，<b>不一定是疫苗的功勞</b>，而是「健康意識」這個
         看不見的<b>干擾因子</b>同時影響了兩邊。直接比較會<b>高估</b>真正的效果。
       </p>
     </div>
 
-    <h2>工具變數的聰明之處</h2>
-    <p>
+    <h2 data-en="The clever idea behind instrumental variables">工具變數的聰明之處</h2>
+    <p data-en="Instead we use an &quot;external nudge&quot; as the entry point: <b>the health authority randomly selects some communities and mails them free vaccination reminders plus an at-home vaccination service</b>. Which communities are picked is random and unrelated to personal health consciousness, yet it pushes some people to get vaccinated. That nudge is the <b>instrument</b>.">
       我們改用一個「外力」當作切入點：<b>衛生單位隨機抽中一些社區，主動寄出免費接種提醒、並安排到府接種服務</b>。
       抽中哪些社區是隨機的，跟個人有沒有健康意識無關，但它會推一部分人去接種疫苗。
       這個外力就是<b>工具變數（Instrument）</b>。
@@ -65,41 +66,41 @@
         <!-- 節點 -->
         <g>
           <rect x="22" y="38" width="130" height="56" rx="12" fill="#0d9488" />
-          <text x="87" y="63" class="dn">接種提醒 Z</text>
-          <text x="87" y="81" class="ds">工具變數</text>
+          <text x="87" y="63" class="dn" data-en="Reminder Z">接種提醒 Z</text>
+          <text x="87" y="81" class="ds" data-en="instrument">工具變數</text>
         </g>
         <g>
           <rect x="255" y="38" width="130" height="56" rx="12" fill="#0ea5e9" />
-          <text x="320" y="63" class="dn">接種疫苗 A</text>
-          <text x="320" y="81" class="ds">處置</text>
+          <text x="320" y="63" class="dn" data-en="Vaccinated A">接種疫苗 A</text>
+          <text x="320" y="81" class="ds" data-en="treatment">處置</text>
         </g>
         <g>
           <rect x="488" y="38" width="130" height="56" rx="12" fill="#16a34a" />
-          <text x="553" y="63" class="dn">健康變化 Y</text>
-          <text x="553" y="81" class="ds">結果</text>
+          <text x="553" y="63" class="dn" data-en="Health Δ Y">健康變化 Y</text>
+          <text x="553" y="81" class="ds" data-en="outcome">結果</text>
         </g>
         <g>
           <rect x="345" y="166" width="170" height="58" rx="12" fill="#ef4444" />
-          <text x="430" y="192" class="dn">健康意識 U</text>
-          <text x="430" y="210" class="ds">看不見的干擾因子</text>
+          <text x="430" y="192" class="dn" data-en="Health sense U">健康意識 U</text>
+          <text x="430" y="210" class="ds" data-en="unseen confounder">看不見的干擾因子</text>
         </g>
       </svg>
     </div>
-    <p class="caption">
+    <p class="caption" data-en="Key point: the reminder (Z) influences health (Y) <b>only through</b> getting people vaccinated (A), and is <b>not</b> affected by &quot;health consciousness&quot; (U). So using it as the entry point lets us bypass the contamination caused by U.">
       重點：接種提醒(Z) <b>只透過</b> 讓人去接種(A) 來影響健康(Y)，而且 <b>不</b> 受「健康意識(U)」影響。
       因此用它當切入點，就能把 U 造成的污染繞過去。
     </p>
 
-    <h2>三種人</h2>
+    <h2 data-en="Three kinds of people">三種人</h2>
     <div class="cards">
-      <div class="card"><h3>Complier（順從者）</h3><p>收到提醒就會去接種、沒收到就不會。<b>IV 估計的就是這群人的效果。</b></p></div>
-      <div class="card"><h3>Always/Never-taker</h3><p>不管有沒有收到提醒，行為都一樣（本來就會打 / 怎樣都不打）。他們不提供因果資訊。</p></div>
-      <div class="card"><h3>Defier（反抗者）</h3><p>收到提醒反而更不去打——我們<b>假設這種人不存在</b>（單調性）。</p></div>
+      <div class="card"><h3 data-en="Complier">Complier（順從者）</h3><p data-en="Gets vaccinated if reminded, does not if not reminded. <b>This is exactly the group the IV estimate is about.</b>">收到提醒就會去接種、沒收到就不會。<b>IV 估計的就是這群人的效果。</b></p></div>
+      <div class="card"><h3 data-en="Always / Never-taker">Always/Never-taker</h3><p data-en="Behaves the same whether or not reminded (would get it anyway / never would). They carry no causal information.">不管有沒有收到提醒，行為都一樣（本來就會打 / 怎樣都不打）。他們不提供因果資訊。</p></div>
+      <div class="card"><h3 data-en="Defier">Defier（反抗者）</h3><p data-en="Getting reminded makes them <i>less</i> likely to vaccinate — we <b>assume such people do not exist</b> (monotonicity).">收到提醒反而更不去打——我們<b>假設這種人不存在</b>（單調性）。</p></div>
     </div>
 
     <div class="card info">
-      <h3>一句話總結</h3>
-      <p>
+      <h3 data-en="In one sentence">一句話總結</h3>
+      <p data-en="The IV method = first see &quot;how many people the reminder pushed into getting vaccinated&quot; (first stage), then see &quot;how much the reminder changed health&quot; (reduced form); dividing one by the other gives the <b>true causal effect among compliers (called the LATE)</b>. To see the actual numbers, go to <b>② Interactive</b> and <b>③ Analyse data</b>.">
         工具變數法 = 先看「接種提醒推動了多少人去接種」（第一階段），
         再看「接種提醒讓健康改變多少」（簡化式），兩者相除就得到
         <b>順從者身上的真正因果效應（稱為 LATE）</b>。
@@ -110,19 +111,19 @@
 
   <!-- ===================== 2. 互動 ===================== -->
   <section id="play" class="panel">
-    <h1>動手玩：外力「夠不夠力」會怎樣影響答案</h1>
+    <h1 data-en="Hands-on: how a nudge's &quot;strength&quot; affects the answer">動手玩：外力「夠不夠力」會怎樣影響答案</h1>
 
     <div class="card info">
-      <h3>先用白話想一遍</h3>
-      <p>
+      <h3 data-en="First, the plain-language idea">先用白話想一遍</h3>
+      <p data-en="The health authority mails vaccination reminders, and we want to use &quot;whether reminded people ended up healthier&quot; to <b>back out whether the vaccine actually works</b>. But how well this works depends on two things:">
         衛生單位寄出接種提醒，我們想用「收到提醒的人後來有沒有比較健康」去<b>回推疫苗到底有沒有效</b>。
         但這招好不好用，取決於兩件事：
       </p>
-      <p>
+      <p data-en="① <b>How persuasive the reminder is</b> — how many people does it actually move to get the shot?<br />② <b>How many people we surveyed</b> — the more people, the steadier the answer and the less it jumps around.">
         ① <b>這個提醒有多少「說服力」</b>——能真的說動多少人去打針？<br />
         ② <b>我們調查了多少人</b>——問越多人，答案就越穩、越不會亂跳。
       </p>
-      <p>
+      <p data-en="The two sliders below let you tune these. We have secretly <b>fixed the true vaccine effect at 1.80</b> — see whether the estimate you pull out can accurately recover that hidden 1.80.">
         下面兩個滑桿就是讓你調這兩件事。我們偷偷把<b>真正的疫苗效果固定成 1.80</b>，
         你來看看：自己拉出來的估計，能不能準確抓到這個藏起來的 1.80。
       </p>
@@ -130,31 +131,31 @@
 
     <div class="controls">
       <label>
-        這個提醒的「說服力」：<b id="csVal">9.0%</b>
+        <span data-en="The reminder's &quot;persuasiveness&quot;:">這個提醒的「說服力」：</span><b id="csVal">9.0%</b>
         <input type="range" id="csSlider" min="1" max="40" value="9.0" step="0.1" />
-        <small>收到提醒的人裡，有多少人因此真的去打針。說動越多人，後面越好估。</small>
+        <small data-en="Of those reminded, how many actually go get the shot. The more people moved, the easier to estimate later.">收到提醒的人裡，有多少人因此真的去打針。說動越多人，後面越好估。</small>
       </label>
       <label>
-        我們調查了多少人：<b id="stVal">1.0×</b>
+        <span data-en="How many people we surveyed:">我們調查了多少人：</span><b id="stVal">1.0×</b>
         <input type="range" id="stSlider" min="0.2" max="2" value="1" step="0.1" />
-        <small>調查越多人，答案的誤差範圍越小、越穩定。</small>
+        <small data-en="The more people surveyed, the smaller the margin of error and the steadier the answer.">調查越多人，答案的誤差範圍越小、越穩定。</small>
       </label>
     </div>
 
     <div class="play-grid">
-      <div class="stat"><div class="stat-label">這個提醒夠不夠力</div><div class="stat-num" id="fStat">–</div><div class="stat-foot" id="fNote"></div></div>
-      <div class="stat"><div class="stat-label">估出來的疫苗效果</div><div class="stat-num" id="ivEst">–</div><div class="stat-foot">真正答案藏在 1.80</div></div>
-      <div class="stat"><div class="stat-label">答案的誤差範圍</div><div class="stat-num small" id="ivCi">–</div><div class="stat-foot" id="ciNote"></div></div>
+      <div class="stat"><div class="stat-label" data-en="Is the reminder strong enough">這個提醒夠不夠力</div><div class="stat-num" id="fStat">–</div><div class="stat-foot" id="fNote"></div></div>
+      <div class="stat"><div class="stat-label" data-en="Estimated vaccine effect">估出來的疫苗效果</div><div class="stat-num" id="ivEst">–</div><div class="stat-foot" data-en="The true answer hides at 1.80">真正答案藏在 1.80</div></div>
+      <div class="stat"><div class="stat-label" data-en="Margin of error">答案的誤差範圍</div><div class="stat-num small" id="ivCi">–</div><div class="stat-foot" id="ciNote"></div></div>
     </div>
     <div id="playChart" class="chart"></div>
-    <p class="caption">
+    <p class="caption" data-en="Observation: when the reminder's persuasiveness is very low (it moves almost nobody), even though the true effect is fixed at 1.80, your estimate swings wildly with a hugely wide margin of error — this is the biggest trap in IV analysis.">
       觀察：當「提醒的說服力」很低（沒說動幾個人），就算真正效果固定是 1.80，
       你的估計也會劇烈亂跳、誤差範圍超寬——這就是 IV 分析最大的陷阱。
     </p>
 
     <details class="term">
-      <summary>看專有名詞解釋</summary>
-      <p>
+      <summary data-en="Show terminology">看專有名詞解釋</summary>
+      <p data-en="Those plain-language phrases map to the textbook terms as follows:<br />• &quot;the reminder's persuasiveness&quot; = the <b>complier share</b> = the first-stage coefficient: the fraction of people the nudge moves to change behaviour.<br />• the &quot;is the reminder strong enough&quot; score = the <b>first-stage F-statistic</b>: above 10 counts as strong, below 10 is a &quot;<b>weak instrument</b>&quot;.<br />• &quot;estimated vaccine effect&quot; = the <b>IV estimate (LATE, local average treatment effect)</b>: only the effect among the compliers the nudge moved.<br />• &quot;margin of error&quot; = the <b>95% confidence interval</b>: the wider it is, the more uncertain the estimate.">
         上面那些白話，對應到統計課本的術語是這樣：<br />
         • 「提醒的說服力」＝<b>complier（順從者）比例</b>＝第一階段係數：被這個外力推動而改變行為的人佔多少。<br />
         • 「這個提醒夠不夠力」的分數＝<b>第一階段 F 統計量</b>：大於 10 才算夠力，低於 10 稱為「<b>弱工具（weak instrument）</b>」。<br />
@@ -166,25 +167,25 @@
 
   <!-- ===================== 3. 分析 ===================== -->
   <section id="analyze" class="panel">
-    <h1>資料分析：跑一次完整的 IV</h1>
+    <h1 data-en="Data analysis: run a full IV">資料分析：跑一次完整的 IV</h1>
 
     <div class="datasource">
-      <button id="useExample" class="btn primary">載入內建接種提醒範例</button>
-      <span class="or">或</span>
-      <label class="btn">上傳 CSV<input type="file" id="fileInput" accept=".csv" hidden /></label>
-      <span id="dataStatus" class="muted">尚未載入資料</span>
+      <button id="useExample" class="btn primary" data-en="Load built-in reminder example">載入內建接種提醒範例</button>
+      <span class="or" data-en="or">或</span>
+      <label class="btn"><span data-en="Upload CSV">上傳 CSV</span><input type="file" id="fileInput" accept=".csv" hidden /></label>
+      <span id="dataStatus" class="muted" data-en="No data loaded yet">尚未載入資料</span>
     </div>
 
     <div id="colMap" class="colmap hidden">
-      <div class="field"><label>結果 Y（outcome）</label><select id="selY"></select></div>
-      <div class="field"><label>處置 A（treatment）</label><select id="selA"></select></div>
-      <div class="field"><label>工具 Z（instrument）</label><select id="selZ"></select></div>
-      <div class="field wide"><label>共變項（covariates，可多選）</label><select id="selCov" multiple size="5"></select></div>
-      <button id="runAnalyze" class="btn primary">執行 IV 分析</button>
+      <div class="field"><label data-en="Outcome Y">結果 Y（outcome）</label><select id="selY"></select></div>
+      <div class="field"><label data-en="Treatment A">處置 A（treatment）</label><select id="selA"></select></div>
+      <div class="field"><label data-en="Instrument Z">工具 Z（instrument）</label><select id="selZ"></select></div>
+      <div class="field wide"><label data-en="Covariates (multi-select)">共變項（covariates，可多選）</label><select id="selCov" multiple size="5"></select></div>
+      <button id="runAnalyze" class="btn primary" data-en="Run IV analysis">執行 IV 分析</button>
     </div>
 
     <div id="analyzeOut" class="hidden">
-      <h2>各種估計的比較</h2>
+      <h2 data-en="Comparison of the estimators">各種估計的比較</h2>
       <div id="estChart" class="chart"></div>
       <div class="result-cards" id="resultCards"></div>
     </div>
@@ -192,45 +193,45 @@
 
   <!-- ===================== 4. 儀表板 ===================== -->
   <section id="assume" class="panel">
-    <h1>這個分析可不可信?六道體檢</h1>
-    <p class="lead">
+    <h1 data-en="Can we trust this analysis? Six health checks">這個分析可不可信?六道體檢</h1>
+    <p class="lead" data-en="For the IV method to hold, it must clear a few hurdles. Below we run a <b>plain-language</b> check-up item by item: green means fine, amber means watch out, red means there is a problem. One of them is a <b>&quot;gotcha test&quot;</b> — instead of proving the nudge valid, it does the reverse: <b>picks holes and tries to break it on the spot</b>; only if it cannot be broken is the nudge more credible. The bottom of each card expands to show the terminology. Load data on <b>③ Analyse data</b> first and this runs automatically.">
       工具變數法要成立,得先通過幾道關卡。下面用<b>白話</b>幫你一項一項體檢,
       綠燈代表沒問題、黃燈要留意、紅燈代表有狀況。其中一道是<b>「抓包測試」</b>——
       不去證明外力合格,而是反過來<b>挑它毛病、試著當場戳破它</b>:戳不破才比較可信。
       每張卡片最下面可以展開看「專有名詞解釋」。先到 <b>③ 資料分析</b> 載入資料,這裡就會自動跑。
     </p>
-    <p class="caption">（這幾項對應統計上的 A1–A4b 假設,以及一組「工具不等式」否證檢定,但你不用記這些代號,看白話說明就好。）</p>
+    <p class="caption" data-en="(These map to the statistical assumptions A1–A4b plus a set of &quot;instrumental inequalities&quot; falsification test, but you don't need to memorise the codes — just read the plain-language notes.)">（這幾項對應統計上的 A1–A4b 假設,以及一組「工具不等式」否證檢定,但你不用記這些代號,看白話說明就好。）</p>
     <div id="overall" class="overall hidden"></div>
     <div id="assumeCards" class="assume-cards"></div>
-    <p id="assumeHint" class="muted">尚未載入資料——請先到「③ 資料分析」載入或上傳資料。</p>
+    <p id="assumeHint" class="muted" data-en="No data loaded yet — please load or upload data on &quot;③ Analyse data&quot; first.">尚未載入資料——請先到「③ 資料分析」載入或上傳資料。</p>
   </section>
 
   <!-- ===================== 5. 用 AI 強化 ===================== -->
   <section id="ml" class="panel">
-    <div class="banner">⚠ 本頁所有數字都是用<b>純屬虛構的合成資料</b>即時模擬出來的，僅供教學展示。</div>
-    <h1>AI 怎麼幫「工具變數」一把</h1>
-    <p class="lead">
+    <div class="banner" data-en="⚠ Every number on this page is simulated in real time from <b>purely fictional synthetic data</b>, for teaching only.">⚠ 本頁所有數字都是用<b>純屬虛構的合成資料</b>即時模擬出來的，僅供教學展示。</div>
+    <h1 data-en="How AI lends instrumental variables a hand">AI 怎麼幫「工具變數」一把</h1>
+    <p class="lead" data-en="Remember the biggest trap from ② Interactive? — <b>when the nudge is too weak, the answer jumps around</b>. AI / machine learning can help in two ways here; below we walk through them step by step, using <b>the same vaccine story</b>.">
       還記得 ② 互動講解裡那個最大的陷阱嗎？——<b>外力（提醒）太弱，答案就會亂跳</b>。
       AI／機器學習能在這裡幫上兩個忙，下面我們用<b>同一個疫苗的故事</b>，一步一步看懂。
     </p>
 
     <div class="cards">
-      <div class="card"><h3>藥方一：把很多弱外力揉成一個強外力</h3>
-        <p>一通提醒推不動幾個人，但如果手上有<b>很多種小外力</b>（接種提醒、診所傳單、公司提醒、社區廣播…），
+      <div class="card"><h3 data-en="Remedy 1: blend many weak nudges into one strong nudge">藥方一：把很多弱外力揉成一個強外力</h3>
+        <p data-en="One reminder moves few people, but if you have <b>many small nudges</b> (vaccination reminder, clinic flyer, employer reminder, community broadcast…), each weak, AI can <b>add them up cleverly</b> into one strong nudge.">一通提醒推不動幾個人，但如果手上有<b>很多種小外力</b>（接種提醒、診所傳單、公司提醒、社區廣播…），
         每個都弱，AI 能把它們<b>聰明地加起來</b>，合成一個夠力的大外力。</p></div>
-      <div class="card"><h3>藥方二：讓「外力→打針」這條關係可以彎</h3>
-        <p>有些外力的影響<b>不是一條直線</b>。用直線去抓會抓不到、以為它沒用；
+      <div class="card"><h3 data-en="Remedy 2: let the &quot;nudge→shot&quot; relationship bend">藥方二：讓「外力→打針」這條關係可以彎</h3>
+        <p data-en="Some nudges' influence is <b>not a straight line</b>. A straight line misses it and thinks it is useless; let AI <b>bend</b> the relationship and it captures the strength a straight line missed.">有些外力的影響<b>不是一條直線</b>。用直線去抓會抓不到、以為它沒用；
         讓 AI 把這條關係「<b>彎起來</b>」，就能抓到直線錯過的力道。</p></div>
-      <div class="card warn"><h3>安全帶：交叉擬合（一定要繫）</h3>
-        <p>讓 AI 學這些關係時，有個鐵則：<b>不能拿同一批人的資料既學習又驗證</b>，
+      <div class="card warn"><h3 data-en="Safety belt: cross-fitting (always buckle up)">安全帶：交叉擬合（一定要繫）</h3>
+        <p data-en="When AI learns these relationships, there is an iron rule: <b>you cannot use the same people's data to both learn and validate</b>, or it will &quot;<b>peek at the answers</b>&quot; and give pretty-looking but deceptive results. Cross-fitting is that safety belt.">讓 AI 學這些關係時，有個鐵則：<b>不能拿同一批人的資料既學習又驗證</b>，
         否則它會「<b>偷看答案</b>」、給出看似漂亮其實騙人的結果。交叉擬合就是這條安全帶。</p></div>
     </div>
 
     <!-- 藥方一 -->
-    <h2>藥方一：把很多弱外力合成一個強外力</h2>
+    <h2 data-en="Remedy 1: synthesise many weak nudges into one strong nudge">藥方一：把很多弱外力合成一個強外力</h2>
     <div class="card info">
-      <h3>先用白話想一遍</h3>
-      <p>
+      <h3 data-en="First, the plain-language idea">先用白話想一遍</h3>
+      <p data-en="Imagine you have <b>several</b> small nudges toward getting the shot, each <b>too weak</b> on its own (like the weak reminder in ② that makes the answer jump). AI's approach: take a bit from each and <b>combine them cleverly</b> into a brand-new &quot;synthetic nudge&quot;. Once combined it becomes <b>strong</b> and the answer steadies. Try the sliders below:">
         想像你手上有<b>好幾種</b>推人去打針的小外力，每一種單獨看都<b>太弱</b>
         （像 ② 裡那種會讓答案亂跳的弱提醒）。
         AI 的做法是：把這些小外力<b>各取一點、聰明地組合</b>成一個全新的「合成外力」。
@@ -239,30 +240,30 @@
     </div>
     <div class="controls">
       <label>
-        手上有幾種小外力：<b id="kVal">12</b>
+        <span data-en="How many small nudges you have:">手上有幾種小外力：</span><b id="kVal">12</b>
         <input type="range" id="kSlider" min="3" max="20" value="12" step="1" />
-        <small>種類越多，AI 能組合出的合成外力通常越強。</small>
+        <small data-en="The more kinds, the stronger the synthetic nudge AI can usually build.">種類越多，AI 能組合出的合成外力通常越強。</small>
       </label>
       <label>
-        每種外力的力道：<b id="psVal">3.0%</b>
+        <span data-en="Strength of each nudge:">每種外力的力道：</span><b id="psVal">3.0%</b>
         <input type="range" id="psSlider" min="1" max="7" value="3" step="0.5" />
-        <small>每一種單獨能說動多少人。刻意調很小，凸顯「單獨都很弱」。</small>
+        <small data-en="How many people each one alone can move. Deliberately set tiny to highlight &quot;each is weak alone&quot;.">每一種單獨能說動多少人。刻意調很小，凸顯「單獨都很弱」。</small>
       </label>
     </div>
     <div class="play-grid">
-      <div class="stat"><div class="stat-label">最強的單一外力</div><div class="stat-num" id="synSingleF">–</div><div class="stat-foot">單獨用最好的那一個</div></div>
-      <div class="stat"><div class="stat-label">合成後的外力</div><div class="stat-num" id="synMlivF">–</div><div class="stat-foot">AI 把全部揉成一個</div></div>
-      <div class="stat"><div class="stat-label">合成後估出的效果</div><div class="stat-num" id="synEst">–</div><div class="stat-foot">真正答案藏在 1.80</div></div>
+      <div class="stat"><div class="stat-label" data-en="Strongest single nudge">最強的單一外力</div><div class="stat-num" id="synSingleF">–</div><div class="stat-foot" data-en="using the best single one alone">單獨用最好的那一個</div></div>
+      <div class="stat"><div class="stat-label" data-en="Nudge after synthesis">合成後的外力</div><div class="stat-num" id="synMlivF">–</div><div class="stat-foot" data-en="AI blends them all into one">AI 把全部揉成一個</div></div>
+      <div class="stat"><div class="stat-label" data-en="Effect estimated after synthesis">合成後估出的效果</div><div class="stat-num" id="synEst">–</div><div class="stat-foot" data-en="The true answer hides at 1.80">真正答案藏在 1.80</div></div>
     </div>
     <div id="synChart" class="chart"></div>
-    <p class="caption">
+    <p class="caption" data-en="Observation: the short bars on the left are <b>each nudge's strength alone</b> (mostly short, below the pass line of 10); the tall bar on the far right is the AI-<b>synthesised nudge</b> — usually well above the pass line. With a single weak nudge the margin of error is unusably wide; with the synthetic nudge it tightens and snugly covers 1.80.">
       觀察：左邊一根根矮柱是<b>每種外力單獨的力道</b>（大多很矮、不及格線 10），
       最右邊那根高柱是 AI <b>合成後的外力</b>——通常遠遠超過及格線。
       用單一弱外力估，誤差範圍寬到沒法用；用合成外力，範圍收窄、穩穩罩住 1.80。
     </p>
     <details class="term">
-      <summary>看專有名詞解釋</summary>
-      <p>
+      <summary data-en="Show terminology">看專有名詞解釋</summary>
+      <p data-en="• &quot;small nudges&quot; = <b>candidate instruments</b>; &quot;blend them into one&quot; = <b>instrument synthesis / MLIV</b>, using machine learning to predict the treatment and using the prediction as a new instrument.<br />• bar height = the <b>first-stage F-statistic</b>; <b>10</b> is the common threshold; below 10 is a <b>weak instrument</b>.<br />• &quot;margin of error&quot; = the <b>95% confidence interval</b>.">
         • 「小外力」＝<b>候選工具變數（candidate instruments）</b>；「把它們揉成一個」＝
         <b>工具合成（instrument synthesis / MLIV）</b>，用機器學習預測處置，再把預測值當成新工具。<br />
         • 柱子的高度＝<b>第一階段 F 統計量</b>，<b>10</b> 是常用門檻；低於 10 叫<b>弱工具</b>。<br />
@@ -271,32 +272,32 @@
     </details>
 
     <!-- 藥方二 -->
-    <h2>藥方二：讓第一階段「可以彎」</h2>
+    <h2 data-en="Remedy 2: let the first stage &quot;bend&quot;">藥方二：讓第一階段「可以彎」</h2>
     <div class="card info">
-      <h3>先用白話想一遍</h3>
-      <p>
+      <h3 data-en="First, the plain-language idea">先用白話想一遍</h3>
+      <p data-en="Switch to a different nudge: <b>&quot;how far you are from today's pop-up vaccine van&quot;</b>. Its influence is <b>not a straight line</b> — too close and you don't notice, too far and you can't be bothered; only a <b>sweet spot in the middle</b> moves people most (like a small hill). If you force a <b>straight line</b> onto it, you find <b>almost no relationship</b> and wrongly conclude the nudge is useless; but let AI <b>bend it into the hill shape</b> and the strength suddenly appears. Click below to see:">
         換一個外力：<b>「離今天的快打巡迴車有多遠」</b>。它的影響<b>不是直線</b>——
         太近沒感覺、太遠也懶得去，只有<b>中間某個甜蜜點</b>最會推人去打針（像一座小山丘）。
         如果你硬用一條<b>直線</b>去描述它，會發現<b>幾乎抓不到關係</b>，誤以為這個外力沒用；
         但讓 AI 把這條關係<b>彎成山丘的形狀</b>，力道一下子就出來了。按下面看結果：
       </p>
     </div>
-    <button id="runNonlinear" class="btn primary">跑「直線 vs 可彎」的比較</button>
+    <button id="runNonlinear" class="btn primary" data-en="Run the &quot;straight vs bendable&quot; comparison">跑「直線 vs 可彎」的比較</button>
     <div id="nlOut" class="hidden">
       <div class="play-grid">
-        <div class="stat"><div class="stat-label">用直線抓</div><div class="stat-num" id="nlLinF">–</div><div class="stat-foot" id="nlLinNote"></div></div>
-        <div class="stat"><div class="stat-label">讓它可以彎</div><div class="stat-num" id="nlFlexF">–</div><div class="stat-foot" id="nlFlexNote"></div></div>
-        <div class="stat"><div class="stat-label">可彎後估出的效果</div><div class="stat-num" id="nlFlexEst">–</div><div class="stat-foot">真正答案藏在 1.80</div></div>
+        <div class="stat"><div class="stat-label" data-en="With a straight line">用直線抓</div><div class="stat-num" id="nlLinF">–</div><div class="stat-foot" id="nlLinNote"></div></div>
+        <div class="stat"><div class="stat-label" data-en="Let it bend">讓它可以彎</div><div class="stat-num" id="nlFlexF">–</div><div class="stat-foot" id="nlFlexNote"></div></div>
+        <div class="stat"><div class="stat-label" data-en="Effect estimated after bending">可彎後估出的效果</div><div class="stat-num" id="nlFlexEst">–</div><div class="stat-foot" data-en="The true answer hides at 1.80">真正答案藏在 1.80</div></div>
       </div>
       <div id="nlChart" class="chart"></div>
-      <p class="caption">
+      <p class="caption" data-en="The blue flat line is what &quot;<b>forcing a straight line</b>&quot; sees — almost flat, so the nudge looks useless. The green curve is what &quot;<b>letting it bend</b>&quot; sees — clearly capturing the hill in the middle.">
         藍色平線是「<b>硬用直線</b>」看到的——幾乎是平的，所以以為外力沒用。
         綠色曲線是「<b>讓它可以彎</b>」看到的——清楚抓到中間那座山丘。
       </p>
     </div>
     <details class="term">
-      <summary>看專有名詞解釋</summary>
-      <p>
+      <summary data-en="Show terminology">看專有名詞解釋</summary>
+      <p data-en="• &quot;let the relationship bend&quot; = use a <b>flexible / non-linear first stage</b> (polynomials, tree models, neural nets…) instead of straight-line regression.<br />• but you <b>cannot</b> plug the bent predictions straight into the second stage — that is the <b>forbidden regression</b>, which biases via &quot;peeking at the answers&quot;; the correct way is to pair it with the <b>cross-fitting</b> below.">
         • 「讓關係可以彎」＝用<b>彈性／非線性的第一階段</b>（多項式、樹模型、神經網路…）取代直線回歸。<br />
         • 但<b>不能</b>把彎好的預測值直接塞回第二階段——那叫<b>禁止迴歸（forbidden regression）</b>，
         會因為「偷看答案」而出現偏誤；正確做法是搭配下面的<b>交叉擬合</b>。
@@ -304,10 +305,10 @@
     </details>
 
     <!-- 安全帶 / 藥方三 -->
-    <h2>藥方三・安全帶：為什麼一定要「交叉擬合」</h2>
+    <h2 data-en="Remedy 3 · Safety belt: why you must always &quot;cross-fit&quot;">藥方三・安全帶：為什麼一定要「交叉擬合」</h2>
     <div class="card warn">
-      <h3>用白話講這條鐵則</h3>
-      <p>
+      <h3 data-en="The iron rule, in plain language">用白話講這條鐵則</h3>
+      <p data-en="AI is very good at &quot;<b>memorising answers</b>&quot;. If you let it use <b>the same people's</b> data both to learn the &quot;nudge→shot&quot; relationship and to estimate the effect, it will <b>memorise their luck (the noise) too</b>, giving you a result that <b>looks very accurate but deceives you</b> (this is the &quot;forbidden regression&quot; trap).<br /><b>Cross-fitting</b> is simple: <b>split people into groups</b>, always learn the relationship from the <b>&quot;other&quot;</b> groups, then apply it to <b>&quot;this&quot;</b> group of unseen people. AI gets no chance to peek, so the result is honest.">
         AI 很會「<b>背答案</b>」。如果讓它用<b>同一批人</b>的資料既學習「外力→打針」這條關係、
         又拿這條關係去估效果，它會把這批人的<b>運氣（雜訊）也一起背起來</b>，
         給你一個<b>看似很準、其實騙你</b>的結果（這就是「禁止迴歸」陷阱）。<br />
@@ -317,30 +318,30 @@
     </div>
 
     <div class="card info">
-      <h3>現場示範：同一個 AI 模型，兩種用法</h3>
-      <p>
+      <h3 data-en="Live demo: the same AI model, two ways of using it">現場示範：同一個 AI 模型，兩種用法</h3>
+      <p data-en="Below we use a model that really does &quot;memorise answers&quot; — a <b>random forest</b> — as the first stage, and run it twice on the <b>same data</b>, the only difference being whether the safety belt is on. Click to run (training the model takes a few seconds):">
         下面用一個真正會「背答案」的<b>樹模型（random forest）</b>當第一階段，
         在<b>同一筆資料</b>上跑兩次，唯一的差別是有沒有繫安全帶。按鈕跑跑看
         （要訓練模型，約需幾秒）：
       </p>
     </div>
-    <button id="runForbidden" class="btn primary">跑「偷看 vs 交叉擬合」現場示範</button>
+    <button id="runForbidden" class="btn primary" data-en="Run the &quot;peek vs cross-fit&quot; live demo">跑「偷看 vs 交叉擬合」現場示範</button>
     <div id="fbOut" class="hidden">
       <div class="play-grid">
-        <div class="stat"><div class="stat-label">未調整（直接比較）</div><div class="stat-num" id="fbNaive">–</div><div class="stat-foot">被汙染、高估的起點</div></div>
-        <div class="stat"><div class="stat-label">AI 偷看版</div><div class="stat-num" id="fbTrap">–</div><div class="stat-foot" id="fbTrapFoot"></div></div>
-        <div class="stat"><div class="stat-label">AI 交叉擬合版</div><div class="stat-num" id="fbCf">–</div><div class="stat-foot" id="fbCfFoot"></div></div>
+        <div class="stat"><div class="stat-label" data-en="Unadjusted (direct)">未調整（直接比較）</div><div class="stat-num" id="fbNaive">–</div><div class="stat-foot" data-en="contaminated, overstated starting point">被汙染、高估的起點</div></div>
+        <div class="stat"><div class="stat-label" data-en="AI peeking version">AI 偷看版</div><div class="stat-num" id="fbTrap">–</div><div class="stat-foot" id="fbTrapFoot"></div></div>
+        <div class="stat"><div class="stat-label" data-en="AI cross-fit version">AI 交叉擬合版</div><div class="stat-num" id="fbCf">–</div><div class="stat-foot" id="fbCfFoot"></div></div>
       </div>
       <div id="fbChart" class="chart"></div>
-      <p class="caption">
+      <p class="caption" data-en="See it? The <b>peeking version</b> sticks almost exactly to the contaminated &quot;unadjusted&quot; number with a narrow error bar (looks super accurate, but it carried the whole confounder back — this is the forbidden regression); the <b>cross-fit version</b> is pulled back near the truth 1.80. <b>Same model, the only difference is whether it peeked.</b>">
         看出來了嗎？<b>偷看版</b>幾乎黏在「未調整」那根被汙染的數字上、誤差棒還很窄
         （看起來超準，其實把干擾因子整包背了回來——這就是禁止迴歸）；
         <b>交叉擬合版</b>則被拉回真值 1.80 附近。<b>同一個模型，差別只在有沒有偷看。</b>
       </p>
     </div>
     <details class="term">
-      <summary>看專有名詞解釋</summary>
-      <p>
+      <summary data-en="Show terminology">看專有名詞解釋</summary>
+      <p data-en="• &quot;memorising answers&quot; = <b>overfitting</b>; the bias from &quot;peeking at the same people&quot; = <b>forbidden regression</b>.<br />• &quot;learn from other groups, apply to this group&quot; = <b>cross-fitting / out-of-fold prediction</b>, the core step of double/debiased machine learning.">
         • 「背答案」＝<b>過度配適（overfitting）</b>；「偷看同一批人」造成的偏誤＝
         <b>禁止迴歸（forbidden regression）</b>。<br />
         • 「用別組學、套到這組」＝<b>交叉擬合（cross-fitting / out-of-fold prediction）</b>，
@@ -349,19 +350,38 @@
     </details>
 
     <!-- 綜合比較 -->
-    <h2>把所有做法擺在一起比</h2>
-    <button id="runMlCompare" class="btn primary">產生綜合比較圖</button>
+    <h2 data-en="Put every approach side by side">把所有做法擺在一起比</h2>
+    <button id="runMlCompare" class="btn primary" data-en="Generate the combined comparison chart">產生綜合比較圖</button>
     <div id="mlCompareOut" class="hidden">
       <div id="mlCompareChart" class="chart"></div>
       <div class="result-cards" id="mlCompareCards"></div>
-      <p class="caption">
+      <p class="caption" data-en="The dashed line is the <b>true answer 1.80</b>. &quot;Unadjusted&quot; and &quot;single weak instrument&quot; are clearly off or jump around; AI's two remedies pull the estimate back near the truth with a usable margin of error.">
         虛線是<b>真正答案 1.80</b>。「未調整」與「單一弱工具」明顯偏掉或亂跳，
         AI 的兩帖藥方則把估計拉回真相附近、且誤差範圍可用。
       </p>
     </div>
   </section>
+
+  <!-- ===================== 參考文獻 / References ===================== -->
+  <footer class="refs">
+    <h2 data-en="References &amp; citation">參考文獻與引用</h2>
+    <p class="cite" data-en="Please cite as: Methodology Working Group, PHDc, NCKU; Tsai DH-T, Lai EC-C.">
+      引用方式：Methodology Working Group, PHDc, NCKU; Tsai DH-T, Lai EC-C.
+    </p>
+    <p class="muted" data-en="The methods and assumption framework draw on the following literature:">方法與假設框架整理自下列文獻：</p>
+    <ul class="reflist">
+      <li>Homayra, F., et al. (2024). Comparative Analysis of Instrumental Variables on the Assignment of Buprenorphine/Naloxone or Methadone for the Treatment of Opioid Use Disorder. <i>Epidemiology, 35</i>(2), 218–231. <span data-en="〔A1–A4b assumption framework〕">〔A1–A4b 假設檢驗框架〕</span></li>
+      <li>Leung, M. (2024). <i>Instrumental Variables</i> <span data-en="〔lecture notes〕. NCKU — Bias in Epidemiology.">〔講義〕. NCKU — Bias in Epidemiology.</span></li>
+      <li>Singh, A., Hosanagar, K., &amp; Gandhi, A. Machine Learning Instrument Variables for Causal Inference. University of Pennsylvania. <span data-en="〔instrument synthesis〕">〔合成工具〕</span></li>
+      <li>Bakhitov, E. (2025). On machine learning instrumental variable estimators. <i>Economics Letters.</i></li>
+      <li>Bruns-Smith, D. (2025). <i>Two-Stage Machine Learning for Nonparametric Instrumental Variable Regression.</i> Stanford University. <span data-en="〔bendable first stage〕">〔可彎的第一階段〕</span></li>
+      <li>Peng, J. (2024). <i>Machine Learning for Instrumental Variable Regression: From Bias to Resilience.</i> University of Connecticut. SSRN 5008641. <span data-en="〔forbidden-regression bias〕">〔禁止迴歸偏誤〕</span></li>
+      <li>Wu, A., Kuang, K., Xiong, R., &amp; Wu, F. (2022). Instrumental Variables in Causal Inference and Machine Learning: A Survey. <i>arXiv:2212.05778.</i></li>
+    </ul>
+  </footer>
 </main>
 
+<script src="/i18n.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>

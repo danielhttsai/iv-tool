@@ -21,7 +21,7 @@ WEB = os.path.join(HERE, "web")
 DOCS = os.path.join(HERE, "docs")
 
 PYODIDE_SCRIPT = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"
-BACKEND_PY = ["iv_core.py", "assumptions.py", "ml_iv.py", "gen_data.py"]
+BACKEND_PY = ["i18n.py", "iv_core.py", "assumptions.py", "ml_iv.py", "gen_data.py"]
 
 
 def _clean_docs():
@@ -36,6 +36,7 @@ def _build_index():
 
     # 1) 絕對路徑改成相對路徑(GitHub Pages 會掛在 /<repo>/ 子路徑底下)
     html = html.replace('href="/styles.css"', 'href="styles.css"')
+    html = html.replace('src="/i18n.js"', 'src="i18n.js"')
     html = html.replace('src="/app.js"', 'src="app.js"')
 
     # 2) 在 </head> 前注入 Pyodide 與橋接(必須在 app.js 之前先攔截 fetch)
@@ -52,6 +53,7 @@ def _build_index():
 
 def _copy_assets():
     shutil.copyfile(os.path.join(FRONTEND, "app.js"), os.path.join(DOCS, "app.js"))
+    shutil.copyfile(os.path.join(FRONTEND, "i18n.js"), os.path.join(DOCS, "i18n.js"))
     shutil.copyfile(os.path.join(FRONTEND, "styles.css"), os.path.join(DOCS, "styles.css"))
     shutil.copyfile(os.path.join(WEB, "pyodide-bridge.js"), os.path.join(DOCS, "pyodide-bridge.js"))
 

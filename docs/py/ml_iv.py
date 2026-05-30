@@ -24,6 +24,8 @@ from __future__ import annotations
 
 import numpy as np
 
+from i18n import t
+
 TRUE_LATE = 1.80
 
 
@@ -301,7 +303,7 @@ def forbidden_demo(n=4000, seed=7, amp=1.2):
 # ---------------------------------------------------------------------------
 # Public: one consolidated comparison (bar chart — ties it all together)
 # ---------------------------------------------------------------------------
-def compare(seed=7):
+def compare(seed=7, lang="zh"):
     syn = synthesis_demo(seed=seed)
     nl = nonlinear_demo(seed=seed + 4)
     # naive OLS of Y on A (confounded) for reference, on the synthesis data.
@@ -310,20 +312,28 @@ def compare(seed=7):
     naive = float(_ols_beta(np.column_stack([np.ones(n), A]), Y)[1])
 
     bars = [
-        {"label": "未調整（直接比較）", "estimate": round(naive, 2),
+        {"label": t(lang, "未調整（直接比較）", "Unadjusted (direct)"),
+         "estimate": round(naive, 2),
          "f": None, "status": "bad",
-         "note": "被健康意識汙染，高估真正效果"},
-        {"label": "單一弱工具", "estimate": round(syn["single_weak"]["estimate"], 2),
+         "note": t(lang, "被健康意識汙染，高估真正效果",
+                   "Confounded by health-consciousness; overstates the true effect")},
+        {"label": t(lang, "單一弱工具", "Single weak instrument"),
+         "estimate": round(syn["single_weak"]["estimate"], 2),
          "ci": [round(c, 2) for c in syn["single_weak"]["ci"]],
          "f": syn["single_weak"]["f_stat"], "status": "weak",
-         "note": "工具太弱：估計亂跳、誤差範圍超寬"},
-        {"label": "AI 合成工具", "estimate": round(syn["mliv_crossfit"]["estimate"], 2),
+         "note": t(lang, "工具太弱：估計亂跳、誤差範圍超寬",
+                   "Instrument too weak: the estimate jumps around with a very wide CI")},
+        {"label": t(lang, "AI 合成工具", "AI-synthesised instrument"),
+         "estimate": round(syn["mliv_crossfit"]["estimate"], 2),
          "ci": [round(c, 2) for c in syn["mliv_crossfit"]["ci"]],
          "f": syn["mliv_crossfit"]["f_stat"], "status": "good",
-         "note": "把多個弱外力揉成一個強外力，誤差大幅收窄"},
-        {"label": "可彎的第一階段", "estimate": round(nl["flexible"]["estimate"], 2),
+         "note": t(lang, "把多個弱外力揉成一個強外力，誤差大幅收窄",
+                   "Combines many weak nudges into one strong instrument; the CI tightens a lot")},
+        {"label": t(lang, "可彎的第一階段", "Flexible first stage"),
+         "estimate": round(nl["flexible"]["estimate"], 2),
          "ci": [round(c, 2) for c in nl["flexible"]["ci"]],
          "f": nl["flexible"]["f_stat"], "status": "good",
-         "note": "讓第一階段可以彎，抓到直線完全錯過的外力"},
+         "note": t(lang, "讓第一階段可以彎，抓到直線完全錯過的外力",
+                   "Letting the first stage bend captures relevance a straight line misses")},
     ]
     return {"true_late": TRUE_LATE, "bars": bars}

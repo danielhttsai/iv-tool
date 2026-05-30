@@ -115,7 +115,8 @@ def _analyze(req: dict) -> dict:
     df = _load(req.get("source", "example"))
     _validate(df, req)
     return iv_core.full_analysis(
-        df, req["outcome"], req["treatment"], req["instrument"], req.get("covariates", [])
+        df, req["outcome"], req["treatment"], req["instrument"],
+        req.get("covariates", []), lang=req.get("lang", "zh"),
     )
 
 
@@ -123,7 +124,8 @@ def _assumptions(req: dict) -> dict:
     df = _load(req.get("source", "example"))
     _validate(df, req)
     return assumptions.check_all(
-        df, req["outcome"], req["treatment"], req["instrument"], req.get("covariates", [])
+        df, req["outcome"], req["treatment"], req["instrument"],
+        req.get("covariates", []), lang=req.get("lang", "zh"),
     )
 
 
@@ -174,7 +176,7 @@ def _ml_forbidden(q: dict) -> dict:
 
 
 def _ml_compare(q: dict) -> dict:
-    return ml_iv.compare(seed=int(q.get("seed", 7)))
+    return ml_iv.compare(seed=int(q.get("seed", 7)), lang=q.get("lang", "zh"))
 
 
 _ROUTES = {

@@ -72,6 +72,7 @@ class AnalyzeRequest(BaseModel):
     treatment: str
     instrument: str
     covariates: list[str] = []
+    lang: str = "zh"
 
 
 # ---------------------------------------------------------------------------
@@ -128,7 +129,7 @@ def analyze(req: AnalyzeRequest):
     df = _load(req.source)
     _validate(df, req)
     out = iv_core.full_analysis(
-        df, req.outcome, req.treatment, req.instrument, req.covariates
+        df, req.outcome, req.treatment, req.instrument, req.covariates, lang=req.lang
     )
     return _clean(out)
 
@@ -138,7 +139,7 @@ def check_assumptions(req: AnalyzeRequest):
     df = _load(req.source)
     _validate(df, req)
     out = assumptions.check_all(
-        df, req.outcome, req.treatment, req.instrument, req.covariates
+        df, req.outcome, req.treatment, req.instrument, req.covariates, lang=req.lang
     )
     return _clean(out)
 
@@ -201,9 +202,9 @@ def ml_forbidden(seed: int = 7):
 
 
 @app.get("/api/ml_compare")
-def ml_compare(seed: int = 7):
+def ml_compare(seed: int = 7, lang: str = "zh"):
     """把各種做法放在一起比較。"""
-    return _clean(ml_iv.compare(seed=seed))
+    return _clean(ml_iv.compare(seed=seed, lang=lang))
 
 
 # ---------------------------------------------------------------------------
