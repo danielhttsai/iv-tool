@@ -36,10 +36,10 @@ def _build_index():
     with open(os.path.join(FRONTEND, "index.html"), encoding="utf-8") as f:
         html = f.read()
 
-    # 1) 絕對路徑改成相對路徑(GitHub Pages 會掛在 /<repo>/ 子路徑底下)
-    html = html.replace('href="/styles.css"', 'href="styles.css"')
-    html = html.replace('src="/i18n.js"', 'src="i18n.js"')
-    html = html.replace('src="/app.js"', 'src="app.js"')
+    # 1) 絕對路徑改成相對路徑(GitHub Pages 會掛在 /<repo>/ 子路徑底下)。
+    #    用 regex 一併處理帶快取破壞查詢字串(?v=N)的版本,否則 /app.js?v=7
+    #    這種帶問號的字串比對不到,會原封不動留下絕對路徑而在 Pages 上 404。
+    html = re.sub(r'(href|src)="/(styles\.css|i18n\.js|app\.js)', r'\1="\2', html)
 
     # 2) 在 </head> 前注入 Pyodide 與橋接(必須在 app.js 之前先攔截 fetch)
     inject = (
