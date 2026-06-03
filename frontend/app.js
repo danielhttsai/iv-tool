@@ -36,6 +36,11 @@ document.querySelectorAll(".tab").forEach((t) => {
     if (t.dataset.tab === "itsanalyze") initItsAnalyze();
     if (t.dataset.tab === "itsassume") initItsAssume();
     if (t.dataset.tab === "itsml") initItsMl();
+    if (t.dataset.tab === "perrlearn") initPerrLearn();
+    if (t.dataset.tab === "perrplay") initPerrPlay();
+    if (t.dataset.tab === "perranalyze") initPerrAnalyze();
+    if (t.dataset.tab === "perrassume") initPerrAssume();
+    if (t.dataset.tab === "perrml") initPerrMl();
     if (t.dataset.tab === "choose") initChoose();
   });
 });
@@ -1974,6 +1979,223 @@ function drawItsBsts(b) {
 }
 
 // ======================================================================
+// Prior Event Rate Ratio (PERR method) — tabs ①–⑤
+// ======================================================================
+const perrState = { source: null, columns: [], req: null };
+let perrLearnReady = false, perrPlayReady = false, perrAnalyzeReady = false,
+    perrAssumeReady = false, perrMlReady = false;
+
+function perrRatesInto(elId, rates) {
+  if (!document.getElementById(elId)) return;
+  const x = [tr("事前期", "prior"), tr("事後期", "post")];
+  const treated = { x, y: [rates.treated_prior, rates.treated_post], type: "bar",
+    name: tr("處置組", "treated"), marker: { color: TEAL } };
+  const control = { x, y: [rates.control_prior, rates.control_post], type: "bar",
+    name: tr("對照組", "control"), marker: { color: "#9aa6b2" } };
+  Plotly.react(elId, [treated, control], sceneLayout({
+    height: 300, barmode: "group", showlegend: true, legend: { orientation: "h", y: 1.12 },
+    yaxis: { title: tr("事件率（每人年）", "event rate (per person-year)") },
+  }), SCENE_CFG);
+}
+function perrRatioBars(elId, d) {
+  if (!document.getElementById(elId)) return;
+  const labels = [tr("事前率比", "RR prior"), tr("天真事後", "naive post"), tr("PERR", "PERR")];
+  const vals = [d.rr_prior, d.naive_rr, d.perr];
+  Plotly.react(elId, [{ x: labels, y: vals, type: "bar",
+    marker: { color: ["#9aa6b2", AMBER, TEAL] },
+    text: vals.map((v) => v.toFixed(2)), textposition: "auto" }], sceneLayout({
+    height: 300, yaxis: { title: tr("率比", "rate ratio") },
+    shapes: [
+      { type: "line", x0: -0.5, x1: 2.5, y0: 1.0, y1: 1.0, line: { color: "#9aa6b2", width: 1.5, dash: "dot" } },
+      { type: "line", x0: -0.5, x1: 2.5, y0: d.true_rr, y1: d.true_rr, line: { color: GREEN, width: 2, dash: "dash" } },
+    ],
+    annotations: [{ x: 2, y: d.true_rr, text: tr("真值 0.70", "truth 0.70"), showarrow: false,
+      yshift: -12, font: { size: 10, color: GREEN } }],
+  }), SCENE_CFG);
+}
+
+// ---- ① learn ----
+function initPerrLearn() {
+  if (perrLearnReady) return;
+  perrLearnReady = true;
+  drawScenePerr();
+}
+function drawScenePerr() {
+  if (!document.getElementById("perrScene")) return;
+  perrRatesInto("perrScene", { treated_prior: 0.131, control_prior: 0.094,
+    treated_post: 0.066, control_post: 0.064 });
+}
+
+// ---- ② interactive ----
+const perrDriftSlider = document.getElementById("perrDriftSlider");
+let perrPlayTimer = null;
+function initPerrPlay() {
+  if (perrPlayReady) return;
+  perrPlayReady = true;
+  refreshPerrPlay();
+}
+function schedulePerrPlay() {
+  document.getElementById("perrDriftVal").textContent = Number(perrDriftSlider.value).toFixed(1);
+  clearTimeout(perrPlayTimer);
+  perrPlayTimer = setTimeout(refreshPerrPlay, 150);
+}
+if (perrDriftSlider) perrDriftSlider.addEventListener("input", schedulePerrPlay);
+async function refreshPerrPlay() {
+  const dv = perrDriftSlider ? Number(perrDriftSlider.value) : 0;
+  let d;
+  try { d = await getJSON(`${API}/api/perr_interactive?drift=${dv}&lang=${lang()}`); }
+  catch (e) { return; }
+  state.perrPlay = d;
+  document.getElementById("perrEst").textContent = fmt(d.perr, 2);
+  document.getElementById("perrNaive").textContent = fmt(d.naive_rr, 2);
+  document.getElementById("perrPrior").textContent = fmt(d.rr_prior, 2);
+  perrRatioBars("perrPlayChart", d);
+}
+
+// ---- ③ analyze ----
+function initPerrAnalyze() {
+  if (perrAnalyzeReady) return;
+  perrAnalyzeReady = true;
+  document.getElementById("usePerrExample").click();
+}
+function perrFillSelects(cols) {
+  const opts = cols.map((c) => `<option value="${c}">${c}</option>`).join("");
+  ["perrSelGroup", "perrSelEp", "perrSelPp", "perrSelEs", "perrSelPs"].forEach((id) =>
+    document.getElementById(id).innerHTML = opts);
+  document.getElementById("perrColMap").classList.remove("hidden");
+}
+function perrApplyDefaults(d) {
+  if (!d) return;
+  const set = (id, v) => { const el = document.getElementById(id); if (v != null) el.value = v; };
+  set("perrSelGroup", d.group); set("perrSelEp", d.events_prior); set("perrSelPp", d.pt_prior);
+  set("perrSelEs", d.events_post); set("perrSelPs", d.pt_post);
+}
+document.getElementById("usePerrExample").addEventListener("click", async () => {
+  const st = document.getElementById("perrDataStatus");
+  try {
+    const d = await getJSON(`${API}/api/perr_example`);
+    perrState.source = "example_perr"; perrState.columns = d.columns;
+    st.textContent = tr(`已載入內建世代範例（${d.n} 人，合成虛構）`,
+                        `Loaded built-in cohort example (${d.n} people, synthetic)`);
+    perrFillSelects(d.columns); perrApplyDefaults(d.defaults);
+    runPerrAnalyze();
+  } catch (e) { st.textContent = tr("載入失敗：", "Load failed: ") + e.message; }
+});
+document.getElementById("perrFileInput").addEventListener("change", async (ev) => {
+  const file = ev.target.files[0]; if (!file) return;
+  const fd = new FormData(); fd.append("file", file);
+  const st = document.getElementById("perrDataStatus"); st.textContent = tr("上傳中…", "Uploading…");
+  try {
+    const r = await fetch(`${API}/api/upload`, { method: "POST", body: fd });
+    if (!r.ok) throw new Error((await r.json()).detail);
+    const d = await r.json();
+    perrState.source = d.token; perrState.columns = d.columns;
+    st.textContent = tr(`已上傳「${file.name}」（${d.n} 列）`, `Uploaded "${file.name}" (${d.n} rows)`);
+    perrFillSelects(d.columns);
+  } catch (e) { st.textContent = tr("上傳失敗：", "Upload failed: ") + e.message; }
+});
+function perrCurrentMapping() {
+  const v = (id) => document.getElementById(id).value;
+  return { source: perrState.source, group: v("perrSelGroup"),
+    events_prior: v("perrSelEp"), pt_prior: v("perrSelPp"),
+    events_post: v("perrSelEs"), pt_post: v("perrSelPs"), lang: lang() };
+}
+document.getElementById("runPerrAnalyze").addEventListener("click", runPerrAnalyze);
+async function runPerrAnalyze() {
+  const req = perrCurrentMapping();
+  if (!req.source) return;
+  perrState.req = req;
+  try {
+    const a = await postJSON(`${API}/api/perr_analyze`, req);
+    renderPerrAnalyze(a);
+    runPerrAssumptions(req);
+  } catch (e) { alert(tr("分析失敗：", "Analysis failed: ") + e.message); }
+}
+function renderPerrAnalyze(a) {
+  document.getElementById("perrAnalyzeOut").classList.remove("hidden");
+  const cards = [
+    [tr("PERR（因果率比）", "PERR (causal rate ratio)"), a.perr, a.interpretation, true],
+    [tr("天真事後率比（有偏）", "Naive post ratio (biased)"), a.naive_rr,
+      tr("只看事後期，被適應症混淆掩蓋了效果。", "Post-only — confounding by indication hides the effect."), false],
+    [tr("事前期率比（混淆指紋）", "Prior ratio (confounding fingerprint)"), a.rr_prior,
+      tr(`PERR 95% 區間 ${fmt(a.ci[0], 2)}～${fmt(a.ci[1], 2)}。`,
+         `PERR 95% CI ${fmt(a.ci[0], 2)}–${fmt(a.ci[1], 2)}.`), false],
+  ];
+  document.getElementById("perrAnalyzeCards").innerHTML = cards.map(([t, v, desc, hl]) =>
+    `<div class="rc ${hl ? "highlight" : ""}"><h3>${t}</h3><div class="big">${fmt(v, 2)}</div><p>${desc}</p></div>`
+  ).join("");
+  perrRatesInto("perrAnalyzeChart", a.rates);
+}
+
+// ---- ④ assumptions ----
+function initPerrAssume() {
+  if (perrAssumeReady) return;
+  perrAssumeReady = true;
+  runPerrAssumptions(perrState.req || { source: "example_perr", lang: lang() });
+}
+async function runPerrAssumptions(req) {
+  const body = req ? { ...req, lang: lang() } : { source: "example_perr", lang: lang() };
+  let out;
+  try { out = await postJSON(`${API}/api/perr_assumptions`, body); } catch (e) { return; }
+  state.perrDash = out;
+  renderPerrAssumptions(out);
+}
+function renderPerrAssumptions(out) {
+  document.getElementById("perrAssumeHint").classList.add("hidden");
+  const ov = document.getElementById("perrOverall");
+  const worst = worstStatus(out.checks);
+  const head = {
+    green: tr("可測項目通過；關鍵假設仍需領域判斷。", "Testable checks pass; the key assumptions still need domain judgement."),
+    amber: tr("有項目需要留意，請展開卡片細看。", "Some items need attention — expand the cards."),
+    red: tr("有項目不符，PERR 結果要保守看待。", "Some items fail — interpret the PERR with caution."),
+    info: tr("PERR 多數假設不可檢驗，需靠領域知識與敏感度分析。", "Most PERR assumptions are untestable — rely on domain knowledge and sensitivity analysis."),
+  }[worst];
+  ov.classList.remove("hidden");
+  ov.className = `overall st-${worst}`; ov.style.background = "#fff";
+  ov.innerHTML = `<span class="dot bg-${worst}"></span> ${head}`;
+  document.getElementById("perrAssumeCards").innerHTML = out.checks.map((c) => {
+    const metrics = c.metrics.map((m) =>
+      `<li>${m.name}<b>${m.value === null ? "–" : m.value}</b><span>${m.note || ""}</span></li>`).join("");
+    return `<div class="acard st-${c.status}">
+      <h3><span class="dot bg-${c.status}"></span>${c.title}
+        <span class="badge bg-${c.status}">${statusText(c.status)}</span></h3>
+      <p class="headline"><b>${c.headline}</b></p>
+      <p class="plain">${c.plain}</p>
+      <ul class="metrics">${metrics}</ul>
+      <details class="term"><summary>${tr("看專有名詞解釋", "Show term explanation")}</summary><p>${c.term}</p></details>
+    </div>`;
+  }).join("");
+}
+
+// ---- ⑤ scale sensitivity (documented refinement, not AI) ----
+function initPerrMl() {
+  if (perrMlReady) return;
+  perrMlReady = true;
+  refreshPerrMl();
+}
+async function refreshPerrMl() {
+  let s;
+  try { s = await getJSON(`${API}/api/perr_scale?lang=${lang()}`); } catch (e) { return; }
+  state.perrScale = s;
+  drawPerrScale(s);
+  document.getElementById("perrScaleReading").textContent = s.reading;
+}
+function drawPerrScale(s) {
+  if (!document.getElementById("perrScaleChart")) return;
+  const y = [s.multiplicative.perr / s.multiplicative.true_rr, s.additive.perd / s.additive.true_diff];
+  Plotly.react("perrScaleChart", [{
+    x: [tr("乘法世界：看 PERR", "multiplicative: use PERR"), tr("加法世界：看 PERD", "additive: use PERD")],
+    y, type: "bar", marker: { color: [TEAL, TEAL] },
+    text: y.map((v) => v.toFixed(2) + "×"), textposition: "auto",
+  }], sceneLayout({
+    height: 280, yaxis: { title: tr("估計 ÷ 真值（1.0＝命中）", "estimate ÷ truth (1.0 = on target)"), range: [0, 1.4] },
+    shapes: [{ type: "line", x0: -0.5, x1: 1.5, y0: 1, y1: 1, line: { color: GREEN, width: 2, dash: "dash" } }],
+    annotations: [{ x: 1, y: 1, text: tr("命中真值", "on target"), showarrow: false, yshift: 10,
+      font: { size: 10, color: GREEN } }],
+  }), SCENE_CFG);
+}
+
+// ======================================================================
 // Language switch — re-render any dynamic content already on screen
 // ======================================================================
 window.addEventListener("iv-lang", async () => {
@@ -2026,6 +2248,11 @@ window.addEventListener("iv-lang", async () => {
   if (itsAnalyzeReady) runItsAnalyze();                // ITS ③ analysis + dashboard
   else if (itsAssumeReady) runItsAssumptions(itsState.req);
   if (itsMlReady) refreshItsMl();                      // ITS ⑤ four upgrades
+  if (perrLearnReady) drawScenePerr();                 // PERR ① learn scene
+  if (perrPlayReady) refreshPerrPlay();                // PERR ② interactive
+  if (perrAnalyzeReady) runPerrAnalyze();              // PERR ③ analysis + dashboard
+  else if (perrAssumeReady) runPerrAssumptions(perrState.req);
+  if (perrMlReady) refreshPerrMl();                    // PERR ⑤ scale sensitivity
   if (state.chooseDone) refreshChoose();                // IV vs RDD comparison
 });
 

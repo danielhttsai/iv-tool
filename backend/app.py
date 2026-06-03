@@ -35,6 +35,9 @@ import its_core
 import its_gen
 import its_assumptions
 import its_ml
+import perr_core
+import perr_gen
+import perr_assumptions
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "data", "demo_vaccine.csv")
@@ -42,7 +45,11 @@ DATA_RDD = os.path.join(HERE, "data", "demo_rdd.csv")
 DATA_DID = os.path.join(HERE, "data", "demo_did.csv")
 DATA_TIT = os.path.join(HERE, "data", "demo_tit.csv")
 DATA_ITS = os.path.join(HERE, "data", "demo_its.csv")
+DATA_PERR = os.path.join(HERE, "data", "demo_perr.csv")
 FRONTEND = os.path.abspath(os.path.join(HERE, "..", "frontend"))
+
+PERR_DEFAULTS = {"group": "group", "events_prior": "events_prior", "pt_prior": "pt_prior",
+                 "events_post": "events_post", "pt_post": "pt_post"}
 
 TIT_DEFAULTS = {"covariates": ["x1", "x2"], "K": 5}
 ITS_DEFAULTS = {"outcome": "outcome", "time": "time", "post": "post", "t_since": "t_since"}
@@ -565,6 +572,76 @@ def its_interactive(level: float = -12.0, lang: str = "zh"):
 def its_ml_demos(seed: int = 7, lang: str = "zh"):
     """ITS ⑤: four upgrades (HAC SE, controlled/triple-diff, flexible ML counterfactual, BSTS)."""
     return _clean(its_ml.boost_demos(seed=seed, lang=lang))
+
+
+# ---------------------------------------------------------------------------
+# Prior Event Rate Ratio (PERR method)
+# ---------------------------------------------------------------------------
+class PerrRequest(BaseModel):
+    source: str = "example_perr"
+    group: str = "group"
+    events_prior: str = "events_prior"
+    pt_prior: str = "pt_prior"
+    events_post: str = "events_post"
+    pt_post: str = "pt_post"
+    lang: str = "zh"
+
+
+def _load_perr(source: str) -> pd.DataFrame:
+    if source in ("example_perr", "example"):
+        return pd.read_csv(DATA_PERR)
+    df = _UPLOADS.get(source)
+    if df is None:
+        raise HTTPException(404, "找不到資料，請重新上傳。")
+    return df
+
+
+@app.get("/api/perr_example")
+def perr_example():
+    df = pd.read_csv(DATA_PERR)
+    return _clean({
+        "columns": list(df.columns), "defaults": PERR_DEFAULTS, "n": len(df),
+        "synthetic": True, "disclaimer": DISCLAIMER,
+        "preview": df.head(8).to_dict(orient="records"),
+        "story": {
+            "group": "group（1＝之後用藥的處置組，0＝對照組）",
+            "events_prior": "events_prior（事前期事件數）／pt_prior（人時）",
+            "events_post": "events_post（事後期事件數）／pt_post（人時）",
+        },
+    })
+
+
+@app.post("/api/perr_analyze")
+def perr_analyze(req: PerrRequest):
+    df = _load_perr(req.source)
+    return _clean(perr_core.full_perr(df, req.group, req.events_prior, req.pt_prior,
+                                      req.events_post, req.pt_post, lang=req.lang))
+
+
+@app.post("/api/perr_assumptions")
+def perr_assumptions_check(req: PerrRequest):
+    df = _load_perr(req.source)
+    return _clean(perr_assumptions.run_dashboard(df, req.group, req.events_prior, req.pt_prior,
+                                                 req.events_post, req.pt_post, lang=req.lang))
+
+
+@app.get("/api/perr_interactive")
+def perr_interactive(drift: float = 0.0, lang: str = "zh"):
+    """Teaching slider: re-generate with `drift` = how much the confounder effect
+    changes from prior to post. 0 = time-invariant (PERR recovers truth); larger =
+    PERR becomes biased (the key assumption P1 fails)."""
+    drift = float(np.clip(drift, 0.0, 1.0))
+    df = perr_gen.generate(drift=drift)
+    out = perr_core.full_perr(df, lang=lang)
+    return _clean({"drift": drift, "true_rr": perr_gen.TRUE_RR,
+                   "perr": out["perr"], "ci": out["ci"], "naive_rr": out["naive_rr"],
+                   "rr_prior": out["rr_prior"], "rates": out["rates"]})
+
+
+@app.get("/api/perr_scale")
+def perr_scale(seed: int = 7, lang: str = "zh"):
+    """PERR ⑤: documented refinement — PERR (multiplicative) vs PERD (additive) scale sensitivity."""
+    return _clean(perr_core.scale_demo(seed=seed, lang=lang))
 
 
 @app.get("/api/tit_interactive")

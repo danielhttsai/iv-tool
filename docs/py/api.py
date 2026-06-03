@@ -33,6 +33,9 @@ import its_core
 import its_gen
 import its_assumptions
 import its_ml
+import perr_core
+import perr_gen
+import perr_assumptions
 
 EXAMPLE_DEFAULTS = {
     "outcome": "health_score_change",
@@ -62,6 +65,8 @@ DID_DEFAULTS = {
 
 TIT_DEFAULTS = {"covariates": ["x1", "x2"], "K": 5}
 ITS_DEFAULTS = {"outcome": "outcome", "time": "time", "post": "post", "t_since": "t_since"}
+PERR_DEFAULTS = {"group": "group", "events_prior": "events_prior", "pt_prior": "pt_prior",
+                 "events_post": "events_post", "pt_post": "pt_post"}
 
 DISCLAIMER = "⚠ 純屬虛構的合成示範資料,非真實病人/個資,僅供教學展示。"
 
@@ -71,6 +76,7 @@ _DEMO_RDD: pd.DataFrame | None = None
 _DEMO_DID: pd.DataFrame | None = None
 _DEMO_TIT: pd.DataFrame | None = None
 _DEMO_ITS: pd.DataFrame | None = None
+_DEMO_PERR: pd.DataFrame | None = None
 
 
 def _demo() -> pd.DataFrame:
@@ -106,6 +112,13 @@ def _demo_its() -> pd.DataFrame:
     if _DEMO_ITS is None:
         _DEMO_ITS = its_gen.generate()
     return _DEMO_ITS
+
+
+def _demo_perr() -> pd.DataFrame:
+    global _DEMO_PERR
+    if _DEMO_PERR is None:
+        _DEMO_PERR = perr_gen.generate()
+    return _DEMO_PERR
 
 
 def _clean(obj):
@@ -513,6 +526,61 @@ def _its_ml(q: dict) -> dict:
     return its_ml.boost_demos(seed=int(q.get("seed", 7)), lang=q.get("lang", "zh"))
 
 
+# ---------------------------------------------------------------------------
+# Prior Event Rate Ratio endpoints (PERR method)
+# ---------------------------------------------------------------------------
+def _load_perr(source: str) -> pd.DataFrame:
+    if source in ("example_perr", "example"):
+        return _demo_perr()
+    df = _UPLOADS.get(source)
+    if df is None:
+        raise ValueError("找不到資料，請重新上傳。")
+    return df
+
+
+def _perr_example() -> dict:
+    df = _demo_perr()
+    return {
+        "columns": list(df.columns), "defaults": PERR_DEFAULTS, "n": len(df),
+        "synthetic": True, "disclaimer": DISCLAIMER,
+        "preview": df.head(8).to_dict(orient="records"),
+        "story": {
+            "group": "group（1＝之後用藥的處置組，0＝對照組）",
+            "events_prior": "events_prior（事前期事件數）／pt_prior（人時）",
+            "events_post": "events_post（事後期事件數）／pt_post（人時）",
+        },
+    }
+
+
+def _perr_analyze(req: dict) -> dict:
+    df = _load_perr(req.get("source", "example_perr"))
+    return perr_core.full_perr(df, req.get("group", "group"),
+                               req.get("events_prior", "events_prior"), req.get("pt_prior", "pt_prior"),
+                               req.get("events_post", "events_post"), req.get("pt_post", "pt_post"),
+                               lang=req.get("lang", "zh"))
+
+
+def _perr_assumptions(req: dict) -> dict:
+    df = _load_perr(req.get("source", "example_perr"))
+    return perr_assumptions.run_dashboard(df, req.get("group", "group"),
+                                          req.get("events_prior", "events_prior"), req.get("pt_prior", "pt_prior"),
+                                          req.get("events_post", "events_post"), req.get("pt_post", "pt_post"),
+                                          lang=req.get("lang", "zh"))
+
+
+def _perr_interactive(q: dict) -> dict:
+    drift = float(np.clip(float(q.get("drift", 0.0)), 0.0, 1.0))
+    df = perr_gen.generate(drift=drift)
+    out = perr_core.full_perr(df, lang=q.get("lang", "zh"))
+    return {"drift": drift, "true_rr": perr_gen.TRUE_RR,
+            "perr": out["perr"], "ci": out["ci"], "naive_rr": out["naive_rr"],
+            "rr_prior": out["rr_prior"], "rates": out["rates"]}
+
+
+def _perr_scale(q: dict) -> dict:
+    return perr_core.scale_demo(seed=int(q.get("seed", 7)), lang=q.get("lang", "zh"))
+
+
 def _tit_interactive(q: dict) -> dict:
     trend = float(np.clip(float(q.get("trend", 1.0)), 0.2, 1.5))
     df = tit_gen.generate(n=2500, trend=trend)   # smaller sample → snappy slider
@@ -557,6 +625,11 @@ _ROUTES = {
     ("POST", "/api/its_assumptions"): lambda q, b: _its_assumptions(b),
     ("GET", "/api/its_interactive"): lambda q, b: _its_interactive(q),
     ("GET", "/api/its_ml"): lambda q, b: _its_ml(q),
+    ("GET", "/api/perr_example"): lambda q, b: _perr_example(),
+    ("POST", "/api/perr_analyze"): lambda q, b: _perr_analyze(b),
+    ("POST", "/api/perr_assumptions"): lambda q, b: _perr_assumptions(b),
+    ("GET", "/api/perr_interactive"): lambda q, b: _perr_interactive(q),
+    ("GET", "/api/perr_scale"): lambda q, b: _perr_scale(q),
 }
 
 

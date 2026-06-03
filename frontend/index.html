@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>準實驗工具箱 Quasi-experimental Toolbox：IV · RDD · DiD · TiT · ITS</title>
+<title>準實驗工具箱 Quasi-experimental Toolbox：IV · RDD · DiD · TiT · ITS · PERR</title>
 <link rel="stylesheet" href="/styles.css" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 </head>
 <body>
 <header class="topbar">
-  <div class="brand"><span data-en="Quasi-experimental toolbox">準實驗工具箱</span> <span>IV</span> · <span>RDD</span> · <span>DiD</span> · <span>TiT</span> · <span>ITS</span></div>
+  <div class="brand"><span data-en="Quasi-experimental toolbox">準實驗工具箱</span> <span>IV</span> · <span>RDD</span> · <span>DiD</span> · <span>TiT</span> · <span>ITS</span> · <span>PERR</span></div>
   <nav class="tabs">
     <span class="tab-group">IV</span>
     <button class="tab active" data-tab="learn" data-en="① What is IV">① IV 是什麼</button>
@@ -41,6 +41,12 @@
     <button class="tab" data-tab="itsanalyze" data-en="③ Analyse data">③ 資料分析</button>
     <button class="tab" data-tab="itsassume" data-en="④ Assumptions">④ 假設檢驗</button>
     <button class="tab" data-tab="itsml" data-en="⑤ Boost with AI">⑤ 用 AI 強化</button>
+    <span class="tab-group">PERR</span>
+    <button class="tab" data-tab="perrlearn" data-en="① What is PERR">① PERR 是什麼</button>
+    <button class="tab" data-tab="perrplay" data-en="② Interactive">② 互動講解</button>
+    <button class="tab" data-tab="perranalyze" data-en="③ Analyse data">③ 資料分析</button>
+    <button class="tab" data-tab="perrassume" data-en="④ Assumptions">④ 假設檢驗</button>
+    <button class="tab" data-tab="perrml" data-en="⑤ Boost with AI">⑤ 用 AI 強化</button>
     <button class="tab tab-sep" data-tab="choose" data-en="IV vs RDD">怎麼選</button>
   </nav>
   <button id="langToggle" class="lang-toggle" type="button" title="切換中／英文" aria-label="Language">EN</button>
@@ -1365,6 +1371,190 @@
     <p class="caption" id="itsBstsReading"></p>
   </section>
 
+  <!-- ===================== PERR ① 是什麼 ===================== -->
+  <section id="perrlearn" class="panel">
+    <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1 data-en="A sixth trick: subtract the confounding you can see in the past (Prior Event Rate Ratio)">第六種招式：把過去看得到的混淆減掉（事前事件率比）</h1>
+    <p class="lead" data-en="People put on a drug are usually different from those who aren't — often sicker (that's why they got it). So directly comparing their event rates after treatment is confounded. PERR's trick: also compare the two groups <b>before</b> anyone was treated. Whatever rate-ratio gap shows up in that prior period is pure confounding — so divide it out of the post-period ratio: <b>PERR = (rate ratio after) ÷ (rate ratio before)</b>.">
+      會被開某個藥的人，通常和沒被開的人不一樣——常常是比較病重（所以才被開）。所以直接比較他們用藥後的
+      事件率會被混淆。PERR 的招式：也比較兩組在<b>還沒有人用藥之前</b>的事件率。事前期出現的任何率比落差
+      都是純混淆——把它從事後期率比中除掉：<b>PERR ＝（事後率比）÷（事前率比）</b>。
+    </p>
+
+    <div class="card info">
+      <h3 data-en="The plain-language idea">先用白話想一遍</h3>
+      <p data-en="Imagine the treated group has 1.4× the event rate of controls <b>before</b> the drug — but nobody is on the drug yet, so that 1.4 is <b>nothing but confounding</b> (the treated are sicker). After the drug, the ratio might look like ~1.0 — seemingly no effect. But that's the protective drug pushing <b>against</b> the 1.4 confounding. Divide: 1.0 ÷ 1.4 ≈ 0.72 — the drug actually cut the rate by ~28%. PERR found the benefit the naive comparison hid. The catch: this only works if the confounding is the <b>same</b> in both periods.">
+        想像處置組在<b>用藥前</b>的事件率是對照組的 1.4 倍——但這時還沒有人用藥，所以那個 1.4
+        <b>純粹是混淆</b>（處置組比較病重）。用藥後，率比可能看起來約 1.0——好像沒效。但那其實是有保護力的藥
+        在<b>對抗</b>那個 1.4 的混淆。一除：1.0 ÷ 1.4 ≈ 0.72——藥其實把事件率降了約 28%。PERR 找出了天真比較
+        藏起來的好處。前提是：這個混淆在兩段期間要<b>一樣</b>。
+      </p>
+    </div>
+
+    <div class="card scene">
+      <h3 data-en="What does the data look like? A confounding gap before, a real effect after">資料長什麼樣子？事前一道混淆落差、事後一個真效果</h3>
+      <p data-en="Four event rates: treated vs control, in the prior period and the post period. In the <b>prior</b> period (nobody treated yet) the teal bar already sits above the grey one — that gap is the confounding fingerprint. In the <b>post</b> period the drug pulls the treated rate down, closing the gap. PERR reads the effect from how that gap <b>changes</b>, not from the post gap alone.">
+        四個事件率：處置 vs 對照，分事前期與事後期。在<b>事前期</b>（還沒有人用藥），青色棒就已經高過灰色棒
+        ——那道落差就是混淆的指紋。在<b>事後期</b>，藥把處置組的率往下拉、把落差縮小。PERR 從這道落差怎麼
+        <b>改變</b>讀出效果，而不是只看事後的落差。
+      </p>
+      <div id="perrScene" class="chart"></div>
+    </div>
+
+    <div class="rdd-twocol">
+      <div class="card">
+        <h3 data-en="What it estimates">它估的是什麼</h3>
+        <p data-en="A causal <b>rate ratio</b> (≈ relative risk) of the treatment on the event — recovered by cancelling time-invariant confounding on the ratio scale, without needing to measure the confounder.">
+          處置對事件的因果<b>率比</b>（≈相對風險）——靠在比值尺度上消掉時間不變的混淆來還原，不需要量到那個混淆因子。
+        </p>
+      </div>
+      <div class="card">
+        <h3 data-en="When it beats a plain cohort study">什麼時候勝過樸素世代研究</h3>
+        <p data-en="A plain after-only comparison (e.g. Cox) is biased by every unmeasured confounder. PERR removes the part of that confounding that is <b>stable over time and multiplicative</b> — at the cost of needing a clean prior period and that stability to hold.">
+          只看事後的樸素比較（如 Cox）會被每一個未測混淆汙染。PERR 把其中<b>時間不變、乘法尺度</b>的那部分消掉
+          ——代價是需要一段乾淨的事前期，以及那份穩定性要成立。
+        </p>
+      </div>
+    </div>
+
+    <details class="term">
+      <summary data-en="How does PERR differ from DiD, ITS and the others?">PERR 和 DiD、ITS 等有什麼不同？</summary>
+      <p data-en="PERR is a close cousin of DiD — both subtract a 'before' difference from an 'after' difference. The difference: DiD works on the outcome <b>level</b> (means), while PERR works on the <b>event rate ratio</b> (counts per person-time), which suits rare events and survival-style data; and PERR's 'before' is the <b>same people</b> in a pre-treatment window, so it leans hard on the confounding being time-invariant. If that fails, PERR is biased — which is exactly what tab ② lets you feel.">
+        PERR 是 DiD 的近親——兩者都把『事前的差異』從『事後的差異』裡減掉。差別：DiD 作用在結果的<b>水準</b>
+        （平均），PERR 作用在<b>事件率比</b>（每人時的次數），適合罕見事件與存活型資料；而且 PERR 的『事前』
+        是<b>同一群人</b>在用藥前的窗，所以非常依賴混淆時間不變。一旦這點不成立，PERR 就會有偏——這正是分頁 ②
+        讓你親手體會的。
+      </p>
+    </details>
+  </section>
+
+  <!-- ===================== PERR ② 互動講解 ===================== -->
+  <section id="perrplay" class="panel">
+    <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1 data-en="Interactive PERR: break the time-invariant assumption and watch it bend">互動式 PERR：弄壞「時間不變」假設，看它怎麼歪掉</h1>
+    <p class="lead" data-en="PERR only works if the confounding is the <b>same</b> in the prior and post periods. Drag the slider to let the confounder's effect <b>drift</b> over time (e.g. frailty resolves after treatment). At 0, PERR recovers the true rate ratio of 0.70. Turn it up, and the prior period no longer captures the post confounding — so PERR drifts away from the truth, even though the naive comparison was wrong all along.">
+      PERR 只有在混淆於事前、事後<b>一樣</b>時才成立。拉動滑桿，讓混淆因子的效果隨時間<b>漂移</b>
+      （例如體弱在用藥後好轉）。在 0 時，PERR 還原真實率比 0.70。往上調，事前期就不再能代表事後的混淆——
+      PERR 便偏離真值，儘管天真比較從頭到尾都是錯的。
+    </p>
+
+    <div class="controls">
+      <label>
+        <span data-en="How much the confounder effect drifts over time:">混淆效果隨時間漂移的程度：</span><b id="perrDriftVal">0.0</b>
+        <input type="range" id="perrDriftSlider" min="0" max="1" value="0" step="0.1" />
+        <small data-en="0 = time-invariant confounding (PERR's key assumption holds → recovers 0.70). Larger = the confounder acts differently before vs after, so dividing out the prior ratio no longer cleans the post ratio.">0＝時間不變的混淆（PERR 關鍵假設成立 → 還原 0.70）。越大＝混淆在前後作用不同，除掉事前率比就不再能清掉事後率比。</small>
+      </label>
+    </div>
+
+    <div class="play-grid">
+      <div class="stat"><div class="stat-label" data-en="PERR (causal rate ratio)">PERR（因果率比）</div><div class="stat-num" id="perrEst">–</div><div class="stat-foot" data-en="the true answer is 0.70">真正答案是 0.70</div></div>
+      <div class="stat"><div class="stat-label" data-en="Naive post-only ratio (biased)">天真：只看事後率比（有偏）</div><div class="stat-num" id="perrNaive">–</div><div class="stat-foot" data-en="confounding hides the benefit">混淆掩蓋了效果</div></div>
+      <div class="stat"><div class="stat-label" data-en="Prior-period ratio (confounding)">事前期率比（混淆指紋）</div><div class="stat-num small" id="perrPrior">–</div><div class="stat-foot" data-en="what PERR divides out">PERR 要除掉的東西</div></div>
+    </div>
+
+    <div id="perrPlayChart" class="chart"></div>
+    <p class="caption" data-en="Bars: the prior-period ratio (confounding), the naive post ratio, and PERR. The green dashed line is the true 0.70; the grey dashed line is 1.0 (no association). At drift 0, PERR sits on 0.70; as drift grows, it climbs away — the assumption failing in real time.">
+      長條：事前期率比（混淆）、天真事後率比、PERR。綠虛線是真值 0.70；灰虛線是 1.0（無關聯）。
+      漂移為 0 時 PERR 落在 0.70；漂移變大，它就往上爬離——假設正在實時崩壞。
+    </p>
+  </section>
+
+  <!-- ===================== PERR ③ 資料分析 ===================== -->
+  <section id="perranalyze" class="panel">
+    <h1 data-en="Data analysis: run a full PERR">資料分析：跑一次完整的 PERR</h1>
+    <p class="lead" data-en="Load the built-in cohort example (or upload a CSV with one row per person: a group indicator, and event counts + person-time for the prior and post periods). The tool computes the prior and post rate ratios, the PERR with a delta-method confidence interval, and the naive comparison it corrects.">
+      載入內建的世代範例（或上傳每列一個人的 CSV：分組指標，以及事前/事後期的事件數與人時）。
+      工具會算事前、事後率比，PERR 及其 delta-method 信賴區間，與它所校正的天真比較。
+    </p>
+
+    <div class="datasource">
+      <button id="usePerrExample" class="btn primary" data-en="Load built-in cohort example">載入內建世代範例</button>
+      <span class="or" data-en="or">或</span>
+      <label class="btn"><span data-en="Upload CSV">上傳 CSV</span><input type="file" id="perrFileInput" accept=".csv" hidden /></label>
+      <span id="perrDataStatus" class="muted" data-en="No data loaded yet">尚未載入資料</span>
+    </div>
+
+    <div id="perrColMap" class="colmap hidden">
+      <div class="field"><label data-en="Group (treated = 1)">分組（treated＝1）</label><select id="perrSelGroup"></select></div>
+      <div class="field"><label data-en="Prior-period events">事前期事件數</label><select id="perrSelEp"></select></div>
+      <div class="field"><label data-en="Prior-period person-time">事前期人時</label><select id="perrSelPp"></select></div>
+      <div class="field"><label data-en="Post-period events">事後期事件數</label><select id="perrSelEs"></select></div>
+      <div class="field"><label data-en="Post-period person-time">事後期人時</label><select id="perrSelPs"></select></div>
+      <button id="runPerrAnalyze" class="btn primary" data-en="Run PERR analysis">執行 PERR 分析</button>
+    </div>
+
+    <div id="perrAnalyzeOut" class="hidden">
+      <h2 data-en="PERR estimate">PERR 估計</h2>
+      <div class="result-cards" id="perrAnalyzeCards"></div>
+      <div id="perrAnalyzeChart" class="chart"></div>
+      <p class="caption" data-en="Event rates by group and period. The prior-period gap (treated above control) is the confounding PERR removes; the post-period gap reflects confounding plus the treatment effect.">各組各期的事件率。事前期的落差（處置高於對照）是 PERR 要消掉的混淆；事後期的落差反映混淆加上處置效果。</p>
+    </div>
+  </section>
+
+  <!-- ===================== PERR ④ 假設檢驗 ===================== -->
+  <section id="perrassume" class="panel">
+    <h1 data-en="Can we trust this PERR? Five checks">這個 PERR 可不可信？五道體檢</h1>
+    <p class="lead" data-en="PERR rests on assumptions that are mostly <b>not testable from data alone</b>, so we are honest (blue cards) and point to what the literature DOES offer. The key one: the confounding is time-invariant and multiplicative. Others: a clean prior period, no event-dependent treatment or dropout, and enough prior events (the one testable check). Green = fine, amber = watch out, red = problem, blue = needs domain judgement.">
+      PERR 依賴的假設大多<b>無法只用資料檢驗</b>，所以我們誠實（藍卡），並指出文獻真有的檢查。最關鍵的：
+      混淆時間不變且乘法。其餘：乾淨的事前期、無事件相依的處置或退出、以及足夠的事前事件數（唯一可檢項）。
+      綠燈沒問題、黃燈要留意、紅燈有狀況、藍燈需領域判斷。
+    </p>
+    <div id="perrOverall" class="overall hidden"></div>
+    <div id="perrAssumeCards" class="assume-cards"></div>
+    <p id="perrAssumeHint" class="muted" data-en="Loading…">載入中…</p>
+  </section>
+
+  <!-- ===================== PERR ⑤ 用 AI 強化 ===================== -->
+  <section id="perrml" class="panel">
+    <h1 data-en="Boosting PERR — an honest &quot;no AI version yet&quot;, plus the real refinements">強化 PERR —— 誠實的「目前沒有 AI 版本」，外加真正的精修</h1>
+    <p class="lead" data-en="As with trend-in-trend, we have to be honest: across the source papers, there is <b>no established machine-learning or doubly-robust version of PERR</b>. The most recent work (Cheung &amp; Ma 2025) clarifies the framework, it is not an AI method. So instead of a fake demo, here is what the literature genuinely offers to make PERR more robust — and some clearly-labelled <b>speculation</b>.">
+      和趨勢中的趨勢一樣，我們必須誠實：在來源論文裡，<b>並沒有成熟的機器學習或雙重穩健版本的 PERR</b>。
+      最新的研究（Cheung &amp; Ma 2025）是在釐清框架，不是 AI 方法。所以與其做一個假 demo，這裡列出文獻
+      真正提供、能讓 PERR 更穩健的做法——再加上清楚標示為<b>推測</b>的方向。
+    </p>
+
+    <div class="card warn">
+      <h3 data-en="What the source papers actually contain">來源論文實際上有什麼</h3>
+      <p data-en="The PERR papers (Yu 2012; Uddin 2015; van Aalst 2021; Rogers 2020; Cheung 2024; Cheung &amp; Ma 2025) use <b>classical rate-ratio / Cox estimation</b> with delta-method or bootstrap intervals. There is <b>no machine learning, no cross-fitting, no doubly-robust PERR</b> in this literature. That is the current state — not a gap we will paper over with a slick demo.">
+        PERR 的論文（Yu 2012、Uddin 2015、van Aalst 2021、Rogers 2020、Cheung 2024、Cheung &amp; Ma 2025）
+        都用<b>古典率比／Cox 估計</b>，搭配 delta-method 或自助法區間。這個文獻中<b>沒有機器學習、沒有交叉擬合、
+        沒有雙重穩健的 PERR</b>。這就是現況——不是我們會用漂亮 demo 掩蓋的缺口。
+      </p>
+    </div>
+
+    <h2 data-en="The real refinements the literature DOES offer">文獻真正提供的精修</h2>
+    <div class="cards">
+      <div class="card"><h3 data-en="① PERR-ALT (paired within-subject framing)">① PERR-ALT（組內配對框架）</h3>
+        <p data-en="Instead of two cross-group ratios, compute each group's own before→after ratio and divide them (paired Cox). Algebraically the same point estimate on these aggregate rates, but it needs no rare-disease approximation and handles paired data and tied events better.">不用兩個跨組率比，而是各組算自己的前→後率比再相除（配對 Cox）。在這些聚合率上點估計相同，但不需罕見近似，且更能處理配對資料與並列事件。</p></div>
+      <div class="card"><h3 data-en="② PERR vs PERD (scale sensitivity)">② PERR vs PERD（尺度敏感度）</h3>
+        <p data-en="If confounding acts additively, not multiplicatively, the right tool is the Prior Event Rate <b>Difference</b> (PERD). The two can't both be right — report both as a sensitivity analysis (computed below).">若混淆是加法而非乘法，正確工具是事前事件率<b>差</b>（PERD）。兩者不可能同時對——把兩個都報出來當敏感度分析（下方計算）。</p></div>
+      <div class="card"><h3 data-en="③ PERR-Comp (robust to dropout)">③ PERR-Comp（對退出穩健）</h3>
+        <p data-en="When dropout/mortality differs by group, a completers-consistent PERR-Comp (Cheung &amp; Ma 2025) stays approximately unbiased — as long as dropout isn't directly caused by the prior event. Pair with SCCS and DRIM checks (see ④).">當退出/死亡因組而異，完成者一致的 PERR-Comp（Cheung &amp; Ma 2025）仍近似無偏——只要退出不是事前事件直接造成。搭配 SCCS 與 DRIM 檢查（見 ④）。</p></div>
+    </div>
+
+    <h2 data-en="Computed: PERR vs PERD scale sensitivity">可計算：PERR vs PERD 尺度敏感度</h2>
+    <div class="card scene">
+      <h3 data-en="Each method shines under its matching scale">各自在對的尺度上發光</h3>
+      <p data-en="Two synthetic worlds. <b>Left</b>: confounding is multiplicative — PERR (ratio scale) hits the true rate ratio, and PERD is the wrong scale. <b>Right</b>: confounding is additive — PERD (difference scale) hits the true rate difference, and PERR is biased. The lesson: match the method to the scale the data look like, and report the other as a sensitivity analysis.">
+        兩個合成世界。<b>左</b>：混淆是乘法——PERR（比值尺度）命中真實率比，PERD 是錯的尺度。
+        <b>右</b>：混淆是加法——PERD（差值尺度）命中真實率差，PERR 偏掉。教訓：把方法配上資料看起來的尺度，
+        另一個當敏感度分析。
+      </p>
+      <div id="perrScaleChart" class="chart"></div>
+    </div>
+    <p class="caption" id="perrScaleReading"></p>
+
+    <div class="card info">
+      <h3 data-en="Could AI help here? Honestly: we don't know — but plausibly…">那 AI 幫得上忙嗎？老實說：不知道——但有可能…</h3>
+      <p data-en="The following are <b>our cautious speculation</b>, not results from any paper: ① an ML model for the prior-period rate could sharpen the confounding fingerprint; ② a doubly-robust score pairing a treatment model with an outcome model <i>might</i> reduce reliance on the time-invariance assumption, if a valid orthogonal score can be derived for this design; ③ an E-value-style sensitivity analysis could quantify how much time-variation in confounding would explain the result away. All unvalidated for PERR. Until then, the honest move is the classical estimator in tabs ②–④, reported transparently with the scale sensitivity above.">
+        以下是<b>我們謹慎的推測</b>，不是任何論文的結果：① 用 ML 估事前期率，<b>或許</b>能讓混淆指紋更鋭利；
+        ② 把處置模型與結果模型配成一條雙重穩健分數，<i>或許</i>能減少對時間不變假設的依賴——前提是能為此設計
+        導出有效的正交分數；③ E-value 式的敏感度分析<b>或許</b>能量化「混淆的時間變動要多大才能把結果解釋掉」。
+        以上對 PERR 皆未驗證。在那之前，誠實的做法就是分頁 ②–④ 的古典估計，連同上面的尺度敏感度一起透明報告。
+      </p>
+    </div>
+  </section>
+
   <!-- ===================== 8. IV vs RDD：怎麼選 ===================== -->
   <section id="choose" class="panel">
     <h1 data-en="IV vs RDD: two designs for the same question — which to use?">IV 與 RDD：回答同一問題的兩種設計，該用哪個？</h1>
@@ -1551,11 +1741,17 @@
       <li>Dey, A. K., et al. (2025). Two-stage interrupted time series analysis with machine learning. <i>American Journal of Epidemiology, 194</i>(10), 2936–2944. https://doi.org/10.1093/aje/kwaf147. <span data-en="〔ML two-stage counterfactual — ITS tab ⑤ ③〕">〔ML 兩階段反事實 —— ITS 分頁⑤ ③〕</span></li>
       <li>Romanowski, K., et al. (2023). Healthcare Utilization After Respiratory Tuberculosis: A Controlled Interrupted Time Series Analysis. <i>Clinical Infectious Diseases, 77</i>(6), 883–891. <span data-en="〔applied controlled ITS〕">〔控制組 ITS 應用範例〕</span></li>
       <li>Brodersen, K. H., et al. (2015). Inferring causal impact using Bayesian structural time-series models. <i>Annals of Applied Statistics, 9</i>(1), 247–274. <span data-en="〔CausalImpact / BSTS — ITS tab ⑤ ④〕">〔CausalImpact／貝氏結構時間序列 —— ITS 分頁⑤ ④〕</span></li>
+      <li>Yu, M., Xie, D., Wang, X., Weiner, M. G., &amp; Tannen, R. L. (2012). Prior event rate ratio adjustment: numerical studies of a statistical method to address unrecognized confounding. <i>Pharmacoepidemiology and Drug Safety, 21</i>(S2), 60–68. https://doi.org/10.1002/pds.3235. <span data-en="〔the PERR method &amp; bias — PERR tabs ①–④〕">〔PERR 方法與偏誤 —— PERR 分頁 ①–④〕</span></li>
+      <li>Uddin, M. J., et al. (2015). Performance of prior event rate ratio adjustment method in pharmacoepidemiology: a simulation study. <i>Pharmacoepidemiology and Drug Safety, 24</i>(5), 468–477. https://doi.org/10.1002/pds.3724. <span data-en="〔failure modes〕">〔失效模式〕</span></li>
+      <li>van Aalst, R., et al. (2021). On the Causal Interpretation of Rate-Change Methods: The Prior Event Rate Ratio and Rate Difference. <i>American Journal of Epidemiology, 190</i>(1), 142–149. https://doi.org/10.1093/aje/kwaa122. <span data-en="〔PERR vs PERD scale sensitivity — PERR tab ⑤ ②〕">〔PERR vs PERD 尺度敏感度 —— PERR 分頁⑤ ②〕</span></li>
+      <li>Rogers, L. R., et al. (2020). Prior event rate ratio adjustment produced estimates consistent with randomized trial: a diabetes case study. <i>Journal of Clinical Epidemiology, 122</i>, 78–86. https://doi.org/10.1016/j.jclinepi.2020.03.009. <span data-en="〔RCT-benchmarked example〕">〔以隨機試驗對照的範例〕</span></li>
+      <li>Cheung, Y. B., Ma, X., &amp; Mackenzie, G. (2024). Two assumptions of the PERR approach can be evaluated by self-controlled case series and dynamic random intercept modeling. <i>Journal of Clinical Epidemiology, 175</i>, 111511. <span data-en="〔SCCS &amp; DRIM checks — PERR tab ④ P3/P4〕">〔SCCS 與 DRIM 檢查 —— PERR 分頁④ P3/P4〕</span></li>
+      <li>Cheung, Y. B., &amp; Ma, X. (2025). Performance of prior event rate ratio method in the presence of differential mortality or dropout. <i>arXiv</i>:2505.20757. <span data-en="〔PERR-Comp under dropout — PERR tab ⑤ ③〕">〔退出下的 PERR-Comp —— PERR 分頁⑤ ③〕</span></li>
     </ul>
   </footer>
 </main>
 
-<script src="i18n.js?v=12"></script>
-<script src="app.js?v=12"></script>
+<script src="i18n.js?v=13"></script>
+<script src="app.js?v=13"></script>
 </body>
 </html>
