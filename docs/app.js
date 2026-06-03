@@ -108,12 +108,12 @@ async function refreshPlay() {
         array: [d.ci[1] - d.estimate], arrayminus: [d.estimate - d.ci[0]], color: "#6366f1", thickness: 3, width: 14 },
       type: "scatter", mode: "markers", marker: { size: 16, color: "#6366f1" }, name: "IV",
     },
-  ], {
+  ], sceneLayout({
     margin: { t: 24, r: 20, b: 40, l: 50 }, showlegend: false,
     yaxis: { title: tr("估計效果", "Estimated effect"), range: [-2, 5], zeroline: true },
     shapes: [{ type: "line", x0: -0.5, x1: 0.5, y0: 1.8, y1: 1.8, line: { color: "#10b981", dash: "dash", width: 2 } }],
     annotations: [{ x: 0.45, y: 1.8, text: tr("真值 1.80", "truth 1.80"), showarrow: false, font: { color: "#10b981" }, yshift: 12 }],
-  }, { displayModeBar: false, responsive: true });
+  }), SCENE_CFG);
 }
 
 // ======================================================================
@@ -195,12 +195,16 @@ function renderAnalysis(out) {
     x: labels, y: vals, type: "bar",
     marker: { color: colors },
     text: vals.map((v) => fmt(v, 2)), textposition: "outside",
-  }], {
+  }], sceneLayout({
     margin: { t: 30, r: 20, b: 50, l: 50 },
     yaxis: { title: tr("對結果的估計效果", "Estimated effect on the outcome") },
     shapes: [{ type: "line", x0: -0.5, x1: labels.length - 0.5, y0: out.iv.estimate, y1: out.iv.estimate,
                line: { color: "#10b981", dash: "dot", width: 1.5 } }],
-  }, { displayModeBar: false, responsive: true });
+    annotations: [
+      { x: 0, y: vals[0], text: tr("被混淆帶偏", "confounded"), showarrow: false, font: { color: RED, size: 10.5 }, yshift: 18 },
+      { x: labels.length - 1, y: out.iv.estimate, text: tr("IV 校正後", "IV-corrected"), showarrow: false, font: { color: GREEN }, yshift: 12, xanchor: "right" },
+    ],
+  }), SCENE_CFG);
 
   const FS = tr("第一階段（工具→處置）", "First stage (instrument→treatment)");
   const cards = [
@@ -276,10 +280,43 @@ function randn(rng) {
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 }
 const SCENE_CFG = { displayModeBar: false, responsive: true };
-const sceneLayout = (extra) => Object.assign({
-  margin: { t: 26, r: 16, b: 40, l: 50 }, height: 280, showlegend: false,
-  font: { size: 11 }, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
-}, extra || {});
+// ---------------------------------------------------------------------------
+// One unified visual language for EVERY method's figures (IV/RDD/DiD/TiT/ITS/
+// PERR + the comparison tab). All charts go through sceneLayout(), so fonts,
+// font sizes, axes, gridlines, legends and annotation labels look identical
+// across study designs. Per-call overrides are deep-merged onto these defaults.
+// ---------------------------------------------------------------------------
+const CHART_FONT = "system-ui, 'Noto Sans TC', 'Segoe UI', sans-serif";
+const GRIDC = "#e6ebf1", ZLINEC = "#c3cedb", TICKC = "#475569";
+const axisBase = () => ({
+  gridcolor: GRIDC, zerolinecolor: ZLINEC, linecolor: ZLINEC,
+  titlefont: { family: CHART_FONT, size: 12.5, color: INK },
+  tickfont: { family: CHART_FONT, size: 11, color: TICKC }, automargin: true,
+});
+function sceneLayout(extra) {
+  extra = extra || {};
+  const base = {
+    height: 300, margin: { t: 30, r: 18, b: 46, l: 56 }, showlegend: false,
+    font: { family: CHART_FONT, size: 12, color: INK },
+    paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    hoverlabel: { font: { family: CHART_FONT, size: 12 } },
+    legend: { orientation: "h", y: 1.16, x: 0,
+      font: { family: CHART_FONT, size: 11.5, color: INK }, bgcolor: "rgba(0,0,0,0)" },
+    xaxis: axisBase(), yaxis: axisBase(),
+  };
+  const out = Object.assign({}, base, extra);
+  ["font", "hoverlabel", "title"].forEach((k) => { if (extra[k]) out[k] = Object.assign({}, base[k] || {}, extra[k]); });
+  if (extra.legend) { out.legend = Object.assign({}, base.legend, extra.legend);
+    out.legend.font = Object.assign({}, base.legend.font, extra.legend.font || {}); }
+  ["xaxis", "yaxis", "xaxis2", "yaxis2"].forEach((k) => {
+    if (extra[k]) { out[k] = Object.assign(axisBase(), extra[k]);
+      if (extra[k].titlefont) out[k].titlefont = Object.assign({ family: CHART_FONT, size: 12.5, color: INK }, extra[k].titlefont); }
+  });
+  // give every annotation the same readable, consistent label font
+  if (out.annotations) out.annotations = out.annotations.map((a) =>
+    Object.assign({}, a, { font: Object.assign({ family: CHART_FONT, size: 11.5, color: INK }, a.font || {}) }));
+  return out;
+}
 
 // scene 1 (IV remedy 1): one weak instrument — two barely-separated clouds
 function drawSceneWeak() {
@@ -370,7 +407,7 @@ function drawSceneTrend() {
       { type: "rect", x0: 53, x1: 77, y0: 0, y1: 1, yref: "paper", fillcolor: AMBER, opacity: 0.1, line: { width: 0 } },
       { type: "line", x0: 65, x1: 65, y0: 0, y1: 1, yref: "paper", line: { color: INK, width: 1.5, dash: "dot" } },
     ],
-    annotations: [{ x: 65, y: 1, yref: "paper", text: tr("65 歲斷點", "cutoff 65"), showarrow: false, font: { size: 10, color: INK }, yshift: 6 }],
+    annotations: [{ x: 65, y: 1, yref: "paper", text: tr("65 歲斷點", "cutoff 65"), showarrow: false, font: { size: 11, color: INK }, yshift: 6 }],
   }), SCENE_CFG);
 }
 
@@ -397,8 +434,8 @@ function drawSceneCensor() {
     xaxis: { title: tr("追蹤時間", "follow-up time"), range: [0, 11], zeroline: false },
     yaxis: { showticklabels: false, range: [-1, n], title: tr("每條線＝一個人", "each line = a person") },
     annotations: [
-      { x: 10.6, y: n - 1, text: "● " + tr("事件", "event"), showarrow: false, font: { size: 10, color: RED }, xanchor: "right" },
-      { x: 10.6, y: n - 2.4, text: "| " + tr("設限", "censored"), showarrow: false, font: { size: 10, color: INK }, xanchor: "right" },
+      { x: 10.6, y: n - 1, text: "● " + tr("事件", "event"), showarrow: false, font: { size: 11, color: RED }, xanchor: "right" },
+      { x: 10.6, y: n - 2.4, text: "| " + tr("設限", "censored"), showarrow: false, font: { size: 11, color: INK }, xanchor: "right" },
     ],
   }), SCENE_CFG);
 }
@@ -431,8 +468,8 @@ function drawSceneSurvIntro() {
     xaxis: { title: tr("追蹤時間（年）", "follow-up time (years)"), range: [0, 11.6], zeroline: false },
     yaxis: { showticklabels: false, range: [-1, n], title: tr("每條線＝一個人", "each line = a person") },
     annotations: [
-      { x: 11.4, y: n - 1, text: "● " + tr("事件發生", "event"), showarrow: false, font: { size: 10, color: RED }, xanchor: "right" },
-      { x: 11.4, y: n - 2.5, text: "| " + tr("被設限", "censored"), showarrow: false, font: { size: 10, color: INK }, xanchor: "right" },
+      { x: 11.4, y: n - 1, text: "● " + tr("事件發生", "event"), showarrow: false, font: { size: 11, color: RED }, xanchor: "right" },
+      { x: 11.4, y: n - 2.5, text: "| " + tr("被設限", "censored"), showarrow: false, font: { size: 11, color: INK }, xanchor: "right" },
     ],
   }), SCENE_CFG);
 }
@@ -486,13 +523,13 @@ async function refreshSynthesis() {
   Plotly.react("synChart", [{
     x: labels, y: yvals, type: "bar", marker: { color: colors },
     text: yvals.map((v) => fmt(v, 0)), textposition: "outside",
-  }], {
+  }], sceneLayout({
     margin: { t: 24, r: 20, b: 50, l: 50 },
     yaxis: { title: tr("外力強度（F 統計量）", "Force strength (F statistic)") },
     shapes: [{ type: "line", x0: -0.5, x1: labels.length - 0.5, y0: 10, y1: 10,
                line: { color: RED, dash: "dash", width: 1.5 } }],
     annotations: [{ x: 0, y: 10, text: tr("及格線 10", "pass line 10"), showarrow: false, font: { color: RED, size: 11 }, yshift: 10, xanchor: "left" }],
-  }, { displayModeBar: false, responsive: true });
+  }), SCENE_CFG);
 }
 
 document.getElementById("runNonlinear").addEventListener("click", async () => {
@@ -521,12 +558,12 @@ function renderNonlinear(d) {
       name: tr("硬用直線", "forced straight line"), line: { color: "#3b82f6", width: 3 } },
     { x: d.curve.dist, y: d.curve.flex, type: "scatter", mode: "lines",
       name: tr("讓它可以彎", "let it bend"), line: { color: TEAL, width: 3 } },
-  ], {
+  ], sceneLayout({
     margin: { t: 24, r: 20, b: 45, l: 55 },
     xaxis: { title: tr("離快打巡迴車的距離（公里）", "Distance to the mobile vaccination van (km)") },
     yaxis: { title: tr("去打針的機率", "Probability of getting vaccinated") },
     legend: { orientation: "h", y: 1.12 },
-  }, { displayModeBar: false, responsive: true });
+  }), SCENE_CFG);
 }
 
 document.getElementById("runMlCompare").addEventListener("click", async () => {
@@ -549,13 +586,13 @@ async function runMlCompare() {
     x: labels, y: vals, type: "bar", marker: { color: colors },
     error_y: { type: "data", symmetric: false, array: errPlus, arrayminus: errMinus, color: INK, thickness: 1.5, width: 8 },
     text: vals.map((v) => fmt(v, 2)), textposition: "outside",
-  }], {
+  }], sceneLayout({
     margin: { t: 30, r: 20, b: 70, l: 50 },
     yaxis: { title: tr("估出的疫苗效果", "Estimated vaccine effect") },
     shapes: [{ type: "line", x0: -0.5, x1: labels.length - 0.5, y0: d.true_late, y1: d.true_late,
                line: { color: GREEN, dash: "dash", width: 2 } }],
     annotations: [{ x: labels.length - 1, y: d.true_late, text: tr("真值 1.80", "truth 1.80"), showarrow: false, font: { color: GREEN }, yshift: 12 }],
-  }, { displayModeBar: false, responsive: true });
+  }), SCENE_CFG);
 
   document.getElementById("mlCompareCards").innerHTML = d.bars.map((b) => {
     const fTxt = b.f === null || b.f === undefined ? "" : `<span>${tr("工具強度 F=", "strength F=")}${fmt(b.f, 1)}</span>`;
@@ -599,13 +636,13 @@ function renderForbidden(d) {
     x: labels, y: vals, type: "bar", marker: { color: colors },
     error_y: { type: "data", symmetric: false, array: errPlus, arrayminus: errMinus, color: INK, thickness: 1.5, width: 10 },
     text: vals.map((v) => fmt(v, 2)), textposition: "outside",
-  }], {
+  }], sceneLayout({
     margin: { t: 30, r: 20, b: 50, l: 50 },
     yaxis: { title: tr("估出的疫苗效果", "Estimated vaccine effect"), range: [0, 3] },
     shapes: [{ type: "line", x0: -0.5, x1: 2.5, y0: d.true_late, y1: d.true_late,
                line: { color: GREEN, dash: "dash", width: 2 } }],
     annotations: [{ x: 2, y: d.true_late, text: tr("真值 1.80", "truth 1.80"), showarrow: false, font: { color: GREEN }, yshift: 12 }],
-  }, { displayModeBar: false, responsive: true });
+  }), SCENE_CFG);
 }
 
 // ======================================================================
@@ -664,7 +701,7 @@ function renderRddPlotInto(elId, plot) {
   if (plot.fit.right) traces.push({ x: plot.fit.right.x, y: plot.fit.right.y, type: "scatter",
     mode: "lines", name: tr("右側配適", "right fit"), line: { color: PURPLE, width: 3 }, showlegend: false });
 
-  Plotly.react(elId, traces, {
+  Plotly.react(elId, traces, sceneLayout({
     margin: { t: 24, r: 20, b: 45, l: 55 },
     xaxis: { title: tr("跑分變數", "Running variable") },
     yaxis: { title: tr("結果", "Outcome") },
@@ -673,7 +710,7 @@ function renderRddPlotInto(elId, plot) {
                line: { color: RED, dash: "dash", width: 1.5 } }],
     annotations: [{ x: c, yref: "paper", y: 1, text: tr(`斷點 ${c}`, `cutoff ${c}`),
                showarrow: false, font: { color: RED, size: 11 }, yshift: 10 }],
-  }, { displayModeBar: false, responsive: true });
+  }), SCENE_CFG);
 }
 
 function renderRddBwInto(elId, bw) {
@@ -684,7 +721,7 @@ function renderRddBwInto(elId, bw) {
       type: "scatter", mode: "lines", showlegend: false, hoverinfo: "skip" },
     { x: bw.h, y: bw.estimate, type: "scatter", mode: "lines+markers",
       line: { color: PURPLE, width: 3 }, marker: { size: 6 }, name: tr("模糊 RD 估計", "fuzzy RD estimate") },
-  ], {
+  ], sceneLayout({
     margin: { t: 24, r: 20, b: 45, l: 55 },
     xaxis: { title: tr("觀察視窗（頻寬，年）", "Observation window (bandwidth, years)") },
     yaxis: { title: tr("模糊 RD 估計", "Fuzzy RD estimate") },
@@ -693,7 +730,7 @@ function renderRddBwInto(elId, bw) {
                line: { color: GREEN, dash: "dash", width: 2 } }],
     annotations: [{ x: bw.h[bw.h.length - 1], y: 1.8, text: tr("真值 1.80", "truth 1.80"),
                showarrow: false, font: { color: GREEN }, yshift: 12, xanchor: "right" }],
-  }, { displayModeBar: false, responsive: true });
+  }), SCENE_CFG);
 }
 
 const runRddSurvBtn = document.getElementById("runRddSurv");
@@ -1009,7 +1046,7 @@ async function refreshRddDml() {
       type: "scatter", mode: "lines", showlegend: false, hoverinfo: "skip" },
     { x: c.window, y: c.dml, type: "scatter", mode: "lines+markers",
       name: tr("DML（調整＋交叉擬合）", "DML (adjusted + cross-fit)"), line: { color: TEAL, width: 3 }, marker: { size: 6 } },
-  ], {
+  ], sceneLayout({
     margin: { t: 24, r: 20, b: 45, l: 55 },
     xaxis: { title: tr("觀察視窗（半寬，年）", "Observation window (half-width, years)") },
     yaxis: { title: tr("估出的疫苗效果", "Estimated vaccine effect") },
@@ -1018,7 +1055,7 @@ async function refreshRddDml() {
                line: { color: GREEN, dash: "dash", width: 2 } }],
     annotations: [{ x: c.window[c.window.length - 1], y: 1.8, text: tr("真值 1.80", "truth 1.80"),
                showarrow: false, font: { color: GREEN }, yshift: 12, xanchor: "right" }],
-  }, { displayModeBar: false, responsive: true });
+  }), SCENE_CFG);
 }
 
 document.getElementById("runRddSurvMl").addEventListener("click", async (ev) => {
@@ -1044,10 +1081,10 @@ function renderRddSurvMl(d) {
     x: labels, y: vals, type: "bar", marker: { color: colors },
     error_y: { type: "data", symmetric: false, array: errPlus, arrayminus: errMinus, color: INK, thickness: 1.5, width: 8 },
     text: vals.map((v) => fmt(v, 2)), textposition: "outside",
-  }], {
+  }], sceneLayout({
     margin: { t: 30, r: 20, b: 70, l: 50 },
     yaxis: { title: tr("斷點處 Δlog（事件時間）", "Δlog(event time) at the cutoff") },
-  }, { displayModeBar: false, responsive: true });
+  }), SCENE_CFG);
 
   document.getElementById("rddSurvMlCards").innerHTML = d.bars.map((b) =>
     `<div class="rc ${b.status === "good" ? "highlight" : ""}"><h3>${b.label}</h3>` +
@@ -1421,11 +1458,11 @@ function drawChooseChart() {
   const corr = { x, y: M.map((r) => r[2]), type: "bar", name: tr("該方法校正後", "method (corrected)"),
     marker: { color: TEAL }, text: M.map((r) => r[2].toFixed(2)), textposition: "outside" };
   Plotly.react("chooseChart", [naive, corr], sceneLayout({
-    height: 340, barmode: "group", showlegend: true, legend: { orientation: "h", y: 1.12 },
+    height: 320, barmode: "group", showlegend: true, legend: { orientation: "h", y: 1.12 },
     yaxis: { title: tr("估計 ÷ 各自真值（1.0＝命中）", "estimate ÷ own truth (1.0 = on target)"), range: [0, 2] },
     shapes: [{ type: "line", x0: -0.5, x1: 5.5, y0: 1, y1: 1, line: { color: GREEN, width: 2, dash: "dash" } }],
     annotations: [{ x: 5, y: 1, text: tr("真值＝1.0", "truth = 1.0"), showarrow: false,
-      yshift: 10, font: { size: 10, color: GREEN } }],
+      yshift: 10, font: { size: 11, color: GREEN } }],
   }), SCENE_CFG);
 }
 
@@ -1552,7 +1589,7 @@ function didTrendInto(elId, trend, t0) {
     shapes: [{ type: "line", x0: t0 - 0.5, x1: t0 - 0.5, y0: 0, y1: 1, yref: "paper",
       line: { color: INK, width: 1.5, dash: "dot" } }],
     annotations: [{ x: t0 - 0.5, y: 1, yref: "paper", yshift: 6,
-      text: tr("政策上路", "policy on"), showarrow: false, font: { size: 10, color: INK } }],
+      text: tr("政策上路", "policy on"), showarrow: false, font: { size: 11, color: INK } }],
   }), SCENE_CFG);
 }
 
@@ -1583,7 +1620,7 @@ function didBarsInto(elId, bars) {
   Plotly.react(elId, [{
     x: bars.labels, y: bars.values, type: "bar", marker: { color: colors },
     text: bars.values.map((v) => v.toFixed(2)), textposition: "auto",
-  }], sceneLayout({ height: 260, margin: { t: 20, r: 16, b: 40, l: 40 }, yaxis: { title: "" } }), SCENE_CFG);
+  }], sceneLayout({ height: 280, margin: { t: 20, r: 16, b: 40, l: 40 }, yaxis: { title: "" } }), SCENE_CFG);
 }
 
 // ---- ① learn ----
@@ -1611,7 +1648,7 @@ function drawSceneDidParallel() {
     shapes: [{ type: "line", x0: t0 - 0.5, x1: t0 - 0.5, y0: 0, y1: 1, yref: "paper",
       line: { color: INK, width: 1.5, dash: "dot" } }],
     annotations: [{ x: t0 - 0.5, y: 1, yref: "paper", yshift: 6,
-      text: tr("政策上路", "policy on"), showarrow: false, font: { size: 10, color: INK } }],
+      text: tr("政策上路", "policy on"), showarrow: false, font: { size: 11, color: INK } }],
   }), SCENE_CFG);
 }
 
@@ -1817,7 +1854,7 @@ function drawDidStagScene() {
     if (c.g >= 0) rows.push({ x: [c.g, 5], y: [c.y, c.y], mode: "lines", type: "scatter",
       line: { color: TEAL, width: 12 }, hoverinfo: "skip" });
     ann.push({ x: 5.2, y: c.y, text: c.label, showarrow: false, xanchor: "left",
-      font: { size: 10, color: INK } });
+      font: { size: 11, color: INK } });
   });
   Plotly.react("sceneDidStag", rows, sceneLayout({
     height: 220, margin: { t: 18, r: 150, b: 38, l: 16 },
@@ -1852,7 +1889,7 @@ function drawDidSynth(s) {
     shapes: [{ type: "line", x0: s.t0 - 0.5, x1: s.t0 - 0.5, y0: 0, y1: 1, yref: "paper",
       line: { color: INK, width: 1.5, dash: "dot" } }],
     annotations: [{ x: s.t0 - 0.5, y: 1, yref: "paper", yshift: 6,
-      text: tr("政策上路", "policy on"), showarrow: false, font: { size: 10, color: INK } }],
+      text: tr("政策上路", "policy on"), showarrow: false, font: { size: 11, color: INK } }],
   }), SCENE_CFG);
 }
 
@@ -1877,7 +1914,7 @@ function titCurvesInto(elId, curve, key, yTitle, pct) {
     line: { color: titColor(s.g, K), width: 2.5 }, marker: { size: 5 },
   }));
   Plotly.react(elId, traces, sceneLayout({
-    height: 320, showlegend: true, legend: { orientation: "h", y: 1.12, font: { size: 9 } },
+    height: 320, showlegend: true, legend: { orientation: "h", y: 1.12 },
     xaxis: { title: tr("期別（季）", "period (quarter)"), dtick: 1 },
     yaxis: Object.assign({ title: yTitle }, pct ? { tickformat: ".0%" } : {}),
   }), SCENE_CFG);
@@ -2066,12 +2103,12 @@ function itsSeriesInto(elId, plot) {
   const post = { x: plot.post.x, y: plot.post.y, mode: "lines", type: "scatter",
     name: tr("介入後", "post"), line: { color: TEAL, width: 3 }, showlegend: false };
   Plotly.react(elId, [pts, cf, pre, post], sceneLayout({
-    height: 340, showlegend: true, legend: { orientation: "h", y: 1.1, font: { size: 9 } },
+    height: 320, showlegend: true, legend: { orientation: "h", y: 1.1 },
     xaxis: { title: tr("期序", "period") }, yaxis: { title: tr("結果", "outcome") },
     shapes: [{ type: "line", x0: plot.t0 - 0.5, x1: plot.t0 - 0.5, y0: 0, y1: 1, yref: "paper",
       line: { color: INK, width: 1.5, dash: "dot" } }],
     annotations: [{ x: plot.t0 - 0.5, y: 1, yref: "paper", yshift: 6,
-      text: tr("介入", "intervention"), showarrow: false, font: { size: 10, color: INK } }],
+      text: tr("介入", "intervention"), showarrow: false, font: { size: 11, color: INK } }],
   }), SCENE_CFG);
 }
 
@@ -2262,7 +2299,7 @@ function renderItsMlcf(d) {
   const cf = { x: s.time, y: s.cf, mode: "lines", type: "scatter",
     name: tr("ML 反事實", "ML counterfactual"), line: { color: AMBER, width: 2.5, dash: "dash" } };
   Plotly.react("itsMlcfSeries", [pts, cf], sceneLayout({
-    height: 320, showlegend: true, legend: { orientation: "h", y: 1.12, font: { size: 9 } },
+    height: 320, showlegend: true, legend: { orientation: "h", y: 1.12 },
     xaxis: { title: tr("期序", "period") }, yaxis: { title: tr("結果", "outcome") },
     shapes: [_itsCutoff(s.t0)],
   }), SCENE_CFG);
@@ -2302,7 +2339,7 @@ function drawItsCtrl(c) {
   const cr = { x: s.time, y: s.control, mode: "lines+markers", type: "scatter",
     name: tr("控制序列", "control"), line: { color: "#9aa6b2", width: 2 }, marker: { size: 4 } };
   Plotly.react("itsCtrlChart", [cr, tr1], sceneLayout({
-    height: 320, showlegend: true, legend: { orientation: "h", y: 1.12, font: { size: 9 } },
+    height: 320, showlegend: true, legend: { orientation: "h", y: 1.12 },
     xaxis: { title: tr("期序", "period") }, yaxis: { title: tr("結果", "outcome") },
     shapes: [_itsCutoff(s.t0)],
   }), SCENE_CFG);
@@ -2315,7 +2352,7 @@ function drawItsFlex(f) {
   const cf = { x: s.time, y: s.cf, mode: "lines", type: "scatter",
     name: tr("彈性反事實", "flexible counterfactual"), line: { color: AMBER, width: 2.5, dash: "dash" } };
   Plotly.react("itsFlexChart", [pts, cf], sceneLayout({
-    height: 320, showlegend: true, legend: { orientation: "h", y: 1.12, font: { size: 9 } },
+    height: 320, showlegend: true, legend: { orientation: "h", y: 1.12 },
     xaxis: { title: tr("期序", "period") }, yaxis: { title: tr("結果", "outcome") },
     shapes: [_itsCutoff(s.t0)],
   }), SCENE_CFG);
@@ -2332,7 +2369,7 @@ function drawItsBsts(b) {
   const pts = { x: s.time, y: s.y, mode: "markers", type: "scatter",
     name: tr("觀察", "observed"), marker: { color: INK, size: 4 } };
   Plotly.react("itsBstsChart", [lo, hi, cf, pts], sceneLayout({
-    height: 320, showlegend: true, legend: { orientation: "h", y: 1.12, font: { size: 9 } },
+    height: 320, showlegend: true, legend: { orientation: "h", y: 1.12 },
     xaxis: { title: tr("期序", "period") }, yaxis: { title: tr("結果", "outcome") },
     shapes: [_itsCutoff(s.t0)],
   }), SCENE_CFG);
@@ -2370,7 +2407,7 @@ function perrRatioBars(elId, d) {
       { type: "line", x0: -0.5, x1: 2.5, y0: d.true_rr, y1: d.true_rr, line: { color: GREEN, width: 2, dash: "dash" } },
     ],
     annotations: [{ x: 2, y: d.true_rr, text: tr("真值 0.70", "truth 0.70"), showarrow: false,
-      yshift: -12, font: { size: 10, color: GREEN } }],
+      yshift: -12, font: { size: 11, color: GREEN } }],
   }), SCENE_CFG);
 }
 
@@ -2551,7 +2588,7 @@ function drawPerrScale(s) {
     height: 280, yaxis: { title: tr("估計 ÷ 真值（1.0＝命中）", "estimate ÷ truth (1.0 = on target)"), range: [0, 1.4] },
     shapes: [{ type: "line", x0: -0.5, x1: 1.5, y0: 1, y1: 1, line: { color: GREEN, width: 2, dash: "dash" } }],
     annotations: [{ x: 1, y: 1, text: tr("命中真值", "on target"), showarrow: false, yshift: 10,
-      font: { size: 10, color: GREEN } }],
+      font: { size: 11, color: GREEN } }],
   }), SCENE_CFG);
 }
 
