@@ -40,10 +40,10 @@
       ".pyloader-logo{margin:0 auto 1.5rem;display:block}" +
       ".pyloader-logo img{height:96px;width:auto;display:block;margin:0 auto}" +
       ".pyloader-title{font-size:1.5rem;font-weight:800;margin-bottom:1.2rem;letter-spacing:.5px;color:#14283c}" +
-      ".pyloader-title span{color:#0d9488}" +
+      ".pyloader-title span{color:#3f8268}" +
       ".pyloader-msg{font-size:1rem;margin-bottom:1rem;min-height:1.4em;color:#334155}" +
       ".pyloader-track{height:8px;border-radius:99px;background:#dbe7e4;overflow:hidden}" +
-      ".pyloader-bar{height:100%;width:5%;border-radius:99px;background:linear-gradient(90deg,#0d9488,#2dd4bf);transition:width .4s ease}" +
+      ".pyloader-bar{height:100%;width:5%;border-radius:99px;background:linear-gradient(90deg,#3f8268,#79c2a2);transition:width .4s ease}" +
       ".pyloader-note{margin-top:1.2rem;font-size:.8rem;color:#64748b;line-height:1.6}";
     document.head.appendChild(css);
     (document.body || document.documentElement).appendChild(o);

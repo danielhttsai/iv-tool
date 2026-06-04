@@ -262,7 +262,7 @@ function statusText(s) {
 // ======================================================================
 // 5. ML + IV demos
 // ======================================================================
-const TEAL = "#0d9488", AMBER = "#f59e0b", RED = "#ef4444", GREEN = "#10b981", INK = "#14283c";
+const TEAL = "#3f8268", AMBER = "#f59e0b", RED = "#ef4444", GREEN = "#10b981", INK = "#14283c";
 const STATUS_COLOR = { good: TEAL, weak: AMBER, bad: RED, trap: AMBER };
 
 // ---- deterministic seeded RNG for the "what does the data look like" mini charts ----
@@ -402,7 +402,7 @@ function drawDoublyRobust(elId) {
     };
   };
   const traces = [
-    pack((d) => d.ok, "#0d9488", "circle", tr("命中真值（不偏）", "on the truth (unbiased)")),
+    pack((d) => d.ok, "#3f8268", "circle", tr("命中真值（不偏）", "on the truth (unbiased)")),
     pack((d) => !d.ok, "#f59e0b", "diamond", tr("偏掉", "biased")),
   ];
   const shapes = [
@@ -410,7 +410,7 @@ function drawDoublyRobust(elId) {
     { type: "line", x0: truth, x1: truth, y0: 0.4, y1: 5.6, line: { color: GREEN, width: 2, dash: "dash" } },
   ];
   const anns = rows.map((d) =>
-    Object.assign(_lbl(0.45, d.y, d.label, d.ok ? "#0f766e" : "#9a3412", 10.5), { xanchor: "left" }));
+    Object.assign(_lbl(0.45, d.y, d.label, d.ok ? "#2f6149" : "#9a3412", 10.5), { xanchor: "left" }));
   anns.push(Object.assign(_lbl(truth, 5.75, tr("真值", "truth"), GREEN, 10.5), { xanchor: "center" }));
   anns.push(_lbl(truth, 0.05, tr("①傾向模型 或 ②結果模型，只要一個對 → 命中真值（雙重穩健）",
                                  "① propensity OR ② outcome — if EITHER is right → on the truth (doubly robust)"), INK, 10));
@@ -443,7 +443,7 @@ function drawTwoStage(elId) {
     { x: [6].concat(cfX), y: [f(6)].concat(cfY), mode: "lines", type: "scatter",
       name: tr("反事實：沒介入會怎樣", "counterfactual: if no intervention"), line: { color: SCHEMA_PURPLE, width: 3, dash: "dash" } },
     { x: postX, y: postY, mode: "markers", type: "scatter", name: tr("介入後（觀測）", "post (observed)"),
-      marker: { color: "#0f766e", size: 8, symbol: "diamond" } },
+      marker: { color: "#2f6149", size: 8, symbol: "diamond" } },
   ];
   const shapes = [{ type: "line", x0: 6, y0: 0, x1: 6, y1: 10, line: { color: "#94a3b8", width: 1.5, dash: "dot" } }];
   const cf9 = f(9), ob9 = f(9) - drop;
@@ -451,7 +451,7 @@ function drawTwoStage(elId) {
     _lbl(6, 9.5, tr("介入", "intervention"), INK, 10),
     Object.assign(_arrow(9, cf9, 9, ob9), { arrowcolor: "#dc2626", arrowwidth: 2.2 }),
     Object.assign(_lbl(9.15, (cf9 + ob9) / 2, tr("效果", "effect"), "#dc2626", 11), { xanchor: "left" }),
-    _lbl(2.7, 1.0, tr("① 用介入前學趨勢", "① learn the pre-trend"), "#0f766e", 10.5),
+    _lbl(2.7, 1.0, tr("① 用介入前學趨勢", "① learn the pre-trend"), "#2f6149", 10.5),
     _lbl(7.7, 9.0, tr("② 外推反事實（虛線）", "② extrapolate it (dashed)"), "#6d28d9", 10.5),
   ];
   Plotly.react(elId, traces, schemaLayout({
@@ -482,51 +482,75 @@ function drawAFT(elId) {
   const shapes = [{ type: "line", x0: 0, y0: 0.5, x1: 10, y1: 0.5, line: { color: "#cbd5e1", width: 1, dash: "dot" } }];
   const anns = [
     Object.assign(_arrow(mC, 0.5, mT, 0.5), { arrowcolor: "#dc2626", arrowwidth: 2.2 }),
-    _lbl((mC + mT) / 2, 0.59, tr("×1.7：中位事件時間延後", "×1.7 later median event time"), "#dc2626", 10.5),
-    _lbl(5, 0.95, tr("AFT：把「整段事件時間」往後拉長（不只比一個平均）", "AFT: stretch the WHOLE event-time distribution later (not just a mean)"), INK, 10.5),
+    _lbl((mC + mT) / 2, 0.6, tr("×1.7：中位事件時間延後", "×1.7 later median event time"), "#dc2626", 10),
+    _lbl(5, 0.98, tr("AFT：把「整段事件時間」往後拉長（不只比一個平均）", "AFT: stretch the WHOLE event-time distribution (not just a mean)"), INK, 9.5),
   ];
   Plotly.react(elId, traces, schemaLayout({
-    height: 280, shapes, annotations: anns, showlegend: true, legend: { orientation: "h", y: 1.18 },
+    height: 300, shapes, annotations: anns, showlegend: true, legend: { orientation: "h", y: 1.2 },
     xaxis: { visible: true, title: tr("時間（追蹤多久）", "time"), range: [0, 10], fixedrange: true },
-    yaxis: { visible: true, title: tr("還沒發生事件的比例", "still event-free"), range: [0, 1.08], fixedrange: true },
-    margin: { t: 30, r: 16, b: 38, l: 50 },
+    yaxis: { visible: true, title: tr("還沒發生事件的比例", "still event-free"), range: [0, 1.12], fixedrange: true },
+    margin: { t: 40, r: 18, b: 40, l: 52 },
   }), SCENE_CFG);
 }
 
-// IPCW illustration — when someone is censored early, up-weight a still-followed,
-// similar person to "stand in" for them, rebuilding the full picture.
+// IPCW illustration — a group of people with SIMILAR covariates. Some are
+// censored before their event is seen (✂ + faded dashed = unobserved). At each
+// OBSERVED event (●), the event is up-weighted (×1/P[uncensored]) so it also
+// "stands in" for the similar people who were censored before their own event.
 function drawIPCW(elId) {
   if (!document.getElementById(elId)) return;
+  // y rows, top→bottom. cens = censored before event; event = observed event (up-weighted).
+  const GREYLINE = "#9aa6b2";
   const rows = [
-    { y: 5.4, end: 9.2, kind: "event" },
-    { y: 4.3, end: 3.0, kind: "cens" },
-    { y: 3.2, end: 6.2, kind: "event" },
-    { y: 2.1, end: 4.2, kind: "cens" },
-    { y: 1.0, end: 8.7, kind: "weight" },
+    { y: 5, kind: "event", obs: 8.6 },
+    { y: 4, kind: "cens", obs: 3.4, would: 7.8 },
+    { y: 3, kind: "event", obs: 6.6 },
+    { y: 2, kind: "cens", obs: 2.6, would: 9.0 },
+    { y: 1, kind: "event", obs: 7.6 },
   ];
+  const nCens = rows.filter((r) => r.kind === "cens").length;
+  const nEvt = rows.filter((r) => r.kind === "event").length;
+  const W = (1 + nCens / nEvt); // each observed event also represents its share of the censored → weight ≈ 1.67×
   const shapes = [], evX = [], evY = [], csX = [], csY = [];
   rows.forEach((r) => {
-    shapes.push({ type: "line", x0: 0.7, y0: r.y, x1: r.end, y1: r.y,
-      line: { color: r.kind === "cens" ? "#f59e0b" : (r.kind === "weight" ? TEAL : "#94a3b8"), width: r.kind === "weight" ? 6 : 2.5 } });
-    if (r.kind === "event") { evX.push(r.end); evY.push(r.y); }
-    if (r.kind === "cens") { csX.push(r.end); csY.push(r.y); }
+    // solid observed segment
+    shapes.push({ type: "line", x0: 0.6, y0: r.y, x1: r.obs, y1: r.y,
+      line: { color: GREYLINE, width: 3 } });
+    if (r.kind === "cens") {
+      // faded dashed continuation to the would-be (unobserved) event
+      shapes.push({ type: "line", x0: r.obs, y0: r.y, x1: r.would, y1: r.y,
+        line: { color: GREYLINE, width: 2, dash: "dot" }, opacity: 0.4 });
+      csX.push(r.obs); csY.push(r.y);
+    } else {
+      evX.push(r.obs); evY.push(r.y);
+    }
   });
   const traces = [
-    { x: evX, y: evY, mode: "markers", type: "scatter", name: tr("● 事件發生", "● event"), marker: { color: RED, size: 11 } },
-    { x: csX, y: csY, mode: "markers", type: "scatter", name: tr("✂ 中途設限（退出）", "✂ censored"), marker: { color: "#f59e0b", size: 13, symbol: "line-ns-open", line: { width: 3 } } },
+    { x: evX, y: evY, mode: "markers", type: "scatter", name: tr("● 看到的事件（被加重）", "● observed event (up-weighted)"),
+      marker: { color: RED, size: 15, line: { color: "#7f1d1d", width: 1.5 } } },
+    { x: csX, y: csY, mode: "markers", type: "scatter", name: tr("✂ 事件前先被設限", "✂ censored before event"),
+      marker: { color: "#64748b", size: 13, symbol: "line-ns-open", line: { width: 3 } } },
   ];
-  const anns = [
-    Object.assign(_lbl(9.0, 1.0, tr("×加重（當替身）", "×weight (stands in)"), "#0f766e", 10.5), { xanchor: "left" }),
-    Object.assign(_arrow(3.0, 4.3, 7.9, 1.2), { arrowcolor: "#0f766e" }),
-    Object.assign(_arrow(4.2, 2.1, 8.2, 1.1), { arrowcolor: "#0f766e" }),
-    _lbl(5, 6.5, tr("IPCW：有人被中途設限（✂），就把「還在追蹤、條件相似」的人加重，替他發聲 → 補回完整樣子",
-                    "IPCW: when someone is censored (✂), up-weight a still-followed, similar person to speak for them → rebuild the full picture"), INK, 10),
-  ];
+  // weight badge next to each observed event
+  const anns = [];
+  rows.filter((r) => r.kind === "event").forEach((r) => {
+    anns.push(Object.assign(_lbl(r.obs + 0.25, r.y, "×" + W.toFixed(1), "#b91c1c", 11), { xanchor: "left", yanchor: "middle" }));
+  });
+  // left bracket label: similar covariates
+  anns.push(Object.assign(_lbl(0.0, 3, tr("一群特徵相近的人", "people with similar covariates"), INK, 10.5),
+    { textangle: -90, xanchor: "center", yanchor: "middle" }));
+  // ✂ explanation on the censored rows
+  rows.filter((r) => r.kind === "cens").forEach((r) => {
+    anns.push(Object.assign(_lbl((r.obs + r.would) / 2, r.y + 0.32, tr("┄ 本來會發生（沒看到）", "┄ event would occur (unseen)"), "#64748b", 9), { xanchor: "center" }));
+  });
+  anns.push(_lbl(5, 6.2, tr(
+    "在事件(●)上加重 → 替提早設限(✂)者補回",
+    "weight events (●) → stand in for censored (✂)"), INK, 10.5));
   Plotly.react(elId, traces, schemaLayout({
-    height: 280, shapes, annotations: anns, showlegend: true, legend: { orientation: "h", y: 1.18 },
-    xaxis: { visible: true, title: tr("追蹤時間", "follow-up time"), range: [0, 10], fixedrange: true },
-    yaxis: { visible: false, range: [0, 7.2] },
-    margin: { t: 30, r: 16, b: 36, l: 26 },
+    height: 300, shapes, annotations: anns, showlegend: true, legend: { orientation: "h", y: 1.16 },
+    xaxis: { visible: true, title: tr("追蹤時間", "follow-up time"), range: [0, 10.6], fixedrange: true },
+    yaxis: { visible: false, range: [0, 6.7] },
+    margin: { t: 34, r: 20, b: 38, l: 40 },
   }), SCENE_CFG);
 }
 
@@ -551,7 +575,7 @@ function drawSceneWeak() {
   const traces = [];
   rows.forEach((r) => { traces.push(hump(5 - r.sep, r.base, GREY)); traces.push(hump(5 + r.sep, r.base, TL)); });
   const anns = [
-    Object.assign(_lbl(0.1, 9.4, tr("● 有被推", "● nudged"), "#0d9488", 10.5), { xanchor: "left" }),
+    Object.assign(_lbl(0.1, 9.4, tr("● 有被推", "● nudged"), "#3f8268", 10.5), { xanchor: "left" }),
     Object.assign(_lbl(2.6, 9.4, tr("● 沒被推", "● not nudged"), "#64748b", 10.5), { xanchor: "left" }),
   ];
   rows.forEach((r) => anns.push(Object.assign(_lbl(0.1, r.base + 2.45, r.label, INK, 11), { xanchor: "left" })));
@@ -645,27 +669,31 @@ function drawSceneTrend() {
 function drawSceneCensor() {
   if (!document.getElementById("sceneCensor")) return;
   const rng = mulberry32(505);
-  const lines = [], eventX = [], eventY = [], censX = [], censY = [], eventC = [], censC = [];
-  const n = 14;
+  const lines = [], dashes = [], eventX = [], eventY = [], censX = [], censY = [];
+  const n = 14, GREYLINE = "#9aa6b2", XMAX = 11;
   for (let i = 0; i < n; i++) {
-    const frail = rng() < 0.5;
-    const col = frail ? AMBER : "#9aa6b2";
+    const frail = rng() < 0.5;                       // timing still varies; just not coloured
     const eventTime = (frail ? 2 + rng() * 5 : 4 + rng() * 6);
-    const censTime = (frail ? 2 + rng() * 3 : 5 + rng() * 5); // frail censored earlier
+    const censTime = (frail ? 2 + rng() * 3 : 5 + rng() * 5);
     const observed = Math.min(eventTime, censTime);
     const isEvent = eventTime <= censTime;
-    lines.push({ x: [0, observed], y: [i, i], mode: "lines", type: "scatter", line: { color: col, width: 3 }, hoverinfo: "skip" });
-    if (isEvent) { eventX.push(observed); eventY.push(i); eventC.push(col); }
-    else { censX.push(observed); censY.push(i); censC.push(col); }
+    lines.push({ x: [0, observed], y: [i, i], mode: "lines", type: "scatter", line: { color: GREYLINE, width: 3 }, hoverinfo: "skip" });
+    if (isEvent) { eventX.push(observed); eventY.push(i); }
+    else {
+      censX.push(observed); censY.push(i);
+      dashes.push({ x: [observed, Math.min(eventTime, XMAX - 0.2)], y: [i, i], mode: "lines", type: "scatter",
+        line: { color: GREYLINE, width: 2, dash: "dot" }, opacity: 0.4, hoverinfo: "skip" });  // unobserved-after-censoring
+    }
   }
   const events = { x: eventX, y: eventY, mode: "markers", type: "scatter", marker: { color: RED, size: 9, symbol: "circle" }, name: "event" };
-  const cens = { x: censX, y: censY, mode: "markers", type: "scatter", marker: { color: censC, size: 11, symbol: "line-ns-open", line: { width: 2 } }, name: "censored" };
-  Plotly.react("sceneCensor", lines.concat([events, cens]), sceneLayout({
-    xaxis: { title: tr("追蹤時間", "follow-up time"), range: [0, 11], zeroline: false },
+  const cens = { x: censX, y: censY, mode: "markers", type: "scatter", marker: { color: "#64748b", size: 11, symbol: "line-ns-open", line: { width: 2 } }, name: "censored" };
+  Plotly.react("sceneCensor", lines.concat(dashes, [events, cens]), sceneLayout({
+    xaxis: { title: tr("追蹤時間", "follow-up time"), range: [0, XMAX], zeroline: false },
     yaxis: { showticklabels: false, range: [-1, n], title: tr("每條線＝一個人", "each line = a person") },
     annotations: [
       { x: 10.6, y: n - 1, text: "● " + tr("事件", "event"), showarrow: false, font: { size: 11, color: RED }, xanchor: "right" },
-      { x: 10.6, y: n - 2.4, text: "| " + tr("設限", "censored"), showarrow: false, font: { size: 11, color: INK }, xanchor: "right" },
+      { x: 10.6, y: n - 2.3, text: "| " + tr("設限", "censored"), showarrow: false, font: { size: 11, color: INK }, xanchor: "right" },
+      { x: 10.6, y: n - 3.6, text: "┄ " + tr("設限後（未觀測）", "after censoring (unobserved)"), showarrow: false, font: { size: 10, color: "#94a3b8" }, xanchor: "right" },
     ],
   }), SCENE_CFG);
 }
@@ -676,30 +704,34 @@ function drawSceneCensor() {
 function drawSceneSurvIntro() {
   if (!document.getElementById("sceneSurvIntro")) return;
   const rng = mulberry32(606);
-  const traces = [], evX = [], evY = [], cX = [], cY = [], cCol = [];
-  const n = 16;
+  const traces = [], dashes = [], evX = [], evY = [], cX = [], cY = [];
+  const n = 16, GREYLINE = "#7e8a98", XMAX = 11.6;
   for (let i = 0; i < n; i++) {
-    const frail = rng() < 0.5;
-    const col = frail ? AMBER : "#7e8a98";
+    const frail = rng() < 0.5;                       // timing still varies; just not coloured
     const eventTime = frail ? 2 + rng() * 5 : 4.5 + rng() * 6;
-    const censTime = frail ? 2 + rng() * 3.5 : 5 + rng() * 5.5;  // frail lost earlier
+    const censTime = frail ? 2 + rng() * 3.5 : 5 + rng() * 5.5;
     const observed = Math.min(eventTime, censTime, 11);
     const isEvent = eventTime <= censTime && eventTime <= 11;
     traces.push({ x: [0, observed], y: [i, i], mode: "lines", type: "scatter",
-      line: { color: col, width: 3 }, hoverinfo: "skip" });
+      line: { color: GREYLINE, width: 3 }, hoverinfo: "skip" });
     if (isEvent) { evX.push(observed); evY.push(i); }
-    else { cX.push(observed); cY.push(i); cCol.push(col); }
+    else {
+      cX.push(observed); cY.push(i);
+      dashes.push({ x: [observed, Math.min(eventTime, XMAX - 0.3)], y: [i, i], mode: "lines", type: "scatter",
+        line: { color: GREYLINE, width: 2, dash: "dot" }, opacity: 0.4, hoverinfo: "skip" });  // unobserved-after-censoring
+    }
   }
   const events = { x: evX, y: evY, mode: "markers", type: "scatter",
     marker: { color: RED, size: 10, symbol: "circle" } };
   const cens = { x: cX, y: cY, mode: "markers", type: "scatter",
-    marker: { color: cCol, size: 13, symbol: "line-ns-open", line: { width: 2.5 } } };
-  Plotly.react("sceneSurvIntro", traces.concat([events, cens]), sceneLayout({
-    xaxis: { title: tr("追蹤時間（年）", "follow-up time (years)"), range: [0, 11.6], zeroline: false },
+    marker: { color: "#64748b", size: 13, symbol: "line-ns-open", line: { width: 2.5 } } };
+  Plotly.react("sceneSurvIntro", traces.concat(dashes, [events, cens]), sceneLayout({
+    xaxis: { title: tr("追蹤時間（年）", "follow-up time (years)"), range: [0, XMAX], zeroline: false },
     yaxis: { showticklabels: false, range: [-1, n], title: tr("每條線＝一個人", "each line = a person") },
     annotations: [
       { x: 11.4, y: n - 1, text: "● " + tr("事件發生", "event"), showarrow: false, font: { size: 11, color: RED }, xanchor: "right" },
-      { x: 11.4, y: n - 2.5, text: "| " + tr("被設限", "censored"), showarrow: false, font: { size: 11, color: INK }, xanchor: "right" },
+      { x: 11.4, y: n - 2.4, text: "| " + tr("被設限", "censored"), showarrow: false, font: { size: 11, color: INK }, xanchor: "right" },
+      { x: 11.4, y: n - 3.8, text: "┄ " + tr("設限後（未觀測）", "after censoring (unobserved)"), showarrow: false, font: { size: 10, color: "#94a3b8" }, xanchor: "right" },
     ],
   }), SCENE_CFG);
 }
@@ -916,8 +948,20 @@ async function refreshRdd() {
   fuzzyEl.textContent = fmt(i.fuzzy, 2);
   fuzzyEl.style.color = Math.abs(i.fuzzy - 1.8) < 0.4 ? TEAL : AMBER;
 
+  // bias–variance readout: window N (variance shrinks with more people) and the
+  // 95% CI width of the fuzzy estimate (variance shows up directly as CI width).
+  const nWin = (i.n_left || 0) + (i.n_right || 0);
+  const ciW = (i.fuzzy_ci && i.fuzzy_ci.length === 2) ? Math.abs(i.fuzzy_ci[1] - i.fuzzy_ci[0]) : NaN;
+  const nEl = document.getElementById("rddNwin");
+  const cwEl = document.getElementById("rddCiW");
+  if (nEl) nEl.textContent = nWin.toLocaleString();
+  if (cwEl) {
+    cwEl.textContent = isFinite(ciW) ? "±" + fmt(ciW / 2, 2) + tr("（半寬）", " (half-width)") : "–";
+    // wider CI = more variance → tint amber when it gets large
+    cwEl.style.color = isFinite(ciW) && ciW > 1.2 ? AMBER : TEAL;
+  }
+
   renderRddPlotInto("rddPlot", a.plot);
-  renderRddBwInto("rddBwChart", a.bandwidth_curve);
 }
 
 function renderRddPlotInto(elId, plot) {
@@ -942,26 +986,6 @@ function renderRddPlotInto(elId, plot) {
                line: { color: RED, dash: "dash", width: 1.5 } }],
     annotations: [{ x: c, yref: "paper", y: 1, text: tr(`斷點 ${c}`, `cutoff ${c}`),
                showarrow: false, font: { color: RED, size: 11 }, yshift: 10 }],
-  }), SCENE_CFG);
-}
-
-function renderRddBwInto(elId, bw) {
-  Plotly.react(elId, [
-    { x: bw.h.concat(bw.h.slice().reverse()),
-      y: bw.hi.concat(bw.lo.slice().reverse()),
-      fill: "toself", fillcolor: "rgba(124,58,237,0.12)", line: { color: "transparent" },
-      type: "scatter", mode: "lines", showlegend: false, hoverinfo: "skip" },
-    { x: bw.h, y: bw.estimate, type: "scatter", mode: "lines+markers",
-      line: { color: PURPLE, width: 3 }, marker: { size: 6 }, name: tr("模糊 RD 估計", "fuzzy RD estimate") },
-  ], sceneLayout({
-    margin: { t: 24, r: 20, b: 45, l: 55 },
-    xaxis: { title: tr("觀察視窗（頻寬，年）", "Observation window (bandwidth, years)") },
-    yaxis: { title: tr("模糊 RD 估計", "Fuzzy RD estimate") },
-    showlegend: false,
-    shapes: [{ type: "line", x0: bw.h[0], x1: bw.h[bw.h.length - 1], y0: 1.8, y1: 1.8,
-               line: { color: GREEN, dash: "dash", width: 2 } }],
-    annotations: [{ x: bw.h[bw.h.length - 1], y: 1.8, text: tr("真值 1.80", "truth 1.80"),
-               showarrow: false, font: { color: GREEN }, yshift: 12, xanchor: "right" }],
   }), SCENE_CFG);
 }
 
@@ -1162,7 +1186,6 @@ function renderRddAnalyze(a) {
     `<div class="rc ${hl ? "highlight" : ""}"><h3>${t}</h3><div class="big">${fmt(v, hl ? 3 : 2)}</div><p>${desc}</p></div>`
   ).join("");
   if (a.plot) renderRddPlotInto("rddAnalyzePlot", a.plot);
-  if (a.bandwidth_curve) renderRddBwInto("rddAnalyzeBw", a.bandwidth_curve);
 }
 
 function renderRddAnalyzeSurv(s) {
