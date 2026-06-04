@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>準實驗工具箱 Quasi-experimental Toolbox：IV · RDD · DiD · TiT · ITS · PERR</title>
-<link rel="stylesheet" href="styles.css?v=40" />
+<link rel="stylesheet" href="styles.css?v=41" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 <script src="pyodide-bridge.js?v=29"></script>
@@ -181,13 +181,56 @@
 
     <details class="term">
       <summary data-en="Show terminology">看專有名詞解釋</summary>
-      <p data-en="Those plain-language phrases map to the textbook terms as follows:<br />• &quot;the reminder's persuasiveness&quot; = the <b>complier share</b> = the first-stage coefficient: the fraction of people the nudge moves to change behaviour.<br />• the &quot;is the reminder strong enough&quot; score = the <b>first-stage F-statistic</b>: above 10 counts as strong, below 10 is a &quot;<b>weak instrument</b>&quot;.<br />• &quot;estimated vaccine effect&quot; = the <b>IV estimate (LATE, local average treatment effect)</b>: only the effect among the compliers the nudge moved.<br />• &quot;margin of error&quot; = the <b>95% confidence interval</b>: the wider it is, the more uncertain the estimate.">
-        上面那些白話，對應到統計課本的術語是這樣：<br />
-        • 「提醒的說服力」＝<b>complier（順從者）比例</b>＝第一階段係數：被這個外力推動而改變行為的人佔多少。<br />
-        • 「這個提醒夠不夠力」的分數＝<b>第一階段 F 統計量</b>：大於 10 才算夠力，低於 10 稱為「<b>弱工具（weak instrument）</b>」。<br />
-        • 「估出來的疫苗效果」＝<b>IV 估計（LATE，局部平均處置效果）</b>：只代表被提醒推動的那群順從者身上的效果。<br />
-        • 「答案的誤差範圍」＝<b>95% 信賴區間</b>：區間越寬，代表估計越不確定。
-      </p>
+      <div class="tdef">
+        <h4>順從者比例 <span class="en">complier share（first-stage coefficient）</span></h4>
+        <p data-en="<b>Plain:</b> the share of people the reminder actually &quot;pushes&quot; into changing behaviour.<br /><b>Definition:</b> the first-stage coefficient of the instrument Z on the treatment A; with a binary instrument it equals (vaccination rate of those reminded) − (rate of those not reminded).<br /><b>Why it matters:</b> IV can only estimate the effect on this pushed group (the compliers) — the fewer compliers, the less information and the shakier the estimate.<br /><b>Example:</b> 58% of reminded people get vaccinated vs 52% of the rest → complier share = 6 points = 0.06.<br /><b>Formula:</b> first stage <code>A = π₀ + π₁·Z + ε</code>, where π₁ is the complier share.">
+          <b>白話：</b>被這個外力（提醒）「推一把」才改變行為的人，佔全部的多少。<br />
+          <b>定義：</b>工具 Z 對處置 A 的<b>第一階段迴歸係數</b>；二元工具下＝（收到提醒者的打針率）−（沒收到者的打針率）。<br />
+          <b>為什麼重要：</b>IV 只估得到「被推動的這群人（順從者）」的效果；順從者越少，可用資訊越少、估計越不穩。<br />
+          <b>例子：</b>收到提醒者打針率 58%、沒收到者 52% → 順從者比例＝6 個百分點＝0.06。<br />
+          <b>公式：</b>第一階段 <code>A = π₀ + π₁·Z + ε</code>，其中 π₁ 即順從者比例。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>第一階段 F 統計量 <span class="en">first-stage F（instrument strength）</span></h4>
+        <p data-en="<b>Plain:</b> a score that checks whether the nudge is &quot;strong enough&quot;.<br /><b>Definition:</b> the F-statistic testing whether the instrument's first-stage coefficient is zero (with a single instrument, F ≈ t²).<br /><b>Why it matters:</b> a weak instrument badly biases the IV estimate and blows up the confidence interval; the rule of thumb is F &gt; 10 to count as strong.<br /><b>Example:</b> F = 42 → strong; F = 4 → weak, the estimate is not trustworthy.<br /><b>Formula:</b> <code>F ≈ (π₁ / SE(π₁))²</code>, threshold 10.">
+          <b>白話：</b>用來檢查「這個外力到底夠不夠力」的分數。<br />
+          <b>定義：</b>第一階段迴歸中，檢定工具係數是否為 0 的 F 值（單一工具時 F ≈ t²）。<br />
+          <b>為什麼重要：</b>工具太弱會讓 IV 估計嚴重偏誤、信賴區間爆寬；經驗門檻 <b>F&gt;10</b> 才算夠力。<br />
+          <b>例子：</b>F=42 → 夠力；F=4 → 弱工具，估計不可信。<br />
+          <b>公式：</b><code>F ≈ (π₁ / SE(π₁))²</code>，門檻 10。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>弱工具 <span class="en">weak instrument</span></h4>
+        <p data-en="<b>Plain:</b> a nudge whose push is too small.<br /><b>Definition:</b> an instrument only weakly correlated with the treatment (F &lt; 10 / very few compliers).<br /><b>Why it matters:</b> under a weak instrument, 2SLS drifts back toward the biased OLS, the standard error explodes, and it can be worse than not using IV at all.<br /><b>Example:</b> if the reminder barely changes the vaccination rate and F is only 3, it is a weak instrument.<br /><b>Formula:</b> red flag when <code>F &lt; 10</code>.">
+          <b>白話：</b>推力太小的外力。<br />
+          <b>定義：</b>與處置相關性很弱的工具（F&lt;10／順從者極少）。<br />
+          <b>為什麼重要：</b>弱工具下 2SLS 會偏回有偏的 OLS、標準誤巨大，甚至比不用 IV 還糟。<br />
+          <b>例子：</b>若提醒幾乎不影響打針率、F 只有 3，就是弱工具。<br />
+          <b>公式：</b>警訊判準 <code>F &lt; 10</code>。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>IV 估計（LATE） <span class="en">local average treatment effect</span></h4>
+        <p data-en="<b>Plain:</b> the vaccine effect among the very people the reminder pushed into getting the shot.<br /><b>Definition:</b> the Local Average Treatment Effect = the average causal effect for the compliers; with a binary instrument it equals the Wald estimate = (jump in Y) ÷ (jump in A).<br /><b>Why it matters:</b> it is NOT the whole-population effect (ATE) — only the compliers; change the instrument and you change which compliers, so the number can change too.<br /><b>Example:</b> Y jumps 0.14, A jumps 0.06 → LATE ≈ 2.4.<br /><b>Formula:</b> <code>LATE = Cov(Y,Z) / Cov(A,Z) = reduced-form ÷ first-stage</code>.">
+          <b>白話：</b>被提醒推去打針的「那群順從者」身上的疫苗效果。<br />
+          <b>定義：</b>局部平均處置效果（LATE）＝順從者的平均因果效果；二元工具下＝Wald 估計＝（Y 的跳幅）÷（A 的跳幅）。<br />
+          <b>為什麼重要：</b>它<b>不是</b>全體平均效果（ATE），只代表順從者；換個工具就換一群順從者，數字可能跟著變。<br />
+          <b>例子：</b>Y 跳 0.14、A 跳 0.06 → LATE ≈ 2.4。<br />
+          <b>公式：</b><code>LATE = Cov(Y,Z) / Cov(A,Z)</code> ＝ 簡化式 ÷ 第一階段。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>95% 信賴區間 <span class="en">95% confidence interval</span></h4>
+        <p data-en="<b>Plain:</b> the margin of error around the answer.<br /><b>Definition:</b> an interval that, under repeated sampling, covers the true value 95% of the time; the wider it is, the more uncertain the estimate.<br /><b>Why it matters:</b> with a weak instrument or few compliers the CI gets very wide, warning you not to over-trust the point estimate.<br /><b>Example:</b> LATE = 2.4 with 95% CI 1.1–3.7 → the effect is positive but imprecise.<br /><b>Formula:</b> <code>estimate ± 1.96 × standard error</code>.">
+          <b>白話：</b>答案的誤差範圍。<br />
+          <b>定義：</b>在重複抽樣下有 95% 機率涵蓋真值的區間；越寬代表越不確定。<br />
+          <b>為什麼重要：</b>弱工具或順從者少時 CI 會很寬，提醒你別太相信點估計。<br />
+          <b>例子：</b>LATE=2.4、95% CI 1.1–3.7，表示效果為正但不精確。<br />
+          <b>公式：</b><code>估計 ± 1.96 × 標準誤</code>。
+        </p>
+      </div>
     </details>
   </section>
 
@@ -296,12 +339,32 @@
     </p>
     <details class="term">
       <summary data-en="Show terminology">看專有名詞解釋</summary>
-      <p data-en="• &quot;small nudges&quot; = <b>candidate instruments</b>; &quot;blend them into one&quot; = <b>instrument synthesis / MLIV</b>, using machine learning to predict the treatment and using the prediction as a new instrument.<br />• bar height = the <b>first-stage F-statistic</b>; <b>10</b> is the common threshold; below 10 is a <b>weak instrument</b>.<br />• &quot;margin of error&quot; = the <b>95% confidence interval</b>.">
-        • 「小外力」＝<b>候選工具變數（candidate instruments）</b>；「把它們揉成一個」＝
-        <b>工具合成（instrument synthesis / MLIV）</b>，用機器學習預測處置，再把預測值當成新工具。<br />
-        • 柱子的高度＝<b>第一階段 F 統計量</b>，<b>10</b> 是常用門檻；低於 10 叫<b>弱工具</b>。<br />
-        • 「誤差範圍」＝<b>95% 信賴區間</b>。
-      </p>
+      <div class="tdef">
+        <h4>候選工具變數 <span class="en">candidate instruments</span></h4>
+        <p data-en="<b>Plain:</b> a pile of small nudges, each one too weak to use on its own.<br /><b>Definition:</b> a set of variables that each plausibly satisfy the instrument conditions (affect the treatment, not the outcome except through the treatment), but individually have a low first-stage F.<br /><b>Why it matters:</b> a single weak instrument gives an unstable IV estimate; many weak ones together can carry real strength — if combined correctly.<br /><b>Example:</b> distance to the clinic, a text reminder, a small subsidy, clinic opening hours — each nudges vaccination a little.<br /><b>Formula:</b> instruments <code>Z₁, Z₂, …, Z_k</code>, each with small individual π₁.">
+          <b>白話：</b>一堆各自太弱、單獨用不上的小外力。<br />
+          <b>定義：</b>一組「看起來都合格」（影響處置、且只透過處置影響結果）的變數，但每個單獨的第一階段 F 都偏低。<br />
+          <b>為什麼重要：</b>單一弱工具會讓 IV 估計亂跳；很多弱工具<b>正確</b>地合起來，卻可能有真正的力道。<br />
+          <b>例子：</b>離診所的距離、簡訊提醒、小額補助、診所營業時段——每個都讓打針率動一點點。<br />
+          <b>公式：</b>工具群 <code>Z₁, Z₂, …, Z_k</code>，各自的 π₁ 都很小。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>工具合成（MLIV） <span class="en">instrument synthesis / machine-learned IV</span></h4>
+        <p data-en="<b>Plain:</b> let AI &quot;blend&quot; many weak nudges into one strong nudge.<br /><b>Definition:</b> use machine learning to predict the treatment from all candidate instruments at once, then use that prediction as a single, stronger synthetic instrument.<br /><b>Why it matters:</b> it rescues strength from many weak instruments — but it MUST be done with cross-fitting (see remedy 3), or the prediction &quot;peeks&quot; at the outcome and re-introduces bias.<br /><b>Example:</b> a model predicts each person's vaccination propensity from all four nudges; that single predicted score becomes the instrument.<br /><b>Formula:</b> Â = f(Z₁…Z_k) by ML, then use Â as the instrument — the first-stage F on Â is much higher.">
+          <b>白話：</b>讓 AI 把很多弱外力「揉」成一個強外力。<br />
+          <b>定義：</b>用機器學習一次吃進所有候選工具來預測處置，再把這個預測值當成<b>單一、較強</b>的合成工具。<br />
+          <b>為什麼重要：</b>它能從一堆弱工具裡救出力道——但<b>一定要</b>搭配交叉擬合（見藥方三），否則預測會「偷看」結果、把偏誤帶回來。<br />
+          <b>例子：</b>模型用四個外力預測每個人的打針傾向，這個預測分數就成了新工具。<br />
+          <b>公式：</b><code>Â = f(Z₁…Z_k)</code>（由 ML 學）再以 Â 當工具；對 Â 的第一階段 F 會高很多。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>第一階段 F／弱工具／95% 信賴區間 <span class="en">recap</span></h4>
+        <p data-en="<b>First-stage F</b> (bar height) = instrument strength, threshold 10; below 10 = <b>weak instrument</b>. <b>95% CI</b> = margin of error. (Full definitions in tab ② &quot;Show terminology&quot;.) Here the point is visual: each single nudge's bar is short (weak), but the synthesised instrument's bar clears 10.">
+          <b>第一階段 F</b>（柱子高度）＝工具強度，門檻 10；低於 10 ＝<b>弱工具</b>。<b>95% 信賴區間</b>＝誤差範圍。（完整定義見 ②「看專有名詞解釋」。）這裡重點在看圖：每個單一外力的柱子都很矮（弱），但合成後的工具柱子越過了 10。
+        </p>
+      </div>
     </details>
 
     <!-- 藥方二 -->
@@ -339,11 +402,26 @@
     </div>
     <details class="term">
       <summary data-en="Show terminology">看專有名詞解釋</summary>
-      <p data-en="• &quot;let the relationship bend&quot; = use a <b>flexible / non-linear first stage</b> (polynomials, tree models, neural nets…) instead of straight-line regression.<br />• but you <b>cannot</b> plug the bent predictions straight into the second stage — that is the <b>forbidden regression</b>, which biases via &quot;peeking at the answers&quot;; the correct way is to pair it with the <b>cross-fitting</b> below.">
-        • 「讓關係可以彎」＝用<b>彈性／非線性的第一階段</b>（多項式、樹模型、神經網路…）取代直線回歸。<br />
-        • 但<b>不能</b>把彎好的預測值直接塞回第二階段——那叫<b>禁止迴歸（forbidden regression）</b>，
-        會因為「偷看答案」而出現偏誤；正確做法是搭配下面的<b>交叉擬合</b>。
-      </p>
+      <div class="tdef">
+        <h4>彈性／非線性第一階段 <span class="en">flexible / non-linear first stage</span></h4>
+        <p data-en="<b>Plain:</b> let the &quot;nudge → treatment&quot; relationship bend into whatever shape the data really has, instead of forcing a straight line.<br /><b>Definition:</b> model the first stage with a flexible learner (polynomials, splines, tree models, neural nets) rather than linear regression.<br /><b>Why it matters:</b> if the true relationship is curved (a hill), a straight line sees almost no relationship and throws the instrument's strength away.<br /><b>Example:</b> distance to the vaccine van helps most at a middle &quot;sweet spot&quot; — a curve captures it, a line misses it.<br /><b>Formula:</b> <code>A = f(Z) + ε</code> with f flexible, instead of <code>A = π₀ + π₁·Z</code>.">
+          <b>白話：</b>讓「外力→處置」這條關係，照資料真正的形狀去彎，而不是硬畫一條直線。<br />
+          <b>定義：</b>第一階段改用<b>彈性學習器</b>（多項式、樣條、樹模型、神經網路）取代直線回歸。<br />
+          <b>為什麼重要：</b>若真實關係是彎的（一座山丘），直線會「看不到」關係、把工具的力道整個丟掉。<br />
+          <b>例子：</b>離快打車的距離在中間「甜蜜點」最有效——曲線抓得到，直線抓不到。<br />
+          <b>公式：</b><code>A = f(Z) + ε</code>（f 彈性），取代 <code>A = π₀ + π₁·Z</code>。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>禁止迴歸 <span class="en">forbidden regression</span></h4>
+        <p data-en="<b>Plain:</b> the tempting-but-wrong shortcut of plugging the bent predictions straight into the second stage.<br /><b>Definition:</b> using a non-linear / ML first-stage fitted on the SAME data and feeding its fitted values into 2SLS — the standard 2SLS algebra no longer holds and bias creeps in.<br /><b>Why it matters:</b> because the model &quot;peeked&quot; at the same people, it carries their noise (and confounding) forward, giving a confident-looking but biased answer.<br /><b>Example:</b> fit a random forest first stage, push its predictions into the second stage → the estimate sticks to the contaminated naive number.<br /><b>Fix:</b> never plug bent predictions in directly — pair them with cross-fitting (below).">
+          <b>白話：</b>把彎好的預測值「直接」塞回第二階段——這個看似聰明、其實錯誤的捷徑。<br />
+          <b>定義：</b>用在<b>同一批資料</b>上配好的非線性／ML 第一階段，把配適值塞進 2SLS——此時 2SLS 的代數不再成立，偏誤就跑進來。<br />
+          <b>為什麼重要：</b>因為模型「偷看」了同一批人，會把他們的雜訊（與混淆）一起帶下去，給你一個看似很有把握、其實偏掉的答案。<br />
+          <b>例子：</b>配一個隨機森林第一階段、把預測塞進第二階段 → 估計黏回那個被汙染的天真數字。<br />
+          <b>解法：</b>絕不直接塞——一定搭配下面的交叉擬合。
+        </p>
+      </div>
     </details>
 
     <!-- 安全帶 / 藥方三 -->
@@ -397,12 +475,36 @@
     </div>
     <details class="term">
       <summary data-en="Show terminology">看專有名詞解釋</summary>
-      <p data-en="• &quot;memorising answers&quot; = <b>overfitting</b>; the bias from &quot;peeking at the same people&quot; = <b>forbidden regression</b>.<br />• &quot;learn from other groups, apply to this group&quot; = <b>cross-fitting / out-of-fold prediction</b>, the core step of double/debiased machine learning.">
-        • 「背答案」＝<b>過度配適（overfitting）</b>；「偷看同一批人」造成的偏誤＝
-        <b>禁止迴歸（forbidden regression）</b>。<br />
-        • 「用別組學、套到這組」＝<b>交叉擬合（cross-fitting / out-of-fold prediction）</b>，
-        是雙重機器學習（double/debiased ML）的核心步驟。
-      </p>
+      <div class="tdef">
+        <h4>過度配適 <span class="en">overfitting</span></h4>
+        <p data-en="<b>Plain:</b> the model &quot;memorises the answers&quot; — it learns the random luck of the specific people it trained on.<br /><b>Definition:</b> a flexible model fits the noise in the training sample, not just the signal, so it looks great in-sample but fails on new data.<br /><b>Why it matters:</b> an overfit first stage manufactures fake strength and, fed into IV, biases the effect toward the contaminated naive estimate.<br /><b>Example:</b> a wiggly curve that threads every single data point looks perfect here but collapses on the next batch of people.<br /><b>Tell:</b> tiny in-sample error, large error on held-out people.">
+          <b>白話：</b>模型在「背答案」——把訓練那批人各自的運氣（雜訊）都記了起來。<br />
+          <b>定義：</b>彈性模型連雜訊都配進去（不只訊號），所以樣本內超好看、換新資料就垮。<br />
+          <b>為什麼重要：</b>過度配適的第一階段會「製造假力道」，餵進 IV 後把效果拉向被汙染的天真估計。<br />
+          <b>例子：</b>一條穿過每個點的扭動曲線，這裡看似完美，換一批人就崩。<br />
+          <b>徵兆：</b>樣本內誤差極小、留出（沒看過的人）誤差很大。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>交叉擬合 <span class="en">cross-fitting / out-of-fold prediction</span></h4>
+        <p data-en="<b>Plain:</b> always learn the relationship from &quot;other&quot; people, then apply it to &quot;these&quot; unseen people — so the model can never peek.<br /><b>Definition:</b> split the sample into K folds; for each fold, fit the nuisance model on the OTHER folds and predict on the held-out fold; stitch the out-of-fold predictions together.<br /><b>Why it matters:</b> it removes the overfitting/forbidden-regression bias, letting you safely use ML in the first stage — the core step of double/debiased machine learning (DML).<br /><b>Example:</b> 5 folds; person in fold 1 is scored by a model trained only on folds 2–5.<br /><b>Formula:</b> for i in fold k, prediction = <code>f_(−k)(Z_i)</code> (model trained without fold k).">
+          <b>白話：</b>永遠用「別組」的人學關係，再套到「這組」沒看過的人——模型就沒機會偷看。<br />
+          <b>定義：</b>把樣本切成 K 折；每一折都用<b>其他折</b>配模型、對留出的那折做預測，再把這些「折外預測」拼起來。<br />
+          <b>為什麼重要：</b>它消掉過度配適／禁止迴歸的偏誤，讓你能安全地在第一階段用 ML——這是<b>雙重／去偏機器學習（DML）</b>的核心步驟。<br />
+          <b>例子：</b>切 5 折；第 1 折的人，由只用第 2–5 折訓練的模型來評分。<br />
+          <b>公式：</b>對第 k 折的 i，預測＝<code>f₋ₖ(Zᵢ)</code>（不含第 k 折所訓練的模型）。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>雙重／去偏機器學習 <span class="en">double / debiased machine learning (DML)</span></h4>
+        <p data-en="<b>Plain:</b> a recipe that lets you use powerful ML for the messy nuisance parts while keeping the causal estimate honest.<br /><b>Definition:</b> estimate the nuisance functions (e.g. the first stage) with ML under cross-fitting, then plug them into a Neyman-orthogonal moment so small ML errors barely move the final estimate.<br /><b>Why it matters:</b> it combines ML flexibility with valid confidence intervals — the modern way to do IV / effect estimation with rich data.<br /><b>Example:</b> ML first stage + cross-fitting pulls the IV estimate back near the truth 1.80, with a usable margin of error.<br /><b>Key idea:</b> orthogonality + cross-fitting ⇒ robustness to nuisance-model error.">
+          <b>白話：</b>一套「讓你放心用強力 ML 去處理雜務、又能保住因果估計誠實」的配方。<br />
+          <b>定義：</b>用 ML＋交叉擬合估計雜務函數（如第一階段），再把它們塞進一個<b>Neyman 正交</b>的動差條件，使 ML 的小誤差幾乎不動到最終估計。<br />
+          <b>為什麼重要：</b>它把 ML 的彈性與「有效的信賴區間」結合起來——是用豐富資料做 IV／效果估計的現代做法。<br />
+          <b>例子：</b>ML 第一階段＋交叉擬合，把 IV 估計拉回真值 1.80 附近、誤差範圍可用。<br />
+          <b>關鍵：</b>正交性＋交叉擬合 ⇒ 對雜務模型誤差穩健。
+        </p>
+      </div>
     </details>
 
     <!-- 綜合比較 -->
@@ -489,6 +591,50 @@
         </li>
       </ul>
     </div>
+
+    <details class="term">
+      <summary data-en="Show terminology">看專有名詞解釋</summary>
+      <div class="tdef">
+        <h4>跑分變數與斷點 <span class="en">running variable &amp; cutoff</span></h4>
+        <p data-en="<b>Plain:</b> the number that decides which side of the line you fall on, and the line itself.<br /><b>Definition:</b> the running (forcing) variable is a continuous score; the cutoff is the threshold where treatment/eligibility switches.<br /><b>Why it matters:</b> RDD works because people just below and just above the cutoff are nearly identical except for eligibility — the confounders don't jump at the line.<br /><b>Example:</b> running variable = age; cutoff = 65 (free programme starts).<br /><b>Notation:</b> running variable <code>x</code>, cutoff <code>c</code>; treated if <code>x ≥ c</code>.">
+          <b>白話：</b>決定你落在線哪一側的那個數字，以及那條線本身。<br />
+          <b>定義：</b>跑分（驅動）變數是一個連續分數；斷點是處置／資格切換的門檻。<br />
+          <b>為什麼重要：</b>RDD 成立是因為斷點上下的人幾乎一模一樣、只差在資格——干擾因子不會在線上突然跳。<br />
+          <b>例子：</b>跑分變數＝年齡；斷點＝65（免費計畫開始）。<br />
+          <b>符號：</b>跑分變數 <code>x</code>、斷點 <code>c</code>；<code>x ≥ c</code> 即受處置。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>銳利 RD <span class="en">sharp RD</span></h4>
+        <p data-en="<b>Plain:</b> the vertical jump in the outcome right at the cutoff, when crossing the line forces treatment.<br /><b>Definition:</b> the gap between the local-linear fits just below and just above the cutoff, when treatment is a deterministic function of the running variable.<br /><b>Why it matters:</b> it measures the effect of being <b>eligible</b> (ITT-like) for <b>everyone</b> at the cutoff.<br /><b>Example:</b> health-score change jumps by 0.8 at age 65 → Sharp RD = 0.8.<br /><b>Formula:</b> <code>τ_SRD = lim_{x↓c} E[Y|x] − lim_{x↑c} E[Y|x]</code>.">
+          <b>白話：</b>當「過了線就一定接受處置」時，結果在斷點上的垂直落差。<br />
+          <b>定義：</b>處置是跑分變數的確定函數時，斷點上方與下方局部線性配適的落差。<br />
+          <b>為什麼重要：</b>它衡量斷點處<b>所有人</b>「有沒有資格」的效果（類似 ITT）。<br />
+          <b>例子：</b>健康分數變化在 65 歲跳了 0.8 → 銳利 RD＝0.8。<br />
+          <b>公式：</b><code>τ_SRD = lim_{x↓c} E[Y|x] − lim_{x↑c} E[Y|x]</code>。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>模糊 RD <span class="en">fuzzy RD</span></h4>
+        <p data-en="<b>Plain:</b> when crossing the line only <i>raises the chance</i> of treatment (not everyone complies), divide the outcome jump by the take-up jump.<br /><b>Definition:</b> the ratio of the outcome discontinuity to the treatment-probability discontinuity at the cutoff — an IV using the threshold as the instrument.<br /><b>Why it matters:</b> it estimates the <b>complier LATE at the cutoff</b> (not everyone at the cutoff), exactly like IV.<br /><b>Example:</b> outcome jumps 0.8, take-up jumps 0.44 → Fuzzy RD ≈ 1.8.<br /><b>Formula:</b> <code>τ_FRD = (jump in Y) ÷ (jump in treatment prob.)</code>.">
+          <b>白話：</b>當「過線只是<i>提高</i>接受處置的機率」（不是人人都從）時，把結果的跳幅除以接種率的跳幅。<br />
+          <b>定義：</b>結果在斷點的不連續 ÷ 處置機率在斷點的不連續——把門檻當工具的 IV。<br />
+          <b>為什麼重要：</b>它估的是<b>斷點處順從者的 LATE</b>（不是斷點處所有人），和 IV 一樣。<br />
+          <b>例子：</b>結果跳 0.8、接種率跳 0.44 → 模糊 RD ≈ 1.8。<br />
+          <b>公式：</b><code>τ_FRD = （Y 的跳幅） ÷ （處置機率的跳幅）</code>。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>局部線性迴歸與頻寬 <span class="en">local-linear regression &amp; bandwidth</span></h4>
+        <p data-en="<b>Plain:</b> fit a straight line using only people near the cutoff; the bandwidth is how wide &quot;near&quot; is.<br /><b>Definition:</b> a weighted regression on each side of the cutoff using observations within ±h (the bandwidth), usually with a kernel that down-weights far points.<br /><b>Why it matters:</b> it is a bias–variance trade-off — a narrow window means fewer people (wide CI, high variance); a wide window pulls in less-similar ages (bias). The ② slider lets you feel this.<br /><b>Example:</b> h = 6 years uses ages 59–71; h = 2 uses 63–67.<br /><b>Formula:</b> fit <code>Y = α + β(x−c)</code> with kernel weights on <code>|x−c| ≤ h</code>.">
+          <b>白話：</b>只用斷點附近的人配一條直線；頻寬就是「附近」有多寬。<br />
+          <b>定義：</b>在斷點兩側、用 ±h（頻寬）範圍內的觀測做<b>加權迴歸</b>，通常用核函數把較遠的點權重壓低。<br />
+          <b>為什麼重要：</b>這是<b>偏差—變異的取捨</b>——窗窄人少（CI 寬、變異大）；窗寬會混入較不相似的年齡（偏差）。② 的拉桿讓你親身感受。<br />
+          <b>例子：</b>h=6 年用 59–71 歲；h=2 用 63–67 歲。<br />
+          <b>公式：</b>在 <code>|x−c| ≤ h</code> 上用核權重配 <code>Y = α + β(x−c)</code>。
+        </p>
+      </div>
+    </details>
 
     <details class="term">
       <summary data-en="How does RDD differ from the IV in tabs IV ①–⑤?">RDD 和 IV ①–⑤ 有什麼不同？</summary>
@@ -744,12 +890,32 @@
     </p>
     <details class="term">
       <summary data-en="Show terminology">看專有名詞解釋</summary>
-      <p data-en="• &quot;plain within-window comparison&quot; = the <b>local-randomization difference in means</b>, valid only in a small window.<br />• &quot;adjust for age and background + cross-fitting&quot; = <b>double / debiased machine learning (DML)</b> with a <b>doubly-robust (AIPW) score</b>; nuisances are predicted <b>out-of-fold</b>. Its key property is <b>robustness to the bandwidth / window choice</b>.<br />• &quot;margin of error&quot; = the <b>95% confidence interval</b>.">
-        • 「視窗內直接比較」＝<b>局部隨機化的差異比較（difference in means）</b>，只有在小視窗才成立。<br />
-        • 「調整年齡與背景＋交叉擬合」＝<b>雙重／去偏機器學習（DML）</b>搭配<b>雙重穩健（AIPW）分數</b>；
-        輔助模型都用<b>離折預測（out-of-fold）</b>。它最關鍵的特性就是<b>對頻寬／視窗選擇穩健</b>。<br />
-        • 「誤差範圍」＝<b>95% 信賴區間</b>。
-      </p>
+      <div class="tdef">
+        <h4>視窗內直接比較（局部隨機化） <span class="en">local-randomization difference in means</span></h4>
+        <p data-en="<b>Plain:</b> just compare the average outcome of those just-above vs just-below the cutoff, inside a small window.<br /><b>Definition:</b> treat a narrow band around the cutoff as if it were a tiny randomised experiment and take the simple difference in means — no covariate adjustment.<br /><b>Why it matters:</b> it is only unbiased in a <b>very narrow</b> window; widen the window to get more people and it pulls in less-similar ages, so the estimate drifts (this is the amber line that climbs away in the chart).<br /><b>Example:</b> mean health change of ages 64–65 vs 65–66.<br /><b>Formula:</b> <code>τ = Ȳ(just above) − Ȳ(just below)</code>.">
+          <b>白話：</b>就在一個小視窗內，把斷點上方與下方的人各取平均，相減。<br />
+          <b>定義：</b>把斷點附近的窄帶當成「小型隨機實驗」，直接算兩邊的平均差，不調整任何共變項。<br />
+          <b>為什麼重要：</b>它只有在<b>很窄</b>的視窗才不偏；視窗一放寬、為了多納入人，就會混入較不相似的年齡，估計開始漂掉（就是圖上那條一路爬高的琥珀線）。<br />
+          <b>例子：</b>64–65 歲與 65–66 歲的健康變化平均相減。<br />
+          <b>公式：</b><code>τ = Ȳ(斷點上方) − Ȳ(斷點下方)</code>。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>雙重穩健（AIPW）分數 <span class="en">doubly-robust / AIPW score</span></h4>
+        <p data-en="<b>Plain:</b> let AI adjust for age and background, with two safety nets so the answer survives even if one net has holes.<br /><b>Definition:</b> the augmented-inverse-probability-weighting (AIPW) score combines a propensity model and an outcome model; it is consistent if <b>either</b> one is correct (doubly robust). Nuisances are predicted out-of-fold (cross-fitting, see IV ⑤).<br /><b>Why it matters:</b> its standout property here is <b>robustness to the bandwidth / window choice</b> — the teal line hugs the truth across every window, unlike the plain comparison.<br /><b>Example:</b> propensity (who is just above 65) + outcome (health given age & background), combined by AIPW.<br /><b>Formula:</b> <code>τ = E[ μ₁−μ₀ + D(Y−μ₁)/e − (1−D)(Y−μ₀)/(1−e) ]</code>.">
+          <b>白話：</b>讓 AI 把年齡與背景調整掉，並用「兩道保險」，就算其中一道有破洞答案也撐得住。<br />
+          <b>定義：</b>增廣反機率加權（AIPW）分數把<b>傾向模型</b>與<b>結果模型</b>結合；只要<b>其中一個</b>對就一致（雙重穩健）。輔助模型都用離折預測（交叉擬合，見 IV ⑤）。<br />
+          <b>為什麼重要：</b>它在這裡最突出的特性是<b>對頻寬／視窗選擇穩健</b>——青色線在每個視窗下都緊貼真值，和「直接比較」截然不同。<br />
+          <b>例子：</b>傾向（誰落在 65 歲以上）＋結果（給定年齡背景下的健康），用 AIPW 結合。<br />
+          <b>公式：</b><code>τ = E[ μ₁−μ₀ + D(Y−μ₁)/e − (1−D)(Y−μ₀)/(1−e) ]</code>。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>DML／95% 信賴區間 <span class="en">recap</span></h4>
+        <p data-en="<b>DML</b> (double/debiased ML) and the <b>95% CI</b> are defined fully under IV ⑤ &quot;Show terminology&quot;. The takeaway here: with AI adjustment + cross-fitting, the RDD estimate stays near the truth no matter the window — that bandwidth-robustness is the whole point.">
+          <b>DML</b>（雙重／去偏機器學習）與 <b>95% 信賴區間</b>的完整定義見 IV ⑤「看專有名詞解釋」。這裡的重點：有了 AI 調整＋交叉擬合，RDD 估計<b>不管視窗怎麼選</b>都貼近真值——這個「對頻寬穩健」就是它的價值所在。
+        </p>
+      </div>
     </details>
 
     <!-- 藥方二 -->
@@ -791,16 +957,46 @@
     </div>
     <details class="term">
       <summary data-en="Show terminology">看專有名詞解釋</summary>
-      <p data-en="• &quot;re-weight by the chance of not being censored&quot; = <b>IPCW (inverse-probability-of-censoring weighting)</b>.<br />• &quot;also fit a flexible outcome model and combine&quot; = a <b>doubly-robust</b> estimator pairing a censoring model with an outcome learner (here Cox / AFT as stand-ins for general ML); consistent if <b>either</b> model is correct, and more efficient and robust to misspecification than one parametric working model.">
-        • 「用沒被設限的機率重新加權」＝<b>IPCW（反設限機率加權）</b>。<br />
-        • 「再配一個彈性結果模型並結合」＝<b>雙重穩健（doubly robust）</b>估計，把設限模型與結果模型配對
-        （這裡用 Cox／AFT 當一般機器學習的替身）；只要<b>其中一個</b>模型對就一致，
-        且比單一參數工作模型更有效率、對設定錯誤更穩健。
-      </p>
-      <p data-en="• Another route is a <b>purely parametric AFT (accelerated failure time)</b> model fitted right at the cutoff (Adeleke et al. 2022): when its distributional assumption holds it is simple and efficient, but get the specification wrong and you lose the doubly-robust safety net above.">
-        • 另一條路是直接在斷點處套<b>純參數的 AFT（加速失效時間）模型</b>（Adeleke 等人 2022）：
-        分布假設正確時它簡單又有效率，但設定一錯，就少了上面那層雙重穩健的保護。
-      </p>
+      <div class="tdef">
+        <h4>設限 <span class="en">censoring</span></h4>
+        <p data-en="<b>Plain:</b> follow-up ends before the event happens, so all we know is &quot;no event yet&quot; — the true event time is unseen.<br /><b>Definition:</b> an observation is right-censored when the study (or the person's follow-up) stops while still event-free; the event time is only known to exceed the last observed time.<br /><b>Why it matters:</b> if <b>who gets censored depends on who they are</b> (frailer people leave earlier), ignoring it biases the answer — censoring here is informative, not random.<br /><b>Example:</b> a sicker patient drops out at year 3; we never see whether/when their event would have occurred (the faint dotted line in the figure).<br /><b>Notation:</b> observe <code>T̃ = min(T, C)</code> and the indicator <code>δ = 1{T ≤ C}</code>.">
+          <b>白話：</b>追蹤在事件發生前就結束了，我們只知道「還沒發生」——真正的事件時間沒看到。<br />
+          <b>定義：</b>當研究（或某人的追蹤）在仍未發生事件時停止，該觀測即為<b>右設限</b>；只知道事件時間超過最後觀測時點。<br />
+          <b>為什麼重要：</b>若<b>誰被設限跟他是誰有關</b>（體弱者更早離開），忽略它就會偏——這裡的設限是<b>有訊息的</b>，不是隨機的。<br />
+          <b>例子：</b>較病重的人第 3 年退出，我們永遠看不到他的事件會不會、何時發生（圖中那段淡色虛線）。<br />
+          <b>符號：</b>觀測到 <code>T̃ = min(T, C)</code> 與指標 <code>δ = 1{T ≤ C}</code>。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>IPCW（反設限機率加權） <span class="en">inverse-probability-of-censoring weighting</span></h4>
+        <p data-en="<b>Plain:</b> at each observed event, up-weight it so it also &quot;stands in&quot; for similar people who were censored before their own event could be seen.<br /><b>Definition:</b> weight each observed event by 1 ÷ (the estimated probability that person was still uncensored at that time), among people with similar covariates.<br /><b>Why it matters:</b> it rebuilds the picture that informative censoring tore holes in — but it leans entirely on the censoring model being right, so it can be shaky.<br /><b>Example:</b> if only 60% of similar people remained uncensored, each observed event counts ≈ 1/0.6 ≈ 1.7×.<br /><b>Formula:</b> weight <code>w_i = δ_i / Ĝ(T̃_i | X_i)</code>, where Ĝ is the probability of staying uncensored.">
+          <b>白話：</b>在每個「看到的事件」上加重，讓它也替「特徵相近、卻在自己事件被看到前就先被設限」的人發聲。<br />
+          <b>定義：</b>把每個觀察到的事件，乘上 1 ÷（這個人能撐到此刻、仍未被設限的估計機率），在共變項相近的人之間進行。<br />
+          <b>為什麼重要：</b>它把「有訊息的設限」戳出的破洞補回來——但完全依賴設限模型正確，所以可能不穩。<br />
+          <b>例子：</b>若相近的人只有 60% 仍未被設限，每個觀察到的事件就約算 1/0.6 ≈ 1.7 倍。<br />
+          <b>公式：</b>權重 <code>wᵢ = δᵢ / Ĝ(T̃ᵢ | Xᵢ)</code>，Ĝ 為仍未被設限的機率。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>加速失效時間模型（AFT） <span class="en">accelerated failure time</span></h4>
+        <p data-en="<b>Plain:</b> a model that says the treatment &quot;stretches&quot; the whole event-time distribution by a constant factor — events happen ×k later (or sooner).<br /><b>Definition:</b> a parametric survival model regressing log(event time) on covariates; the coefficient is a time-acceleration factor (e.g. log-normal, log-logistic).<br /><b>Why it matters:</b> it describes the whole time distribution (not just one mean) and can be fitted right at the cutoff (Adeleke et al. 2022); efficient when its distributional assumption holds, but fragile if mis-specified.<br /><b>Example:</b> a ×1.7 factor = events occur 70% later under treatment.<br /><b>Formula:</b> <code>log T = Xβ + σε</code>; acceleration factor = <code>exp(β)</code>.">
+          <b>白話：</b>一個說「處置把整段事件時間按固定倍數拉長」的模型——事件晚（或早）×k 發生。<br />
+          <b>定義：</b>把 log（事件時間）對共變項做迴歸的<b>參數存活模型</b>；係數是時間加速因子（如對數常態、對數羅吉斯）。<br />
+          <b>為什麼重要：</b>它描述<b>整段時間分布</b>（不只一個平均），可直接在斷點處套用（Adeleke 等人 2022）；分布假設成立時有效率，但設定一錯就脆弱。<br />
+          <b>例子：</b>×1.7 倍＝處置下事件晚 70% 發生。<br />
+          <b>公式：</b><code>log T = Xβ + σε</code>；加速因子＝<code>exp(β)</code>。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>雙重穩健（DR） <span class="en">doubly robust</span></h4>
+        <p data-en="<b>Plain:</b> pair the censoring model (IPCW) with an outcome model (Cox / AFT) so the estimate is right if EITHER one is right — two nets, one is enough.<br /><b>Definition:</b> an estimator that combines an inverse-probability (censoring) model and an outcome-regression model; it stays consistent if at least one is correctly specified, and is more efficient and robust than a single working model.<br /><b>Why it matters:</b> it removes the single-point-of-failure of plain IPCW, giving a tighter and steadier estimate — the two DR versions in the chart land close together with the narrowest margins.<br /><b>Example:</b> IPCW (censoring) + AFT (outcome) combined; even if the censoring model is a bit off, a good AFT rescues it.<br /><b>Key property:</b> consistent if censoring model OR outcome model is correct.">
+          <b>白話：</b>把設限模型（IPCW）和結果模型（Cox／AFT）配成一對——只要<b>其中一個</b>對，估計就對；兩道網，一道夠用。<br />
+          <b>定義：</b>結合「反機率（設限）模型」與「結果迴歸模型」的估計式；至少一個設定正確就一致，且比單一工作模型更有效率、更穩健。<br />
+          <b>為什麼重要：</b>它消掉純 IPCW「單點失效」的弱點，給出更窄、更穩的估計——圖中兩個 DR 版本落點接近、誤差範圍最窄。<br />
+          <b>例子：</b>IPCW（設限）＋ AFT（結果）結合；就算設限模型略偏，好的 AFT 也能救回來。<br />
+          <b>關鍵特性：</b>設限模型「或」結果模型其一正確即一致。
+        </p>
+      </div>
     </details>
   </section>
 
@@ -864,6 +1060,50 @@
         </p>
       </div>
     </div>
+
+    <details class="term">
+      <summary data-en="Show terminology">看專有名詞解釋</summary>
+      <div class="tdef">
+        <h4>差異中的差異（DiD／ATT） <span class="en">difference-in-differences / ATT</span></h4>
+        <p data-en="<b>Plain:</b> compare the treated group's before→after change with the control group's before→after change, and subtract.<br /><b>Definition:</b> the 2×2 DiD = (Ȳ_treat,post − Ȳ_treat,pre) − (Ȳ_ctrl,post − Ȳ_ctrl,pre); it estimates the Average Treatment effect on the Treated (ATT).<br /><b>Why it matters:</b> the double subtraction cancels fixed group differences and the common time trend, isolating the policy effect.<br /><b>Example:</b> treated towns rise 5, control towns rise 2 → DiD = 3.<br /><b>Formula:</b> in regression, β₃ in <code>Y = β₀ + β₁·post + β₂·treat + β₃·(treat×post)</code>.">
+          <b>白話：</b>把「處置組的前→後變化」和「對照組的前→後變化」相減。<br />
+          <b>定義：</b>2×2 DiD ＝（Ȳ_處置,後 − Ȳ_處置,前）−（Ȳ_對照,後 − Ȳ_對照,前）；估的是<b>受處置者的平均處置效果（ATT）</b>。<br />
+          <b>為什麼重要：</b>這個「兩次相減」消掉固定的組間差異與共同時間趨勢，把政策效果分離出來。<br />
+          <b>例子：</b>處置社區升 5、對照社區升 2 → DiD＝3。<br />
+          <b>公式：</b>迴歸式中 <code>Y = β₀ + β₁·post + β₂·treat + β₃·(treat×post)</code> 的 β₃。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>平行趨勢 <span class="en">parallel trends</span></h4>
+        <p data-en="<b>Plain:</b> without the policy, the treated and control groups would have moved in step.<br /><b>Definition:</b> the key identifying assumption — absent treatment, the average outcome of treated and control would have followed the same trend.<br /><b>Why it matters:</b> it is what licenses the &quot;subtract the control trend&quot; logic; if it fails, the DiD estimate is biased. It can't be proven for the post period, but pre-period trends give a strong check.<br /><b>Example:</b> if both groups rose ~2/year before the policy, parallel trends is plausible.<br /><b>Check:</b> event-study pre-period coefficients ≈ 0 (tab ④).">
+          <b>白話：</b>如果沒有這個政策，處置組與對照組本來會「同步」變化。<br />
+          <b>定義：</b>最關鍵的識別假設——若沒有處置，處置組與對照組的平均結果會走<b>相同的趨勢</b>。<br />
+          <b>為什麼重要：</b>它正是「可以把對照組趨勢減掉」的依據；一旦不成立，DiD 就有偏。後期無法證明，但前期趨勢可強力檢查。<br />
+          <b>例子：</b>政策前兩組都約每年升 2，平行趨勢就合理。<br />
+          <b>檢查：</b>事件研究的前期係數 ≈ 0（見 ④）。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>事件研究 <span class="en">event study</span></h4>
+        <p data-en="<b>Plain:</b> estimate the effect period-by-period relative to just before the policy, and plot it.<br /><b>Definition:</b> a DiD with one coefficient per period (relative to a base period); pre-period coefficients test parallel trends, post-period ones trace the dynamic effect.<br /><b>Why it matters:</b> flat pre-period coefficients support the assumption; a jump after the policy shows the effect building up.<br /><b>Example:</b> coefficients ≈ 0 for years −3…−1, then 1, 3, 4 for years 0,1,2.<br /><b>Formula:</b> <code>Y = Σ_k δ_k·1{period = k} + unit &amp; time fixed effects</code>.">
+          <b>白話：</b>以「政策前一刻」為基準，一期一期估效果，再畫出來。<br />
+          <b>定義：</b>每期各一個係數（相對基期）的 DiD；前期係數檢驗平行趨勢，後期係數描繪動態效果。<br />
+          <b>為什麼重要：</b>前期係數平坦支持假設；政策後跳起來則顯示效果逐步累積。<br />
+          <b>例子：</b>第 −3…−1 年係數 ≈ 0，第 0,1,2 年為 1、3、4。<br />
+          <b>公式：</b><code>Y = Σ_k δ_k·1{期別 = k} ＋ 單位與時間固定效果</code>。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>群集穩健標準誤 <span class="en">cluster-robust standard error</span></h4>
+        <p data-en="<b>Plain:</b> the margin of error must account for the fact that repeated observations of the same unit are correlated.<br /><b>Definition:</b> standard errors clustered at the unit level, allowing arbitrary correlation within a unit over time.<br /><b>Why it matters:</b> ignoring within-unit correlation makes the CI far too narrow and overstates significance; you also need enough clusters.<br /><b>Example:</b> 40 towns × 10 years → cluster by town, not treat all 400 rows as independent.<br /><b>Note:</b> too few clusters (&lt; ~30–40) needs special corrections.">
+          <b>白話：</b>誤差範圍要考慮「同一單位重複觀測會彼此相關」這件事。<br />
+          <b>定義：</b>在<b>單位層級</b>做群集的標準誤，允許同一單位跨時間任意相關。<br />
+          <b>為什麼重要：</b>忽略單位內相關會讓 CI 太窄、誇大顯著性；同時也需要足夠的群集數。<br />
+          <b>例子：</b>40 個社區 × 10 年 → 以社區群集，而非把 400 列當獨立。<br />
+          <b>注意：</b>群集數太少（&lt; 約 30–40）需特別校正。
+        </p>
+      </div>
+    </details>
 
     <details class="term">
       <summary data-en="How does DiD differ from IV and RDD?">DiD 和 IV、RDD 有什麼不同？</summary>
@@ -1093,6 +1333,50 @@
     </div>
 
     <details class="term">
+      <summary data-en="Show terminology">看專有名詞解釋</summary>
+      <div class="tdef">
+        <h4>趨勢中的趨勢（TiT） <span class="en">trend-in-trend</span></h4>
+        <p data-en="<b>Plain:</b> if a drug really causes harm, then in the groups where uptake rose fastest over time, the bad outcome should also rise fastest.<br /><b>Definition:</b> identify the effect from how the outcome prevalence tracks the exposure prevalence ACROSS time and across strata — not from the confounded individual user-vs-nonuser contrast.<br /><b>Why it matters:</b> it is robust to unmeasured confounding that is stable over time, which sinks the naive cohort comparison.<br /><b>Example:</b> high-uptake strata where use climbed 5%→40% also show the steepest rise in the outcome rate.<br /><b>Causal parameter:</b> odds ratio <code>OR = exp(β₁)</code>.">
+          <b>白話：</b>如果某藥真的有害，那麼在「採用率隨時間上升最快」的那些群裡，壞結果也應該上升得最快。<br />
+          <b>定義：</b>從「結果盛行率<b>跨時間、跨層</b>如何跟著暴露盛行率走」來識別效果——而不是用被混淆汙染的「個體用藥 vs 沒用藥」比較。<br />
+          <b>為什麼重要：</b>它對「時間上穩定」的未測混淆穩健，而這正是天真世代比較會垮掉的地方。<br />
+          <b>例子：</b>採用率從 5%→40% 上升最快的高層，結果發生率的上升也最陡。<br />
+          <b>因果參數：</b>勝算比 <code>OR = exp(β₁)</code>。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>累積暴露機率（CPE）與分層 <span class="en">cumulative probability of exposure &amp; strata</span></h4>
+        <p data-en="<b>Plain:</b> from baseline features, score how likely each person is to ever take the drug, then sort people into groups by that score.<br /><b>Definition:</b> CPE is a baseline-covariate logistic prediction of ever-exposure; strata are quantile bins of CPE (e.g. 5 groups) that rise at different speeds over time.<br /><b>Why it matters:</b> the differential time-trends across strata are exactly what TiT exploits; the strata absorb stratum-level confounding.<br /><b>Example:</b> the top CPE stratum adopts the drug far faster than the bottom one.<br /><b>Formula:</b> <code>CPE = logit⁻¹(baseline X·γ)</code>, split into K quantile strata.">
+          <b>白話：</b>用基線特徵替每個人算「會不會用這個藥」的分數，再按分數把人分組。<br />
+          <b>定義：</b>CPE 是用基線共變項做的「曾暴露」邏輯斯預測；分層是 CPE 的分位數箱（如 5 層），各層隨時間上升速度不同。<br />
+          <b>為什麼重要：</b>各層「不同的時間趨勢」正是 TiT 利用的東西；層也吸收掉層級的混淆。<br />
+          <b>例子：</b>最高 CPE 層採用藥物的速度，遠快於最低層。<br />
+          <b>公式：</b><code>CPE = logit⁻¹(基線 X·γ)</code>，再切成 K 個分位層。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>罕見結果假設 <span class="en">rare-outcome assumption</span></h4>
+        <p data-en="<b>Plain:</b> the bad event has to be uncommon (well under 5%) for the method's approximation to hold.<br /><b>Definition:</b> TiT's multiplicative model assumes a rare outcome so the odds ratio ≈ relative risk and the prevalence-tracking algebra is valid.<br /><b>Why it matters:</b> if the outcome is common the OR≈RR approximation breaks and the estimate can be off.<br /><b>Example:</b> an adverse event at 1–2% overall is fine; a 30% outcome is not.<br /><b>Check:</b> overall outcome rate, viewable in the data.">
+          <b>白話：</b>那個壞事件必須夠少見（遠低於 5%），方法的近似才成立。<br />
+          <b>定義：</b>TiT 的乘法模型假設罕見結果，使勝算比 ≈ 相對風險、盛行率追蹤的代數才有效。<br />
+          <b>為什麼重要：</b>若結果常見，OR≈RR 的近似會破、估計可能偏掉。<br />
+          <b>例子：</b>整體 1–2% 的不良事件可以；30% 的結果就不行。<br />
+          <b>檢查：</b>整體結果發生率（資料中可看）。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>因適應症而生的混淆 <span class="en">confounding by indication</span></h4>
+        <p data-en="<b>Plain:</b> sicker people are both more likely to be prescribed the drug AND more likely to have the bad outcome anyway.<br /><b>Definition:</b> confounding where the reason for treatment (the indication / underlying severity) is itself a cause of the outcome.<br /><b>Why it matters:</b> it makes the naive user-vs-nonuser odds ratio look much worse than the truth; TiT is designed to sidestep it.<br /><b>Example:</b> naive OR ≈ 4 while the true causal OR is ~2 — the gap is confounding by indication.<br /><b>Antidote:</b> identify from cross-time/cross-strata trends, not the individual contrast.">
+          <b>白話：</b>比較病重的人，<b>既</b>更可能被開這個藥，<b>又</b>本來就更可能發生壞結果。<br />
+          <b>定義：</b>當「用藥的原因（適應症／潛在嚴重度）」本身就是結果的成因，所造成的混淆。<br />
+          <b>為什麼重要：</b>它讓天真的「用藥 vs 沒用藥」勝算比看起來比真相差很多；TiT 就是為了繞過它而設計。<br />
+          <b>例子：</b>天真 OR ≈ 4、真實因果 OR ~2——差距就是這種混淆。<br />
+          <b>解方：</b>用跨時間／跨層的趨勢識別，而非個體比較。
+        </p>
+      </div>
+    </details>
+
+    <details class="term">
       <summary data-en="How does TiT differ from IV, RDD and DiD?">TiT 和 IV、RDD、DiD 有什麼不同？</summary>
       <p data-en="IV borrows randomness from a random instrument; RDD from a sharp cutoff; DiD from a policy that switches on at a known time. Trend-in-trend borrows it from a <b>gradual secular trend in exposure prevalence that differs across strata</b> — no instrument, no cutoff, no single switch-on date, just the rising tide of adoption. Its key (untestable) assumption is that no unmeasured factor trends over calendar time in step with that adoption across strata.">
         IV 從隨機工具借隨機；RDD 從明確門檻借；DiD 從某時點開啟的政策借。趨勢中的趨勢則從
@@ -1285,6 +1569,50 @@
         </p>
       </div>
     </div>
+
+    <details class="term">
+      <summary data-en="Show terminology">看專有名詞解釋</summary>
+      <div class="tdef">
+        <h4>分段迴歸（中斷時間序列） <span class="en">segmented regression / ITS</span></h4>
+        <p data-en="<b>Plain:</b> collect many time points before and after a known intervention, fit the pre-trend, extrapolate it as the counterfactual, and read the effect off as the change.<br /><b>Definition:</b> a regression with a level term and a slope term that switch on at the intervention time.<br /><b>Why it matters:</b> it needs only one series (no control group) yet separates an immediate jump from a change in trajectory.<br /><b>Example:</b> monthly admissions before/after a policy starting in month 24.<br /><b>Formula:</b> <code>Y_t = β₀ + β₁·t + β₂·X_t + β₃·(t−t₀)·X_t</code>.">
+          <b>白話：</b>在已知的「介入時點」前後蒐集許多期，配出介入前趨勢、外推當作反事實，效果＝介入後的變化。<br />
+          <b>定義：</b>一條含「水準項」與「斜率項」、在介入時點開啟的迴歸。<br />
+          <b>為什麼重要：</b>它只要一條序列（不需對照組），就能把「立即跳變」與「軌跡改變」分開。<br />
+          <b>例子：</b>某政策在第 24 個月生效，前後的每月住院數。<br />
+          <b>公式：</b><code>Y_t = β₀ + β₁·t + β₂·X_t + β₃·(t−t₀)·X_t</code>。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>水準變化與斜率變化 <span class="en">level change &amp; slope change</span></h4>
+        <p data-en="<b>Plain:</b> two kinds of effect — an instant step up/down, and a change in the rate of climb.<br /><b>Definition:</b> the level change (β₂) is the immediate jump at the intervention; the slope change (β₃) is the change in trend afterwards.<br /><b>Why it matters:</b> distinguishing them tells you whether the policy gave a one-off shift, a lasting acceleration, or both.<br /><b>Example:</b> β₂ = −12 (admissions drop instantly), β₃ = −0.5/month (and keep falling).<br /><b>Counterfactual:</b> the pre-trend line <code>β₀ + β₁·t</code> extended forward.">
+          <b>白話：</b>兩種效果——一個瞬間的上下跳，一個是「上升速度」的改變。<br />
+          <b>定義：</b>水準變化（β₂）是介入當下的立即跳變；斜率變化（β₃）是之後趨勢的改變。<br />
+          <b>為什麼重要：</b>區分兩者，能看出政策是給了一次性位移、持續性加速、還是兩者皆有。<br />
+          <b>例子：</b>β₂ = −12（住院數立刻下降）、β₃ = −0.5/月（且持續下降）。<br />
+          <b>反事實：</b>把介入前趨勢線 <code>β₀ + β₁·t</code> 往後延伸。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>自相關 <span class="en">autocorrelation</span></h4>
+        <p data-en="<b>Plain:</b> this month's value is correlated with last month's, so the data points are not independent.<br /><b>Definition:</b> correlation between residuals at nearby time points (serial correlation).<br /><b>Why it matters:</b> if ignored, ordinary standard errors are far too narrow and you over-claim significance.<br /><b>Example:</b> a high admission month tends to be followed by another high month.<br /><b>Check:</b> residual lag-1 correlation / Durbin–Watson (tab ④).">
+          <b>白話：</b>這個月的值會和上個月相關，所以資料點不是彼此獨立的。<br />
+          <b>定義：</b>鄰近時間點殘差之間的相關（序列相關）。<br />
+          <b>為什麼重要：</b>若忽略，普通標準誤會太窄，讓你誇大顯著性。<br />
+          <b>例子：</b>一個住院數高的月份，往往後面也接著高。<br />
+          <b>檢查：</b>殘差 lag-1 相關／Durbin–Watson（見 ④）。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>Newey–West（HAC）穩健標準誤 <span class="en">Newey–West / HAC SE</span></h4>
+        <p data-en="<b>Plain:</b> a way to widen the error bars correctly so they account for autocorrelation.<br /><b>Definition:</b> heteroskedasticity- and autocorrelation-consistent (HAC) standard errors that stay valid under serial correlation.<br /><b>Why it matters:</b> it fixes the over-narrow CI problem so your significance claims are honest; alternatives are Prais–Winsten or ARIMA errors.<br /><b>Example:</b> the naive SE = 1.2 widens to a HAC SE = 2.1 once autocorrelation is accounted for.<br /><b>Key idea:</b> down-weight covariances at longer lags up to a chosen bandwidth.">
+          <b>白話：</b>一種「把誤差棒正確放寬」、考慮自相關的方法。<br />
+          <b>定義：</b>對異質變異與自相關都一致（HAC）的標準誤，在序列相關下仍有效。<br />
+          <b>為什麼重要：</b>它修好「CI 太窄」的問題，讓顯著性誠實；替代做法有 Prais–Winsten 或 ARIMA 誤差。<br />
+          <b>例子：</b>天真 SE=1.2，考慮自相關後變成 HAC SE=2.1。<br />
+          <b>關鍵：</b>對較長落後期的共變異逐步降權，到選定的頻寬為止。
+        </p>
+      </div>
+    </details>
 
     <details class="term">
       <summary data-en="How does ITS differ from IV, RDD, DiD and TiT?">ITS 和 IV、RDD、DiD、TiT 有什麼不同？</summary>
@@ -1494,6 +1822,50 @@
         </p>
       </div>
     </div>
+
+    <details class="term">
+      <summary data-en="Show terminology">看專有名詞解釋</summary>
+      <div class="tdef">
+        <h4>率比 <span class="en">rate ratio (RR)</span></h4>
+        <p data-en="<b>Plain:</b> how many times higher the event rate is in the treated group than the control group.<br /><b>Definition:</b> (events ÷ person-time in treated) ÷ (events ÷ person-time in control), computed within a period.<br /><b>Why it matters:</b> it is the building block of PERR — one is computed in the prior period and one in the post period.<br /><b>Example:</b> treated 30 events/1000 py, control 20/1000 py → RR = 1.5.<br /><b>Formula:</b> <code>RR = (E_t / PT_t) ÷ (E_c / PT_c)</code>.">
+          <b>白話：</b>處置組的事件率，是對照組的幾倍。<br />
+          <b>定義：</b>（處置組事件 ÷ 人時）÷（對照組事件 ÷ 人時），在某一期內計算。<br />
+          <b>為什麼重要：</b>它是 PERR 的基本零件——事前期算一個、事後期算一個。<br />
+          <b>例子：</b>處置組 30 件/1000 人年、對照組 20/1000 → RR＝1.5。<br />
+          <b>公式：</b><code>RR = (E_t / PT_t) ÷ (E_c / PT_c)</code>。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>事前事件率比（PERR） <span class="en">prior event rate ratio</span></h4>
+        <p data-en="<b>Plain:</b> compute the treated-vs-control rate ratio in the &quot;before treatment&quot; period and in the &quot;after&quot; period, then divide them.<br /><b>Definition:</b> PERR = RR_post ÷ RR_prior; the prior-period ratio captures the baseline imbalance, and dividing it out cancels time-invariant multiplicative confounding.<br /><b>Why it matters:</b> it corrects the naive post-only rate ratio for fixed group differences using each group's own history — no external control needed.<br /><b>Example:</b> RR_post = 1.5, RR_prior = 1.25 → PERR = 1.2.<br /><b>Formula:</b> <code>PERR = RR_post / RR_prior</code>.">
+          <b>白話：</b>在「治療前」與「治療後」各算一次處置 vs 對照的率比，再相除。<br />
+          <b>定義：</b>PERR ＝ RR_後 ÷ RR_前；事前期率比抓住了基線的不平衡，把它除掉就消去「時間不變的乘法混淆」。<br />
+          <b>為什麼重要：</b>它用每組<b>自己的過去</b>，校正天真「只看事後率比」的固定組間差異——不需外部對照。<br />
+          <b>例子：</b>RR_後＝1.5、RR_前＝1.25 → PERR＝1.2。<br />
+          <b>公式：</b><code>PERR = RR_後 / RR_前</code>。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>時間不變的乘法混淆 <span class="en">time-invariant multiplicative confounding</span></h4>
+        <p data-en="<b>Plain:</b> a baseline difference between groups that stays the same over time and acts by a constant multiplier on the rate.<br /><b>Definition:</b> confounding whose effect on the rate ratio is constant across the prior and post periods.<br /><b>Why it matters:</b> this is exactly the kind PERR can cancel; if the confounding instead <b>changes over time</b>, PERR breaks (its key assumption P1).<br /><b>Example:</b> treated patients are 1.25× sicker throughout → cancels in PERR; if they get relatively sicker after treatment, it does not.<br /><b>Assumption:</b> RR_prior reflects the same confounding multiplier as RR_post.">
+          <b>白話：</b>組間一個「不隨時間變、且對事件率以固定倍數作用」的基線差異。<br />
+          <b>定義：</b>對率比的影響在事前期與事後期都相同的混淆。<br />
+          <b>為什麼重要：</b>這正是 PERR 能消掉的那種；若混淆<b>隨時間改變</b>，PERR 就會失效（其關鍵假設 P1）。<br />
+          <b>例子：</b>處置組全程都病重 1.25 倍 → 在 PERR 中相消；若治療後才相對更病重，就不行。<br />
+          <b>假設：</b>RR_前 反映的混淆倍數，與 RR_後 相同。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>Delta 法信賴區間 <span class="en">delta-method CI</span></h4>
+        <p data-en="<b>Plain:</b> a way to put a margin of error on PERR by working on the log scale, where the four counts contribute independent bits of variance.<br /><b>Definition:</b> on log(PERR) = log RR_post − log RR_prior, sum the Poisson variances of the log rates, then exponentiate the interval.<br /><b>Why it matters:</b> if prior-period events are few, the CI blows up — a built-in warning that RR_prior is unstable (assumption P5).<br /><b>Example:</b> Var(logRR) ≈ 1/E_t + 1/E_c per period.<br /><b>Formula:</b> <code>Var(log PERR) = Σ_periods (1/E_t + 1/E_c)</code>.">
+          <b>白話：</b>在 log 尺度上給 PERR 加誤差範圍——這裡四個事件數各自貢獻獨立的一份變異。<br />
+          <b>定義：</b>對 log(PERR) ＝ log RR_後 − log RR_前，把各 log 率的 Poisson 變異相加，再把區間取指數還原。<br />
+          <b>為什麼重要：</b>若事前期事件太少，CI 會爆寬——內建地警告你 RR_前 不穩（假設 P5）。<br />
+          <b>例子：</b>每期 Var(logRR) ≈ 1/E_t + 1/E_c。<br />
+          <b>公式：</b><code>Var(log PERR) = Σ_各期 (1/E_t + 1/E_c)</code>。
+        </p>
+      </div>
+    </details>
 
     <details class="term">
       <summary data-en="How does PERR differ from DiD, ITS and the others?">PERR 和 DiD、ITS 等有什麼不同？</summary>
@@ -1843,7 +2215,7 @@
   </footer>
 </main>
 
-<script src="i18n.js?v=40"></script>
-<script src="app.js?v=40"></script>
+<script src="i18n.js?v=41"></script>
+<script src="app.js?v=41"></script>
 </body>
 </html>

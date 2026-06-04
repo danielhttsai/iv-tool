@@ -326,6 +326,14 @@ select { padding: .45rem; border: 1px solid var(--line); border-radius: 8px; fon
 .term summary::before { content: "▸ "; }
 .term[open] summary::before { content: "▾ "; }
 .term p { font-size: .85rem; color: var(--muted); margin: .5rem 0 0; line-height: 1.7; }
+.tdef { margin: .7rem 0 0; padding: .7rem .85rem; background: #f8fafb; border: 1px solid var(--line); border-left: 3px solid var(--z); border-radius: 10px; }
+.tdef + .tdef { margin-top: .6rem; }
+.tdef h4 { margin: 0 0 .35rem; font-size: .92rem; color: var(--ink, #14283c); font-weight: 700; }
+.tdef h4 .en { color: var(--muted); font-weight: 500; font-size: .82rem; }
+.tdef p { font-size: .85rem; color: #334155; margin: 0; line-height: 1.75; }
+.tdef p b { color: var(--z); font-weight: 700; }
+.tdef code { background: #eef4f2; border: 1px solid var(--line); border-radius: 5px; padding: .05rem .35rem; font-size: .82rem; color: #14283c; white-space: nowrap; }
+.tdef .tform { margin-top: .3rem; }
 
 .hidden { display: none !important; }
 
