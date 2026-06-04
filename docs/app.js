@@ -1394,8 +1394,8 @@ const DNODES = {
              en: "↗ A common design, not implemented here. Still needs to handle measured confounding (matching/adjustment)." } } },
   rctSplit: {
     step: { zh: "已有別族群 RCT", en: "Have an RCT elsewhere" },
-    q: { zh: "你已經有一場（做在別族群的）RCT。先釐清：上面的對照藥物世代／CCW／序列試驗本身就是 target trial emulation，所以不必再回到 TTE。真正的關鍵在——你拿得到那場 RCT 的「<b>個體層級資料（individual-level data）</b>」嗎？",
-         en: "You already have an RCT (in a different population). Note: the active-comparator cohort / CCW / sequential trials above are themselves target trial emulation, so no need to loop back to TTE. The real fork is — do you have its <b>individual-level data</b>?" },
+    q: { zh: "你已經有一場（做在別族群的）RCT。你拿得到那場 RCT 的「<b>個體層級資料（individual-level data）</b>」嗎？",
+         en: "You already have an RCT (in a different population). Do you have its <b>individual-level data</b>?" },
     opts: [
       { l: { zh: "拿不到——只有發表的彙總結果（效果量、亞組表）", en: "No — only published summary results (effect sizes, subgroup tables)" }, to: "rEXTCTRL" },
       { l: { zh: "拿得到——有每位受試者的個體資料", en: "Yes — I have per-participant individual data" }, to: "rTRANS" },
@@ -1474,8 +1474,6 @@ const FULLMAP = {
     },
   ],
   rct: {
-    note: { zh: "註：上面的對照藥物世代／CCW／序列試驗本身就是 target trial emulation。",
-            en: "Note: the active-comparator cohort / CCW / sequential trials above are themselves target trial emulation." },
     q: { zh: "若其實已有一場（別族群的）RCT —— 你拿得到它的「個體層級資料」嗎？",
          en: "If you already have an RCT (in another population) — do you have its individual-level data?" },
     forks: [
@@ -1584,8 +1582,6 @@ function renderFullMap(hitKey) {
     `</div>`;
   const rct = FULLMAP.rct;
   const rctHtml =
-    `<div class="fc-note">${L(rct.note)}</div>` +
-    link("") +
     `<div class="fc-q">${L(rct.q)}</div>` +
     rct.forks.map(outGroup).join("");
   box.innerHTML =
