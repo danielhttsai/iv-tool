@@ -3042,44 +3042,54 @@ function drawSceneCcw() {
   const sc = ccwState.scenario;
   const [armA, armB] = ccwArmLabels(sc);
   const meta = ccwSceneMeta(sc);
-  const ARM0 = TEAL, ARM1 = "#5b7aa8", CENS = "#cbd5e1", WT = GREEN;
-  const panelX = [0, 1.55, 3.1, 4.65, 6.2];                 // five panels across the decision window
-  const active = [9, 8, 6, 5, 5];                            // clones still uncensored in each panel
+  const ARM0 = TEAL, ARM1 = "#5b7aa8", CENS = "#cbd5e1", RING = "#2e8b6f";
+  const panelX = [0, 1.55, 3.1, 4.65, 6.2];                 // five time points across the decision window
+  const active = [9, 8, 6, 5, 5];                            // clones still uncensored at each time point
+  // running stabilised IPCW weight at each time point ≈ 9 / (uncensored in arm) — it
+  // GROWS as more clones are censored, because IPCW is recomputed at every time point.
+  const wt = active.map((a) => 9 / a);                      // [1, 1.13, 1.5, 1.8, 1.8]
   const armY = [2.45, 1.05];                                 // top arm / bottom arm row centres
   const dx = 0.20, dy = 0.20;                                // 3×3 person-dot grid spacing
-  // panel background cards (last one = green weighting panel)
+  // panel background cards: a green tint that deepens left→right, signalling that the
+  // surviving clones carry ever-larger IPCW weights over time (not a one-off final step)
   const shapes = panelX.map((cx, p) => ({
     type: "rect", x0: cx - 0.5, x1: cx + 0.5, y0: 0.45, y1: 3.05,
-    fillcolor: p === 4 ? "rgba(63,130,104,.12)" : "rgba(148,163,184,.10)",
-    line: { color: p === 4 ? "rgba(63,130,104,.5)" : "rgba(148,163,184,.4)", width: 1 },
+    fillcolor: p === 0 ? "rgba(148,163,184,.10)" : `rgba(63,130,104,${0.05 + p * 0.035})`,
+    line: { color: p === 0 ? "rgba(148,163,184,.4)" : "rgba(63,130,104,.45)", width: 1 },
   }));
   // dotted decision-window timeline along the bottom
   shapes.push({ type: "line", x0: -0.2, x1: 6.9, y0: 0.28, y1: 0.28, line: { color: "#94a3b8", width: 1.4, dash: "dot" } });
   panelX.forEach((cx) => shapes.push({ type: "line", x0: cx, x1: cx, y0: 0.22, y1: 0.34, line: { color: "#94a3b8", width: 1.4 } }));
-  // build the person dots: active (per arm colour or green in weight panel) vs censored
-  const a0 = { x: [], y: [] }, a1 = { x: [], y: [] }, cen = { x: [], y: [] }, wt = { x: [], y: [] };
+  // person dots: active clones (per-arm colour, SIZE + green ring grow with the running
+  // IPCW weight) vs censored clones (grey). size/ring carry the time-varying weighting.
+  const a0 = { x: [], y: [], s: [], lw: [] }, a1 = { x: [], y: [], s: [], lw: [] }, cen = { x: [], y: [] };
   panelX.forEach((cx, p) => {
+    const size = 7 * Math.pow(wt[p], 0.8), ring = 0.6 + (wt[p] - 1) * 3.2;   // grow with weight
     armY.forEach((yc, a) => {
       for (let k = 0; k < 9; k++) {
         const col = k % 3, row = Math.floor(k / 3);
         const x = cx + (col - 1) * dx, y = yc + (1 - row) * dy;
         if (k >= active[p]) { cen.x.push(x); cen.y.push(y); }
-        else if (p === 4) { wt.x.push(x); wt.y.push(y); }
-        else { (a === 0 ? a0 : a1).x.push(x); (a === 0 ? a0 : a1).y.push(y); }
+        else { const t = a === 0 ? a0 : a1; t.x.push(x); t.y.push(y); t.s.push(size); t.lw.push(ring); }
       }
     });
   });
   const traces = [
-    { x: a0.x, y: a0.y, mode: "markers", type: "scatter", name: `${armA}${tr("（未設限）", " (uncensored)")}`, marker: { color: ARM0, size: 9 } },
-    { x: a1.x, y: a1.y, mode: "markers", type: "scatter", name: `${armB}${tr("（未設限）", " (uncensored)")}`, marker: { color: ARM1, size: 9 } },
-    { x: cen.x, y: cen.y, mode: "markers", type: "scatter", name: tr("偏離策略 → 設限", "deviated → censored"), marker: { color: CENS, size: 9 } },
-    { x: wt.x, y: wt.y, mode: "markers", type: "scatter", name: tr("加權後存活者（IPCW）", "up-weighted survivors (IPCW)"), marker: { color: WT, size: 11, line: { color: "#1f6b4a", width: 1.5 } } },
+    { x: a0.x, y: a0.y, mode: "markers", type: "scatter", name: `${armA}${tr("（未設限）", " (uncensored)")}`,
+      marker: { color: ARM0, size: a0.s, line: { color: RING, width: a0.lw } } },
+    { x: a1.x, y: a1.y, mode: "markers", type: "scatter", name: `${armB}${tr("（未設限）", " (uncensored)")}`,
+      marker: { color: ARM1, size: a1.s, line: { color: RING, width: a1.lw } } },
+    { x: cen.x, y: cen.y, mode: "markers", type: "scatter", name: tr("偏離策略 → 設限", "deviated → censored"), marker: { color: CENS, size: 8 } },
+    // legend-only cue for the growing weight
+    { x: [null], y: [null], mode: "markers", type: "scatter", name: tr("綠圈／點越大＝IPCW 權重越大", "bigger dot + green ring = larger IPCW weight"),
+      marker: { color: "#fff", size: 11, line: { color: RING, width: 3 } } },
   ];
   const anns = [
     // step labels over the panels
     Object.assign(_lbl(panelX[0], 3.32, tr("① 複製到兩臂", "① clone into both arms"), ARM0, 9.5), { xanchor: "center" }),
-    Object.assign(_lbl(panelX[2], 3.32, tr("② 偏離指派策略即設限", "② censor on deviation"), SLATE, 9.5), { xanchor: "center" }),
-    Object.assign(_lbl(panelX[4], 3.32, tr("③ 對未設限者加權", "③ weight the uncensored"), WT, 9.5), { xanchor: "center" }),
+    Object.assign(_lbl(3.875, 3.32, tr("② 偏離即設限 ＋ ③ 每個時間點重算 IPCW 權重", "② censor on deviation  +  ③ recompute IPCW at every time point"), RING, 9.5), { xanchor: "center" }),
+    // per-time-point running weight (the heart of the fix: weighting is continuous)
+    ...panelX.map((cx, p) => Object.assign(_lbl(cx, 2.92, "×" + wt[p].toFixed(1), p === 0 ? "#94a3b8" : RING, p === 0 ? 8.5 : 9.5 + (wt[p] - 1) * 2), { xanchor: "center" })),
     // arm row labels (scenario-specific)
     Object.assign(_lbl(-0.95, armY[0], armA, ARM0, 9), { xanchor: "left" }),
     Object.assign(_lbl(-0.95, armY[1], armB, ARM1, 9), { xanchor: "left" }),
@@ -3087,8 +3097,8 @@ function drawSceneCcw() {
     Object.assign(_lbl(panelX[0], 0.08, meta.start, INK, 9.5), { xanchor: "center" }),
     Object.assign(_lbl(panelX[4], 0.08, meta.end, INK, 9.5), { xanchor: "center" }),
     _lbl(3.1, -0.42, tr(
-      `在時間零點把每個人①複製到兩臂；一旦偏離被指派的策略就②設限（灰點）——${meta.dev}最後③依設限因子對未設限者加權（IPCW），讓存活者重新代表完整族群。`,
-      `At time zero ① clone each person into both arms; ② censor (grey) a clone once it deviates from its assigned strategy — ${meta.dev} Finally ③ up-weight the uncensored clones by their censoring factors (IPCW) so survivors again represent the full population.`), INK, 9.5),
+      `在時間零點把每個人①複製到兩臂；一旦偏離被指派的策略就②設限（灰點）——${meta.dev}③IPCW 不是最後才做一次：每個時間點都重算，把當下仍未設限的分身放大權重（×w、綠圈越來越大），補回到該時點為止被設限的人。`,
+      `At time zero ① clone each person into both arms; ② censor (grey) a clone once it deviates — ${meta.dev} ③ IPCW is not a one-off final step: it is recomputed at every time point, up-weighting the clones still uncensored at that moment (growing ×w / green ring) to stand in for everyone censored up to that point.`), INK, 9.5),
   ];
   Plotly.react("ccwScene", traces, schemaLayout({
     height: 310, shapes, annotations: anns, showlegend: true, legend: { orientation: "h", y: 1.18 },
