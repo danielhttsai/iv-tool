@@ -8,7 +8,7 @@
 
 教學重點：當「暴露效應隨某共變項而變」（效應修飾／交互作用）且共變項效應<b>非線性</b>時，
 只放主效應的（條件）logistic 會<b>低估或抹平</b>這個結構；改用隨機森林這類 ML，預測力（AUC）明顯
-較好，且變數重要度會把『暴露×共變項』的交互作用標出來。這是這個分頁裡<b>唯一真的用到機器學習</b>之處。
+較好，且變數重要度會把『暴露×共變項』的交互作用標出來。
 """
 from __future__ import annotations
 
@@ -79,12 +79,12 @@ def matched_forest_demo(seed=23, lang="zh"):
         "importance": importance,
         "plain": t(
             lang,
-            "這是本分頁<b>唯一真正用到機器學習</b>之處。情境：暴露的效應<b>只在某個亞群</b>出現（暴露 × 生物標記的"
+            "情境：暴露的效應<b>只在某個亞群</b>出現（暴露 × 生物標記的"
             "<b>交互作用</b>），而生物標記本身又以<b>非線性</b>方式影響風險。只放『主效應』的條件 logistic 假設效應"
             "對每個人一樣、且共變項是線性的——於是<b>抹平</b>了這個結構。改用<b>隨機森林</b>（Matched Forest／"
             "CLogitForest 的精神）就能自動納入交互作用與非線性：held-out 的<b>判別力（AUC）明顯較高</b>，而且"
             "<b>變數重要度</b>會把『暴露』與『生物標記』標成關鍵——指出效應修飾的存在。",
-            "This is the <b>only place in this tab that genuinely uses machine learning</b>. Here the exposure effect appears "
+            "Here the exposure effect appears "
             "<b>only in a subgroup</b> (an exposure × biomarker <b>interaction</b>) and the biomarker affects risk "
             "<b>non-linearly</b>. A main-effects conditional logistic model assumes one effect for everyone and linear "
             "covariates — so it <b>flattens</b> this structure. A <b>random forest</b> (in the spirit of Matched Forest / "

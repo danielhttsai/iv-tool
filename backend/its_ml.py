@@ -152,13 +152,13 @@ def mlcf_demo(seed=5, lang="zh"):
                    "cf": cf_ml.round(2).tolist(), "t0": t0},
         "plain": t(
             lang,
-            "這是這個分頁裡<b>唯一真正用到機器學習</b>的地方。情境：沒有介入時，每月的健康指標其實由幾個"
+            "情境：沒有介入時，每月的健康指標其實由幾個"
             "<b>可觀測的共變項</b>非線性地決定（例如季節性的背景呼吸道疾病指數、以及『是否有共同流行的病毒』，"
             "兩者還會交互作用）；而『有共同流行病毒』在介入後的那段時間剛好變多。樸素 ITS 只看時間、不看共變項，"
             "會把這個共變項造成的變化誤當成介入效果。兩階段做法（Dey 2025）：只用<b>介入前</b>資料訓練一個模型"
             "去學『共變項→結果』，再用介入後觀測到的共變項預測『沒介入會怎樣』的反事實。<b>線性</b>模型抓不到"
             "交互作用、仍偏；改用<b>梯度提升</b>這種機器學習就抓得到，把效果拉回真值。模型只准看介入前、不准碰介入後。",
-            "This is the <b>only place in this tab that genuinely uses machine learning</b>. Absent the intervention, the "
+            "Absent the intervention, the "
             "monthly health index is actually driven <b>non-linearly</b> by a few observed covariates (a seasonal "
             "background-illness index and whether a co-circulating virus is present, which also interact); and the "
             "co-circulating virus happens to be more common during the post period. A naive ITS that looks only at time "

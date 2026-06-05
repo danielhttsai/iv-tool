@@ -101,12 +101,12 @@ def dml_demo(seed=7, lang="zh"):
                  "values": [true_att, naive, lin, mlv]},
         "plain": t(
             lang,
-            "這是這個分頁裡<b>唯一真正用到機器學習</b>的地方。情境：是否接種與隨時間的自然變化，都以<b>非線性</b>"
+            "情境：是否接種與隨時間的自然變化，都以<b>非線性</b>"
             "的方式取決於好幾個共變項。雙重穩健 DiD 同時配『傾向分數模型』與『結果模型』，只要其一對就不偏；"
             "但如果用<b>線性</b>模型去配這些非線性關係，模型設定錯，估計仍會偏。改用<b>梯度提升（gradient boosting）</b>"
             "這種機器學習去估那兩塊、再用<b>交叉擬合</b>（用別折資料學、套到沒看過的折）去偏，就能把效果拉回真值——"
             "這就是雙重／去偏機器學習（DML）。",
-            "This is the <b>only place in this tab that genuinely uses machine learning</b>. Here both who gets "
+            "Here both who gets "
             "vaccinated and the natural over-time change depend <b>non-linearly</b> on several covariates. Doubly-robust "
             "DiD pairs a propensity model with an outcome model and is unbiased if either is right — but fit those "
             "non-linear relationships with <b>linear</b> models and the misspecification leaves bias. Estimate the two "

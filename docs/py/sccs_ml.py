@@ -4,7 +4,7 @@
 learning</b>：用「同一個人前後比」的自我對照訊號＋機器學習，去找出<b>效應的異質性</b>、
 建構<b>個人化的治療決策規則</b>。標準 SCCS 只給<b>一個平均 IRR</b>；當不同人的危險窗風險其實差很多
 （效應修飾）時，平均值會把高風險亞群藏起來。把每個人的自我對照結果交給隨機森林，就能依基線特徵
-把<b>高風險亞群</b>標出來——這是這個分頁裡<b>唯一真的用到機器學習</b>之處。
+把<b>高風險亞群</b>標出來
 """
 from __future__ import annotations
 
@@ -71,12 +71,12 @@ def self_matched_demo(seed=31, lang="zh"):
         "importance": importance,
         "plain": t(
             lang,
-            "這是本分頁<b>唯一真正用到機器學習</b>之處。標準 SCCS 只回一個<b>平均 IRR</b>；但若危險窗的風險其實"
+            "標準 SCCS 只回一個<b>平均 IRR</b>；但若危險窗的風險其實"
             "<b>因人而異</b>（效應修飾——這裡只有「年輕男性」風險特別高），平均值就把高風險亞群<b>稀釋藏起來</b>。"
             "把每個人的<b>自我對照標籤</b>（事件有沒有落在危險窗）交給<b>隨機森林</b>（Xu 等 2022 的 self-matched "
             "learning 精神），它會自動抓到「年齡 × 性別」的交互作用、依基線特徵把<b>高風險亞群</b>標出來：再分別"
             "估每群自己的 IRR，整體的單一數字就被拆成天差地遠的兩群——這正是個人化決策規則的起點。",
-            "This is the <b>only place in this tab that genuinely uses machine learning</b>. Standard SCCS returns a single "
+            "Standard SCCS returns a single "
             "<b>pooled IRR</b>; but if the risk-window effect is actually <b>heterogeneous</b> (effect modification — here it "
             "is large only for young males), the average <b>hides the high-risk subgroup</b>. Feeding each case's "
             "<b>self-matched label</b> (did the event fall in the risk window?) to a <b>random forest</b> (the spirit of Xu "
