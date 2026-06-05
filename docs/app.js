@@ -1550,14 +1550,14 @@ const DNODES = {
                 en: "Vaccine scenario: each month, open a mini-trial among people who just became eligible (<b>vaccinate now vs not</b> — a one-shot decision), then pool across months." },
     watch: { zh: "✓ 本工具箱已實作（見「序列試驗」分頁 ①–⑤）。也屬 <b>target trial emulation</b> 家族。",
              en: "✓ Implemented in this toolbox (see the Sequential-trials tabs ①–⑤). Also part of the <b>target trial emulation</b> family." } } },
-  rCCTC: { rec: { kind: "toolbox", method: "cctc", badge: "CCO/CCTC ✓",
-    title: { zh: "建議：案例交叉／案例-時間對照 CCO/CCTC ✓（本工具）", en: "Suggested: case-crossover / case-(case-)time-control (CCO/CCTC) ✓ (this tool)" },
+  rCCTC: { rec: { kind: "toolbox", method: "cctc", badge: "CCTC ✓",
+    title: { zh: "建議：案例交叉／案例-時間對照 CCTC ✓（本工具）", en: "Suggested: case-crossover / case-(case-)time-control (CCTC) ✓ (this tool)" },
     why: { zh: "暴露<b>短暫、會波動</b>，想用個人自身近期當對照——比較發病前的危險窗 vs 較早的參考窗（案例交叉，CCO），自我控制掉所有穩定特徵。若暴露的<b>盛行率隨日曆時間上升</b>，純 CCO 會被高估；用對照族群（或較晚發病的未來 case）把趨勢扣掉，就是 <b>CCTC</b>。其「世代版」正是本工具箱的 TiT。",
            en: "For a <b>transient, fluctuating</b> exposure, use each case's own recent past as control — compare the pre-event hazard window vs an earlier reference window (case-crossover, CCO), cancelling every time-stable trait. If the exposure's <b>prevalence trends up over calendar time</b>, plain CCO is inflated; net out that trend with controls (or future-onset cases) → <b>CCTC</b>. Its cohort version is this toolbox's TiT." },
     scenario: { zh: "疫苗情境：對「接種後當天就醫」這種急性事件，比較事件前幾天 vs 更早一段時間的接種暴露；若全國接種率逐年上升，再用對照族群把趨勢扣掉。",
                 en: "Vaccine scenario: for an acute event like an ER visit on the day of vaccination, compare exposure in the days before vs an earlier reference window; if national uptake rises year on year, net out the trend with a control group." },
-    watch: { zh: "✓ 本工具箱已實作（見 CCO/CCTC 分頁 ①–⑤）。若你有世代資料，也可改用世代版 <b>TiT ✓</b>。",
-             en: "✓ Implemented in this toolbox (see the CCO/CCTC tabs ①–⑤). With cohort data you can also use the cohort version <b>TiT ✓</b>." },
+    watch: { zh: "✓ 本工具箱已實作（見 CCTC 分頁 ①–⑤）。若你有世代資料，也可改用世代版 <b>TiT ✓</b>。",
+             en: "✓ Implemented in this toolbox (see the CCTC tabs ①–⑤). With cohort data you can also use the cohort version <b>TiT ✓</b>." },
     altMethod: "tit", altLabel: { zh: "改用世代版 TiT →", en: "Use the cohort version: TiT →" } } },
   rNCC: { rec: { kind: "external", badge: "↗",
     title: { zh: "建議：巢式對照研究 nested case-control ↗", en: "Suggested: nested case-control ↗" },
@@ -1645,9 +1645,9 @@ const FULLMAP = {
             { edge: { zh: "配對、巢式抽樣", en: "matched, nested" },
               leaves: [{ key: "rNCC", cond: { zh: "想看「劑量–反應」，只量個案＋抽樣對照的暴露量", en: "want a dose-response; measure exposure only for cases + sampled controls" }, tag: "巢式對照 ↗", kind: "ex" }] },
             { edge: { zh: "自身對照 · 暴露無趨勢", en: "own control · no trend" },
-              leaves: [{ key: "rCCTC", cond: { zh: "急性、會波動的暴露（案例交叉 CCO）", en: "acute, fluctuating exposure (case-crossover CCO)" }, tag: "CCO/CCTC ✓", kind: "tb" }] },
+              leaves: [{ key: "rCCTC", cond: { zh: "急性、會波動的暴露（案例交叉 CCO）", en: "acute, fluctuating exposure (case-crossover CCO)" }, tag: "CCTC ✓", kind: "tb" }] },
             { edge: { zh: "自身對照 · 暴露有趨勢", en: "own control · has a trend" },
-              leaves: [{ key: "rCCTC", cond: { zh: "扣掉日曆趨勢（CCTC；世代版＝TiT ✓）", en: "net out the trend (CCTC; cohort = TiT ✓)" }, tag: "CCO/CCTC ✓", kind: "tb" }] },
+              leaves: [{ key: "rCCTC", cond: { zh: "扣掉日曆趨勢（CCTC；世代版＝TiT ✓）", en: "net out the trend (CCTC; cohort = TiT ✓)" }, tag: "CCTC ✓", kind: "tb" }] },
           ] },
       ],
     },
@@ -1805,8 +1805,8 @@ function drawChooseChart() {
 const CITE = {
   authors: "Methodology Working Group, Population Health Data Center, National Cheng Kung University; Tsai DH-T, Lai EC-C.",
   publisher: "Population Health Data Center, National Cheng Kung University",
-  titleZh: "真實世界證據與準實驗工具箱（IV · RDD · DiD · TiT · ITS · PERR · CCW · CCO/CCTC · 序列試驗）線上教學工具",
-  titleEn: "RWE and Quasi-experimental Toolbox (IV · RDD · DiD · TiT · ITS · PERR · CCW · CCO/CCTC · Sequential trials) — Online Teaching Tool",
+  titleZh: "真實世界證據與準實驗工具箱（IV · RDD · DiD · PERR · ITS · TiT · CCW · 序列試驗 · CCTC）線上教學工具",
+  titleEn: "RWE and Quasi-experimental Toolbox (IV · RDD · DiD · PERR · ITS · TiT · CCW · Sequential trials · CCTC) — Online Teaching Tool",
   year: "2026",
   url: "https://danielhttsai.github.io/iv-rdd-tool/",
 };
@@ -1820,7 +1820,7 @@ const METHOD_REF = {
   its:  { zh: "中斷時間序列 ITS", en: "Interrupted Time Series (ITS)", src: "Bernal, Cummins & Gasparrini (2017), IJE; Dey et al. (2025)" },
   perr: { zh: "事前事件率比 PERR", en: "Prior Event Rate Ratio (PERR)", src: "Yu et al. (2012); van Aalst et al. (2021)" },
   ccw:  { zh: "複製-設限-加權 CCW", en: "Clone-Censor-Weight (CCW)", src: "Hernán (2018), BMJ; Gaber et al. (2024)" },
-  cctc: { zh: "案例交叉與時間對照 CCO/CCTC", en: "Case-crossover & (case-)time-control (CCO/CCTC)", src: "Maclure (1991); Suissa (1995); Jeong et al. (2023)" },
+  cctc: { zh: "案例交叉與時間對照 CCTC", en: "Case-crossover & (case-)time-control (CCTC)", src: "Maclure (1991); Suissa (1995); Jeong et al. (2023)" },
   seq:  { zh: "序列（巢式）試驗", en: "Sequential (nested) trials", src: "Hernán & Robins (target trial); Danaei et al.; Gran et al." },
 };
 let refsContext = "iv";   // which page's references/citation to show
@@ -3716,11 +3716,11 @@ window.addEventListener("iv-lang", async () => {
   if (ccwAnalyzeReady) runCcwAnalyze();                // CCW ③ analysis + dashboard
   else if (ccwAssumeReady) runCcwAssumptions(ccwState.req);
   if (state.ccwGrace) refreshCcwGrace();               // CCW ⑤ grace sensitivity (re-render)
-  if (cctcLearnReady) drawSceneCctc();                 // CCO/CCTC ① learn scene
-  if (cctcPlayReady) refreshCctcPlay();                // CCO/CCTC ② interactive
-  if (cctcAnalyzeReady) runCctcAnalyze();              // CCO/CCTC ③ analysis + dashboard
+  if (cctcLearnReady) drawSceneCctc();                 // CCTC ① learn scene
+  if (cctcPlayReady) refreshCctcPlay();                // CCTC ② interactive
+  if (cctcAnalyzeReady) runCctcAnalyze();              // CCTC ③ analysis + dashboard
   else if (cctcAssumeReady) runCctcAssumptions(cctcState.req);
-  if (state.cctcDemo) refreshCctcDemo();               // CCO/CCTC ⑤ demo (re-render)
+  if (state.cctcDemo) refreshCctcDemo();               // CCTC ⑤ demo (re-render)
   if (seqLearnReady) drawSceneSeq();                   // Sequential ① learn scene
   if (seqPlayReady) refreshSeqPlay();                  // Sequential ② interactive
   if (seqAnalyzeReady) runSeqAnalyze();                // Sequential ③ analysis + dashboard
