@@ -3030,81 +3030,174 @@ function ccwCurveInto(elId, curve) {
   }), SCENE_CFG);
 }
 
-// ① learn: the clone-censor-weight design as drawn in the source paper's supplement
-// (Tsai et al, Br J Psychiatry 2024). A panel-by-panel flow across the decision window:
-// ① clone every person into BOTH treatment arms at time zero; ② censor a clone the
-// moment it deviates from its assigned strategy (icons drop out across the panels);
-// ③ in the final panel, up-weight the still-uncensored clones (IPCW) so they resemble
-// the full uncensored population. The arm names and the deviation rule are SCENARIO-
-// SPECIFIC (grace / early-vs-late / sustained) — the cloning machinery is the same.
+// ① learn: each CCW scenario gets its OWN illustration, because the three are
+// mechanically different cloning problems — not one figure with the caption swapped.
+//   grace      → the population panel figure of the source supplement (Tsai et al,
+//                Br J Psychiatry 2024, Suppl Fig 1): cohort → clone into two arms →
+//                censor deviators → weight survivors.
+//   earlylate  → individual swimmer lanes with an early/late cutoff τ; a clone is
+//                censored when its actual initiation time conflicts with its arm.
+//   sustained  → treatment on/off bars over follow-up; a clone is censored the moment
+//                its on/off status deviates from its assigned strategy.
+const CCW_RING = "#2e8b6f", CCW_CENS = "#cbd5e1", CCW_PILL = "#b45309";
 function drawSceneCcw() {
   if (!document.getElementById("ccwScene")) return;
   const sc = ccwState.scenario;
-  const [armA, armB] = ccwArmLabels(sc);
-  const meta = ccwSceneMeta(sc);
-  const ARM0 = TEAL, ARM1 = "#5b7aa8", CENS = "#cbd5e1", RING = "#2e8b6f";
-  const panelX = [0, 1.55, 3.1, 4.65, 6.2];                 // five time points across the decision window
-  const active = [9, 8, 6, 5, 5];                            // clones still uncensored at each time point
-  // running stabilised IPCW weight at each time point ≈ 9 / (uncensored in arm) — it
-  // GROWS as more clones are censored, because IPCW is recomputed at every time point.
-  const wt = active.map((a) => 9 / a);                      // [1, 1.13, 1.5, 1.8, 1.8]
-  const armY = [2.45, 1.05];                                 // top arm / bottom arm row centres
-  const dx = 0.20, dy = 0.20;                                // 3×3 person-dot grid spacing
-  // panel background cards: a green tint that deepens left→right, signalling that the
-  // surviving clones carry ever-larger IPCW weights over time (not a one-off final step)
+  if (sc === "earlylate") return drawCcwEarlyLate();
+  if (sc === "sustained") return drawCcwSustained();
+  return drawCcwGraceScene();
+}
+
+// ---- grace: faithful to Suppl Fig 1 (cohort → clone → censor → weight) ----
+function drawCcwGraceScene() {
+  const [armA, armB] = ccwArmLabels("grace");
+  const ARM0 = TEAL, ARM1 = "#5b7aa8", RING = CCW_RING;
+  // six distinct "people" (colours) make up the cohort; each arm gets a clone of all six
+  const PEOPLE = ["#1f2937", "#3f8268", "#f59e0b", "#60a5fa", "#2563eb", "#9aa6b2"];
+  const cohortX = -1.45, panelX = [0, 1.6, 3.2, 4.8];          // clone, censor, censor, weight
+  const tint = ["rgba(245,158,11,.10)", "rgba(148,163,184,.12)", "rgba(148,163,184,.12)", "rgba(63,130,104,.14)"];
+  const tline = ["rgba(245,158,11,.5)", "rgba(148,163,184,.45)", "rgba(148,163,184,.45)", "rgba(63,130,104,.5)"];
+  const armY = [2.5, 1.0], dx = 0.22, dy = 0.20;
+  // which people are censored by each panel — DIFFERENT per arm (depends on assignment):
+  //   within-grace arm loses those who never initiate (idx 4,5); defer arm loses those
+  //   who initiate during grace (idx 1,2). Censoring accumulates across panels.
+  const censByPanel = [[[], []], [[5], [2]], [[4, 5], [1, 2]], [[4, 5], [1, 2]]];
+  const wt = [1, 1.2, 1.5, 1.5];                                // running IPCW weight per panel
   const shapes = panelX.map((cx, p) => ({
-    type: "rect", x0: cx - 0.5, x1: cx + 0.5, y0: 0.45, y1: 3.05,
-    fillcolor: p === 0 ? "rgba(148,163,184,.10)" : `rgba(63,130,104,${0.05 + p * 0.035})`,
-    line: { color: p === 0 ? "rgba(148,163,184,.4)" : "rgba(63,130,104,.45)", width: 1 },
+    type: "rect", x0: cx - 0.62, x1: cx + 0.62, y0: 0.5, y1: 3.25, fillcolor: tint[p], line: { color: tline[p], width: 1 },
   }));
-  // dotted decision-window timeline along the bottom
-  shapes.push({ type: "line", x0: -0.2, x1: 6.9, y0: 0.28, y1: 0.28, line: { color: "#94a3b8", width: 1.4, dash: "dot" } });
-  panelX.forEach((cx) => shapes.push({ type: "line", x0: cx, x1: cx, y0: 0.22, y1: 0.34, line: { color: "#94a3b8", width: 1.4 } }));
-  // person dots: active clones (per-arm colour, SIZE + green ring grow with the running
-  // IPCW weight) vs censored clones (grey). size/ring carry the time-varying weighting.
-  const a0 = { x: [], y: [], s: [], lw: [] }, a1 = { x: [], y: [], s: [], lw: [] }, cen = { x: [], y: [] };
+  shapes.push({ type: "line", x0: cohortX + 0.5, x1: 5.3, y0: 0.34, y1: 0.34, line: { color: "#94a3b8", width: 1.4, dash: "dot" } });
+  [0, 4.8].forEach((cx) => shapes.push({ type: "line", x0: cx, x1: cx, y0: 0.28, y1: 0.4, line: { color: "#94a3b8", width: 1.4 } }));
+  const live = { x: [], y: [], c: [], s: [], lw: [] }, dead = { x: [], y: [] }, coh = { x: [], y: [], c: [] };
+  // original cohort cluster on the left
+  PEOPLE.forEach((c, k) => { const col = k % 2, row = Math.floor(k / 2); coh.x.push(cohortX + (col - 0.5) * 0.34); coh.y.push(1.75 + (1 - row) * 0.34); coh.c.push(c); });
+  // clone/censor/weight panels
   panelX.forEach((cx, p) => {
-    const size = 7 * Math.pow(wt[p], 0.8), ring = 0.6 + (wt[p] - 1) * 3.2;   // grow with weight
+    const size = 8 * Math.pow(wt[p], 0.8), ring = p === 3 ? 0.6 + (wt[p] - 1) * 3.5 : 0;
     armY.forEach((yc, a) => {
-      for (let k = 0; k < 9; k++) {
+      const censored = censByPanel[p][a];
+      PEOPLE.forEach((c, k) => {
         const col = k % 3, row = Math.floor(k / 3);
-        const x = cx + (col - 1) * dx, y = yc + (1 - row) * dy;
-        if (k >= active[p]) { cen.x.push(x); cen.y.push(y); }
-        else { const t = a === 0 ? a0 : a1; t.x.push(x); t.y.push(y); t.s.push(size); t.lw.push(ring); }
-      }
+        const x = cx + (col - 1) * dx, y = yc + (0.5 - row) * dy;
+        if (censored.includes(k)) { dead.x.push(x); dead.y.push(y); }
+        else { live.x.push(x); live.y.push(y); live.c.push(c); live.s.push(p === 3 ? size : 8); live.lw.push(ring); }
+      });
     });
   });
   const traces = [
-    { x: a0.x, y: a0.y, mode: "markers", type: "scatter", name: `${armA}${tr("（未設限）", " (uncensored)")}`,
-      marker: { color: ARM0, size: a0.s, line: { color: RING, width: a0.lw } } },
-    { x: a1.x, y: a1.y, mode: "markers", type: "scatter", name: `${armB}${tr("（未設限）", " (uncensored)")}`,
-      marker: { color: ARM1, size: a1.s, line: { color: RING, width: a1.lw } } },
-    { x: cen.x, y: cen.y, mode: "markers", type: "scatter", name: tr("偏離策略 → 設限", "deviated → censored"), marker: { color: CENS, size: 8 } },
-    // legend-only cue for the growing weight
-    { x: [null], y: [null], mode: "markers", type: "scatter", name: tr("綠圈／點越大＝IPCW 權重越大", "bigger dot + green ring = larger IPCW weight"),
-      marker: { color: "#fff", size: 11, line: { color: RING, width: 3 } } },
+    { x: coh.x, y: coh.y, mode: "markers", type: "scatter", name: tr("原始世代", "original cohort"), marker: { color: coh.c, size: 9, symbol: "circle" } },
+    { x: live.x, y: live.y, mode: "markers", type: "scatter", name: tr("未設限（仍符合策略）", "uncensored (still compatible)"),
+      marker: { color: live.c, size: live.s, line: { color: RING, width: live.lw } } },
+    { x: dead.x, y: dead.y, mode: "markers", type: "scatter", name: tr("偏離策略 → 設限", "deviated → censored"), marker: { color: CCW_CENS, size: 8 } },
   ];
   const anns = [
-    // step labels over the panels
-    Object.assign(_lbl(panelX[0], 3.32, tr("① 複製到兩臂", "① clone into both arms"), ARM0, 9.5), { xanchor: "center" }),
-    Object.assign(_lbl(3.875, 3.32, tr("② 偏離即設限 ＋ ③ 每個時間點重算 IPCW 權重", "② censor on deviation  +  ③ recompute IPCW at every time point"), RING, 9.5), { xanchor: "center" }),
-    // per-time-point running weight (the heart of the fix: weighting is continuous)
-    ...panelX.map((cx, p) => Object.assign(_lbl(cx, 2.92, "×" + wt[p].toFixed(1), p === 0 ? "#94a3b8" : RING, p === 0 ? 8.5 : 9.5 + (wt[p] - 1) * 2), { xanchor: "center" })),
-    // arm row labels (scenario-specific)
-    Object.assign(_lbl(-0.95, armY[0], armA, ARM0, 9), { xanchor: "left" }),
-    Object.assign(_lbl(-0.95, armY[1], armB, ARM1, 9), { xanchor: "left" }),
-    // timeline endpoints (scenario-specific)
-    Object.assign(_lbl(panelX[0], 0.08, meta.start, INK, 9.5), { xanchor: "center" }),
-    Object.assign(_lbl(panelX[4], 0.08, meta.end, INK, 9.5), { xanchor: "center" }),
-    _lbl(3.1, -0.42, tr(
-      `在時間零點把每個人①複製到兩臂；一旦偏離被指派的策略就②設限（灰點）——${meta.dev}③IPCW 不是最後才做一次：每個時間點都重算，把當下仍未設限的分身放大權重（×w、綠圈越來越大），補回到該時點為止被設限的人。`,
-      `At time zero ① clone each person into both arms; ② censor (grey) a clone once it deviates — ${meta.dev} ③ IPCW is not a one-off final step: it is recomputed at every time point, up-weighting the clones still uncensored at that moment (growing ×w / green ring) to stand in for everyone censored up to that point.`), INK, 9.5),
+    Object.assign(_lbl(cohortX, 1.2, tr("原始世代", "original cohort"), INK, 9), { xanchor: "center" }),
+    Object.assign(_lbl(panelX[0], 3.5, tr("① 複製成兩臂", "① clone into two arms"), ARM0, 9.5), { xanchor: "center" }),
+    Object.assign(_lbl(panelX[1] + 0.8, 3.5, tr("② 偏離即設限（各臂掉的人不同）", "② censor deviators (different per arm)"), SLATE, 9.5), { xanchor: "center" }),
+    Object.assign(_lbl(panelX[3], 3.5, tr("③ 加權", "③ weight"), RING, 9.5), { xanchor: "center" }),
+    Object.assign(_lbl(panelX[3], 3.05, "×" + wt[3].toFixed(1), RING, 11), { xanchor: "center" }),
+    // arm labels at left of each band
+    Object.assign(_lbl(cohortX, armY[0], armA, ARM0, 8.5), { xanchor: "center" }),
+    Object.assign(_lbl(cohortX, armY[1], armB, ARM1, 8.5), { xanchor: "center" }),
+    Object.assign(_lbl(0, 0.12, tr("指標日", "index date"), INK, 9), { xanchor: "center" }),
+    Object.assign(_lbl(4.8, 0.12, tr("指標日＋寬限期", "index + grace"), INK, 9), { xanchor: "center" }),
+    _lbl(2.0, -0.45, tr(
+      "把原始世代①複製成兩臂；②寬限期內一旦偏離指派策略就設限——「寬限期內起始」臂掉的是「沒在窗內起始」的人，「延後起始」臂掉的是「窗內就起始」的人（兩臂掉不同人）；③再依設限因子對存活者加權（IPCW，每個時間點重算）。",
+      "Clone the cohort into two arms; during grace, ② censor anyone who deviates — the within-grace arm loses those who never initiate, the defer arm loses those who initiate early (different people per arm); ③ then weight survivors by their censoring factors (IPCW, recomputed at every time point)."), INK, 9.5),
   ];
   Plotly.react("ccwScene", traces, schemaLayout({
-    height: 310, shapes, annotations: anns, showlegend: true, legend: { orientation: "h", y: 1.18 },
-    xaxis: { visible: false, range: [-1.0, 7.0], fixedrange: true },
-    yaxis: { visible: false, range: [-0.55, 3.6] },
-    margin: { t: 30, r: 14, b: 28, l: 14 },
+    height: 320, shapes, annotations: anns, showlegend: true, legend: { orientation: "h", y: 1.16 },
+    xaxis: { visible: false, range: [-2.1, 5.6], fixedrange: true },
+    yaxis: { visible: false, range: [-0.6, 3.75] },
+    margin: { t: 30, r: 12, b: 26, l: 12 },
+  }), SCENE_CFG);
+}
+
+// ---- early vs late: swimmer lanes, early/late cutoff τ, censor on conflict ----
+function drawCcwEarlyLate() {
+  const ARM0 = TEAL, ARM1 = "#5b7aa8", RING = CCW_RING, TAU = 3, XMAX = 12;
+  // three example patients with an actual initiation month; both arms eventually treat
+  const pts = [
+    { lbl: tr("病人甲（第1月起始＝早）", "patient A (initiate m1 = early)"), init: 1 },
+    { lbl: tr("病人乙（第6月起始＝晚）", "patient B (initiate m6 = late)"), init: 6 },
+    { lbl: tr("病人丙（第2月起始＝早）", "patient C (initiate m2 = early)"), init: 2 },
+  ];
+  const shapes = [{ type: "line", x0: TAU, x1: TAU, y0: 0.3, y1: 6.7, line: { color: "#b45309", width: 1.4, dash: "dot" } }];
+  const lateX = [], lateY = [], pillX = [], pillY = [], censX = [], censY = [], wX = [], wY = [], wT = [];
+  const segs = [];
+  pts.forEach((pt, i) => {
+    const yE = 6.0 - i * 2.0, yL = yE - 0.7;                  // early-clone lane (top) + late-clone lane
+    const early = pt.init <= TAU;
+    // early clone: compatible iff initiates by τ; else censored at τ
+    if (early) { segs.push({ x0: 0, x1: XMAX, y: yE, c: ARM0, solid: true }); wX.push(8); wY.push(yE + 0.16); wT.push("×w↑"); }
+    else { segs.push({ x0: 0, x1: TAU, y: yE, c: ARM0, solid: true }); segs.push({ x0: TAU, x1: XMAX, y: yE, c: ARM0, solid: false }); censX.push(TAU); censY.push(yE); }
+    // late clone: compatible iff initiates after τ; else censored at its (early) initiation
+    if (!early) { segs.push({ x0: 0, x1: XMAX, y: yL, c: ARM1, solid: true }); wX.push(9); wY.push(yL + 0.16); wT.push("×w↑"); }
+    else { segs.push({ x0: 0, x1: pt.init, y: yL, c: ARM1, solid: true }); segs.push({ x0: pt.init, x1: XMAX, y: yL, c: ARM1, solid: false }); censX.push(pt.init); censY.push(yL); }
+    pillX.push(pt.init); pillY.push(early ? yE : yL);          // actual treatment start
+  });
+  segs.forEach((s) => shapes.push({ type: "line", x0: s.x0, x1: s.x1, y0: s.y, y1: s.y, line: { color: s.c, width: 4, dash: s.solid ? "solid" : "dot" }, opacity: s.solid ? 1 : 0.4 }));
+  const traces = [
+    { x: pillX, y: pillY, mode: "markers", type: "scatter", name: tr("實際起始用藥", "actual treatment start"), marker: { color: CCW_PILL, size: 12, symbol: "square" } },
+    { x: censX, y: censY, mode: "markers", type: "scatter", name: tr("與指派臂衝突 → 設限 ✂", "conflicts with arm → censored ✂"), marker: { color: "#64748b", size: 14, symbol: "x-thin-open", line: { width: 3 } } },
+    { x: [null], y: [null], mode: "markers", type: "scatter", name: tr("早臂", "early arm"), marker: { color: ARM0, size: 10 } },
+    { x: [null], y: [null], mode: "markers", type: "scatter", name: tr("晚臂", "late arm"), marker: { color: ARM1, size: 10 } },
+  ];
+  const anns = [Object.assign(_lbl(TAU, 6.95, tr("早／晚分界 τ", "early/late cutoff τ"), "#b45309", 9.5), { xanchor: "center" })];
+  pts.forEach((pt, i) => anns.push(Object.assign(_lbl(0.1, 6.0 - i * 2.0 - 0.35, pt.lbl, INK, 8.5), { xanchor: "left" })));
+  wX.forEach((x, i) => anns.push(Object.assign(_lbl(x, wY[i], wT[i], RING, 8.5), { xanchor: "center" })));
+  anns.push(_lbl(6, -0.35, tr(
+    "兩臂最終都會用藥，差別只在「早或晚」。每人①複製成早臂、晚臂；②實際起始時機與指派臂衝突時就設限（✂：早臂在沒能早起始時、晚臂在太早起始時）；③存活者沿時間做 IPCW 加權（×w↑）。",
+    "Both arms eventually treat — only the timing differs. Clone each person into an early and a late arm; ② censor (✂) the clone whose actual initiation conflicts with its arm (early arm if it fails to start early; late arm if it starts too early); ③ weight survivors along time with IPCW (×w↑)."), INK, 9.5));
+  Plotly.react("ccwScene", traces, schemaLayout({
+    height: 320, shapes, annotations: anns, showlegend: true, legend: { orientation: "h", y: 1.16 },
+    xaxis: { visible: true, title: tr("診斷後月份", "months since diagnosis"), range: [0, XMAX], fixedrange: true, dtick: 2 },
+    yaxis: { visible: false, range: [-0.7, 7.2] },
+    margin: { t: 30, r: 14, b: 40, l: 14 },
+  }), SCENE_CFG);
+}
+
+// ---- sustained: treatment on/off bars over follow-up, censor at status deviation ----
+function drawCcwSustained() {
+  const ON = TEAL, OFFC = "#d6dde6", ARM1 = "#5b7aa8", RING = CCW_RING, TAU = 4, XMAX = 12;
+  // everyone starts ON at month 0; some discontinue later
+  const pts = [
+    { lbl: tr("病人甲（持續用藥，不停）", "patient A (never discontinues)"), disc: null },
+    { lbl: tr("病人乙（第4月停藥）", "patient B (discontinues m4)"), disc: 4 },
+    { lbl: tr("病人丙（第7月停藥）", "patient C (discontinues m7)"), disc: 7 },
+  ];
+  const shapes = [];
+  const censX = [], censY = [], wX = [], wY = [], wT = [];
+  const bar = (x0, x1, y, c, op) => shapes.push({ type: "rect", x0, x1, y0: y - 0.16, y1: y + 0.16, fillcolor: c, line: { width: 0 }, opacity: op == null ? 1 : op });
+  pts.forEach((pt, i) => {
+    const ySt = 6.0 - i * 2.0, yDi = ySt - 0.75;               // stay-on clone (top) + discontinue clone
+    const d = pt.disc;
+    // stay-on clone: must stay on; censored the moment they discontinue
+    if (d == null) { bar(0, XMAX, ySt, ON); wX.push(9); wY.push(ySt + 0.34); wT.push("×w↑"); }
+    else { bar(0, d, ySt, ON); bar(d, XMAX, ySt, OFFC, 0.5); censX.push(d); censY.push(ySt); }
+    // discontinue clone: must stop (here: by τ); on then off. Never-stop → censored at τ
+    if (d == null) { bar(0, TAU, yDi, ON); bar(TAU, XMAX, yDi, OFFC, 0.5); censX.push(TAU); censY.push(yDi); }
+    else { bar(0, d, yDi, ON); bar(d, XMAX, yDi, OFFC); wX.push(d + 2.4); wY.push(yDi + 0.34); wT.push("×w↑"); }
+  });
+  const traces = [
+    { x: censX, y: censY, mode: "markers", type: "scatter", name: tr("狀態偏離指派 → 設限 ✂", "status deviates → censored ✂"), marker: { color: "#64748b", size: 14, symbol: "x-thin-open", line: { width: 3 } } },
+    { x: [null], y: [null], mode: "markers", type: "scatter", name: tr("用藥中（on）", "on treatment"), marker: { color: ON, size: 12, symbol: "square" } },
+    { x: [null], y: [null], mode: "markers", type: "scatter", name: tr("已停藥（off）", "off treatment"), marker: { color: OFFC, size: 12, symbol: "square" } },
+  ];
+  const anns = [];
+  pts.forEach((pt, i) => anns.push(Object.assign(_lbl(0.1, 6.0 - i * 2.0 + 0.4, pt.lbl, INK, 8.5), { xanchor: "left" })));
+  // row labels for the two clone lanes of the first patient (as a key)
+  anns.push(Object.assign(_lbl(12.2, 6.0, tr("持續臂", "stay-on"), ON, 8), { xanchor: "left" }));
+  anns.push(Object.assign(_lbl(12.2, 6.0 - 0.75, tr("停藥臂", "discontinue"), ARM1, 8), { xanchor: "left" }));
+  wX.forEach((x, i) => anns.push(Object.assign(_lbl(x, wY[i], wT[i], RING, 8.5), { xanchor: "center" })));
+  anns.push(_lbl(6, -0.4, tr(
+    "全員第0月起都在用藥（時變的治療狀態）。每人①複製成持續臂、停藥臂；②狀態一偏離指派就設限（✂：持續臂在停藥當下、停藥臂在沒有如期停藥時）；③存活者沿時間做 IPCW 加權（×w↑）。",
+    "Everyone is on treatment from month 0 (time-varying status). Clone each into a stay-on and a discontinue arm; ② censor (✂) the moment status deviates — the stay-on arm at discontinuation, the discontinue arm if it never stops; ③ weight survivors along time with IPCW (×w↑)."), INK, 9.5));
+  Plotly.react("ccwScene", traces, schemaLayout({
+    height: 320, shapes, annotations: anns, showlegend: true, legend: { orientation: "h", y: 1.16 },
+    xaxis: { visible: true, title: tr("診斷後月份", "months since diagnosis"), range: [0, XMAX], fixedrange: true, dtick: 2 },
+    yaxis: { visible: false, range: [-0.75, 7.0] },
+    margin: { t: 30, r: 48, b: 40, l: 14 },
   }), SCENE_CFG);
 }
 
