@@ -2975,11 +2975,41 @@ const ccwState = { source: null, columns: [], req: null, scenario: "grace" };
 let ccwLearnReady = false, ccwPlayReady = false, ccwAnalyzeReady = false,
     ccwAssumeReady = false, ccwMlReady = false;
 
-// per-scenario arm labels for charts/cards
+// per-scenario arm labels for charts/cards. The three CCW scenarios are DIFFERENT
+// cloning concepts, so the two arms are named differently in each:
+//   grace      → initiate within a grace window  vs  defer
+//   earlylate  → early initiation                vs  late initiation
+//   sustained  → stay on treatment               vs  discontinue
 function ccwArmLabels(sc) {
   if (sc === "earlylate") return [tr("早啟動", "early initiation"), tr("晚啟動", "late initiation")];
   if (sc === "sustained") return [tr("持續用藥", "stay on treatment"), tr("停藥", "discontinue")];
-  return [tr("早接種策略", "early strategy"), tr("晚接種策略", "late strategy")];
+  return [tr("寬限期內起始", "initiate within grace"), tr("延後起始", "defer initiation")];
+}
+
+// per-scenario timeline endpoints + the deviation rule that triggers censoring —
+// this is what genuinely differs between the three cloning concepts.
+function ccwSceneMeta(sc) {
+  if (sc === "earlylate") return {
+    start: tr("合格日（時間零）", "eligibility (time zero)"),
+    end: tr("起始時窗結束", "end of initiation window"),
+    span: tr("起始時窗", "initiation window"),
+    dev: tr("早啟動臂在「太晚才用藥」時設限；晚啟動臂在「太早就用藥」時設限。",
+            "the early arm is censored if treatment starts too late; the late arm if it starts too early."),
+  };
+  if (sc === "sustained") return {
+    start: tr("開始用藥（時間零）", "start of treatment (time zero)"),
+    end: tr("追蹤結束", "end of follow-up"),
+    span: tr("追蹤期間", "follow-up"),
+    dev: tr("持續用藥臂在「停藥」時設限；停藥臂在「沒有如期停藥」時設限。",
+            "the stay-on arm is censored at discontinuation; the discontinue arm if it fails to stop as assigned."),
+  };
+  return {  // grace
+    start: tr("指標日", "index date"),
+    end: tr("指標日＋寬限期", "index date + grace period"),
+    span: tr("寬限期", "grace period"),
+    dev: tr("「寬限期內起始」臂在過了寬限期仍未起始時設限；「延後起始」臂在寬限期內就起始時設限。",
+            "the within-grace arm is censored if it hasn't initiated by the end of grace; the defer arm if it initiates during grace."),
+  };
 }
 
 // cumulative-incidence curves: arm 1 (teal) vs arm 2 (slate), over months
@@ -3001,15 +3031,19 @@ function ccwCurveInto(elId, curve) {
 }
 
 // ① learn: the clone-censor-weight design as drawn in the source paper's supplement
-// (Tsai et al, Br J Psychiatry 2024). A panel-by-panel flow across the grace period:
-// ① clone every person into BOTH treatment arms at the index date; ② censor a clone
-// the moment it deviates from its assigned strategy (icons drop out across the panels);
+// (Tsai et al, Br J Psychiatry 2024). A panel-by-panel flow across the decision window:
+// ① clone every person into BOTH treatment arms at time zero; ② censor a clone the
+// moment it deviates from its assigned strategy (icons drop out across the panels);
 // ③ in the final panel, up-weight the still-uncensored clones (IPCW) so they resemble
-// the full uncensored population. Two stacked bands = the two treatment arms.
+// the full uncensored population. The arm names and the deviation rule are SCENARIO-
+// SPECIFIC (grace / early-vs-late / sustained) — the cloning machinery is the same.
 function drawSceneCcw() {
   if (!document.getElementById("ccwScene")) return;
+  const sc = ccwState.scenario;
+  const [armA, armB] = ccwArmLabels(sc);
+  const meta = ccwSceneMeta(sc);
   const ARM0 = TEAL, ARM1 = "#5b7aa8", CENS = "#cbd5e1", WT = GREEN;
-  const panelX = [0, 1.55, 3.1, 4.65, 6.2];                 // five panels across the grace period
+  const panelX = [0, 1.55, 3.1, 4.65, 6.2];                 // five panels across the decision window
   const active = [9, 8, 6, 5, 5];                            // clones still uncensored in each panel
   const armY = [2.45, 1.05];                                 // top arm / bottom arm row centres
   const dx = 0.20, dy = 0.20;                                // 3×3 person-dot grid spacing
@@ -3019,7 +3053,7 @@ function drawSceneCcw() {
     fillcolor: p === 4 ? "rgba(63,130,104,.12)" : "rgba(148,163,184,.10)",
     line: { color: p === 4 ? "rgba(63,130,104,.5)" : "rgba(148,163,184,.4)", width: 1 },
   }));
-  // dotted grace-period timeline along the bottom
+  // dotted decision-window timeline along the bottom
   shapes.push({ type: "line", x0: -0.2, x1: 6.9, y0: 0.28, y1: 0.28, line: { color: "#94a3b8", width: 1.4, dash: "dot" } });
   panelX.forEach((cx) => shapes.push({ type: "line", x0: cx, x1: cx, y0: 0.22, y1: 0.34, line: { color: "#94a3b8", width: 1.4 } }));
   // build the person dots: active (per arm colour or green in weight panel) vs censored
@@ -3036,8 +3070,8 @@ function drawSceneCcw() {
     });
   });
   const traces = [
-    { x: a0.x, y: a0.y, mode: "markers", type: "scatter", name: tr("早起始臂（未設限）", "early-start arm (uncensored)"), marker: { color: ARM0, size: 9 } },
-    { x: a1.x, y: a1.y, mode: "markers", type: "scatter", name: tr("晚起始臂（未設限）", "late-start arm (uncensored)"), marker: { color: ARM1, size: 9 } },
+    { x: a0.x, y: a0.y, mode: "markers", type: "scatter", name: `${armA}${tr("（未設限）", " (uncensored)")}`, marker: { color: ARM0, size: 9 } },
+    { x: a1.x, y: a1.y, mode: "markers", type: "scatter", name: `${armB}${tr("（未設限）", " (uncensored)")}`, marker: { color: ARM1, size: 9 } },
     { x: cen.x, y: cen.y, mode: "markers", type: "scatter", name: tr("偏離策略 → 設限", "deviated → censored"), marker: { color: CENS, size: 9 } },
     { x: wt.x, y: wt.y, mode: "markers", type: "scatter", name: tr("加權後存活者（IPCW）", "up-weighted survivors (IPCW)"), marker: { color: WT, size: 11, line: { color: "#1f6b4a", width: 1.5 } } },
   ];
@@ -3046,15 +3080,15 @@ function drawSceneCcw() {
     Object.assign(_lbl(panelX[0], 3.32, tr("① 複製到兩臂", "① clone into both arms"), ARM0, 9.5), { xanchor: "center" }),
     Object.assign(_lbl(panelX[2], 3.32, tr("② 偏離指派策略即設限", "② censor on deviation"), SLATE, 9.5), { xanchor: "center" }),
     Object.assign(_lbl(panelX[4], 3.32, tr("③ 對未設限者加權", "③ weight the uncensored"), WT, 9.5), { xanchor: "center" }),
-    // arm row labels
-    Object.assign(_lbl(-0.95, armY[0], tr("早起始臂", "early arm"), ARM0, 9), { xanchor: "left" }),
-    Object.assign(_lbl(-0.95, armY[1], tr("晚起始臂", "late arm"), ARM1, 9), { xanchor: "left" }),
-    // timeline endpoints
-    Object.assign(_lbl(panelX[0], 0.08, tr("指標日", "index date"), INK, 9.5), { xanchor: "center" }),
-    Object.assign(_lbl(panelX[4], 0.08, tr("指標日＋寬限期", "index date + grace period"), INK, 9.5), { xanchor: "center" }),
+    // arm row labels (scenario-specific)
+    Object.assign(_lbl(-0.95, armY[0], armA, ARM0, 9), { xanchor: "left" }),
+    Object.assign(_lbl(-0.95, armY[1], armB, ARM1, 9), { xanchor: "left" }),
+    // timeline endpoints (scenario-specific)
+    Object.assign(_lbl(panelX[0], 0.08, meta.start, INK, 9.5), { xanchor: "center" }),
+    Object.assign(_lbl(panelX[4], 0.08, meta.end, INK, 9.5), { xanchor: "center" }),
     _lbl(3.1, -0.42, tr(
-      "在指標日把每個人①複製到兩臂；一旦偏離被指派的策略就②設限（灰點）；最後③依設限因子對未設限者加權（IPCW），讓存活者重新代表完整族群。",
-      "At the index date ① clone each person into both arms; ② censor (grey) a clone once it deviates from its assigned strategy; finally ③ up-weight the uncensored clones by their censoring factors (IPCW) so survivors again represent the full population."), INK, 9.5),
+      `在時間零點把每個人①複製到兩臂；一旦偏離被指派的策略就②設限（灰點）——${meta.dev}最後③依設限因子對未設限者加權（IPCW），讓存活者重新代表完整族群。`,
+      `At time zero ① clone each person into both arms; ② censor (grey) a clone once it deviates from its assigned strategy — ${meta.dev} Finally ③ up-weight the uncensored clones by their censoring factors (IPCW) so survivors again represent the full population.`), INK, 9.5),
   ];
   Plotly.react("ccwScene", traces, schemaLayout({
     height: 310, shapes, annotations: anns, showlegend: true, legend: { orientation: "h", y: 1.18 },
@@ -3084,17 +3118,20 @@ function scheduleCcwPlay() {
   ccwPlayTimer = setTimeout(refreshCcwPlay, 350);
 }
 if (ccwTimingSlider) ccwTimingSlider.addEventListener("input", scheduleCcwPlay);
-// scenario selectors (② and ③ kept in sync via ccwState.scenario)
+// scenario selectors (①, ② and ③ kept in sync via ccwState.scenario)
 function ccwSyncScenario(val, from) {
   ccwState.scenario = val;
-  const s2 = document.getElementById("ccwScenario"), s3 = document.getElementById("ccwScenario3");
-  if (s2 && s2.value !== val) s2.value = val;
-  if (s3 && s3.value !== val) s3.value = val;
+  ["ccwScenario1", "ccwScenario", "ccwScenario3"].forEach((id) => {
+    const s = document.getElementById(id);
+    if (s && s.value !== val) s.value = val;
+  });
 }
+const ccwScen1 = document.getElementById("ccwScenario1");
+if (ccwScen1) ccwScen1.addEventListener("change", () => { ccwSyncScenario(ccwScen1.value); drawSceneCcw(); });
 const ccwScen2 = document.getElementById("ccwScenario");
-if (ccwScen2) ccwScen2.addEventListener("change", () => { ccwSyncScenario(ccwScen2.value); refreshCcwPlay(); });
+if (ccwScen2) ccwScen2.addEventListener("change", () => { ccwSyncScenario(ccwScen2.value); drawSceneCcw(); refreshCcwPlay(); });
 const ccwScen3 = document.getElementById("ccwScenario3");
-if (ccwScen3) ccwScen3.addEventListener("change", () => { ccwSyncScenario(ccwScen3.value); document.getElementById("useCcwExample").click(); });
+if (ccwScen3) ccwScen3.addEventListener("change", () => { ccwSyncScenario(ccwScen3.value); drawSceneCcw(); document.getElementById("useCcwExample").click(); });
 async function refreshCcwPlay() {
   const te = ccwTimingSlider ? Number(ccwTimingSlider.value) : 1.0;
   let d;
