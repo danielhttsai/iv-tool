@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>真實世界證據與準實驗工具箱 RWE and Quasi-experimental Toolbox</title>
-<link rel="stylesheet" href="styles.css?v=61" />
+<link rel="stylesheet" href="styles.css?v=62" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 <script src="pyodide-bridge.js?v=29"></script>
@@ -35,6 +35,7 @@
       <button class="tab subtab" data-sub="analyze" data-en="③ Analyse data">③ 資料分析</button>
       <button class="tab subtab" data-sub="assume" data-en="④ Assumptions">④ 假設檢驗</button>
       <button class="tab subtab" data-sub="ml" data-en="⑤ Boost with AI">⑤ 用 AI 強化</button>
+      <button class="tab subtab" data-sub="whatif" data-en="⑥ What if">⑥ 如果……？</button>
     </div>
     <button class="tab tab-sep" id="chooseTab" data-en="Which one?">怎麼選</button>
   </nav>
@@ -2932,6 +2933,163 @@
     </div>
   </section>
 
+  <!-- ===================== ⑥ What if（每法一個面板）===================== -->
+  <!-- 內容為原創白話改寫的因果推論概念，標註出處《Causal Inference: What If》(Hernán & Robins 2020)，未照抄原文。 -->
+
+  <section id="whatif" class="panel">
+    <h1 data-en="⑥ What if…? IV in the language of counterfactuals">⑥ 如果……？用反事實的語言看「工具變數 IV」</h1>
+    <p class="lead" data-en="The whole point of causal inference is a <b>contrast of counterfactuals</b>: what would the outcome be <b>if everyone were treated</b> vs <b>if no one were treated</b>? We never see both worlds for the same person, so we need a design that makes the treated and untreated <b>comparable</b>. IV does <b>not</b> make everyone comparable — instead it borrows an (as-good-as) random nudge and reads off the effect <b>among the people that nudge moves</b>.">
+      因果推論的核心是<b>兩個反事實的對比</b>：如果<b>大家都接種</b> vs 如果<b>大家都不接種</b>，結果會差多少？同一個人不可能同時看到兩個世界，所以要靠設計讓「接種與不接種的人<b>可比</b>」。IV 並<b>不</b>讓全體可比——而是借一個<b>近似隨機的推力</b>，把效果讀在<b>被這個推力推動的人</b>身上。
+    </p>
+    <div class="card scene"><h3 data-en="The two worlds, and where IV recovers the contrast">兩個世界，以及 IV 在哪救回對比</h3><div id="whatifScene_iv" class="chart"></div></div>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="Effect = Yᵃ⁼¹ − Yᵃ⁼⁰. IV identifies it only for <b>compliers</b> — people who take the treatment when nudged and not otherwise. That's the <b>local average treatment effect (LATE)</b>, not the whole-population effect.">效果＝Yᵃ⁼¹ − Yᵃ⁼⁰。IV 只在<b>順從者</b>（被推力推了才接種、沒推就不接種的人）身上辨識它——這是<b>局部平均因果效果（LATE）</b>，不是全體的效果。</p></div>
+      <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b> for treatment is <b>not</b> assumed; instead the <b>instrument</b> is assumed unconfounded and to act only through treatment (exclusion). <b>Positivity</b>: the instrument actually shifts treatment in one direction (relevance + monotonicity). <b>Consistency</b>: a well-defined treatment.">這裡<b>不</b>假設治療本身可交換；而是假設<b>工具</b>無混淆、且只透過治療影響結果（排除限制）。<b>正性</b>：工具確實單方向移動治療（相關性＋單調性）。<b>一致性</b>：治療定義明確。</p></div>
+      <div class="card"><h3 data-en="③ Where the &quot;exchangeability&quot; is borrowed from">③ 可交換性從哪借來</h3><p data-en="From the <b>randomly-assigned nudge</b> (e.g. a mailed reminder). Because the nudge is as-good-as-random and exclusion holds, the nudge–outcome association divided by the nudge–treatment association is the compliers' effect.">來自<b>隨機分派的推力</b>（如隨機寄出的提醒）。因為推力近似隨機、又滿足排除限制，「推力→結果」除以「推力→治療」就是順從者的效果。</p></div>
+      <div class="card"><h3 data-en="④ In What If">④ 對應《What If》</h3><p data-en="See Chapter 16 (instrumental variable estimation). Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020). Free book: hsph.harvard.edu/miguel-hernan/causal-inference-book/">見第 16 章（工具變數估計）。Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020)。免費電子書：<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">hsph.harvard.edu/miguel-hernan/causal-inference-book</a>。</p></div>
+    </div>
+  </section>
+
+  <section id="rddwhatif" class="panel">
+    <h1 data-en="⑥ What if…? RDD in the language of counterfactuals">⑥ 如果……？用反事實的語言看「斷點回歸 RDD」</h1>
+    <p class="lead" data-en="We want the contrast of <b>Yᵃ⁼¹</b> (eligible) vs <b>Yᵃ⁼⁰</b> (not) — but eligibility is decided by a sharp rule (age ≥ 65). Right at the cutoff, the person just-below is an almost-perfect stand-in for the person just-above: it's like a tiny randomised experiment.">
+      我們要的是<b>Yᵃ⁼¹</b>（有資格）vs <b>Yᵃ⁼⁰</b>（沒資格）的對比——但資格由一條尖銳規則（年齡 ≥ 65）決定。<b>剛好在斷點</b>，差一點點沒過的人，幾乎就是差一點點過了的人的替身：像一個小型隨機實驗。
+    </p>
+    <div class="card scene"><h3 data-en="The two worlds, recovered at the cutoff">兩個世界，在斷點處救回</h3><div id="whatifScene_rdd" class="chart"></div></div>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="Effect = Yᵃ⁼¹ − Yᵃ⁼⁰ <b>at the cutoff</b> (a local effect). Sharp RDD gives the eligibility effect for everyone at the threshold; fuzzy RDD gives the complier effect there (the cutoff as an instrument).">效果＝<b>斷點處</b>的 Yᵃ⁼¹ − Yᵃ⁼⁰（局部效果）。Sharp 給斷點處所有人的資格效果；Fuzzy 給斷點處順從者的效果（把門檻當工具）。</p></div>
+      <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b>: local randomisation / continuity — just-below and just-above are otherwise alike. <b>Positivity</b>: there are people on both sides of the cutoff. <b>Consistency</b>: the policy is a well-defined intervention.">​<b>可交換性</b>：局部隨機化／連續性——斷點上下兩側其他條件幾乎相同。<b>正性</b>：切點兩側都有人。<b>一致性</b>：政策是明確的介入。</p></div>
+      <div class="card"><h3 data-en="③ Where the &quot;exchangeability&quot; is borrowed from">③ 可交換性從哪借來</h3><p data-en="From the <b>arbitrariness of the threshold</b>: nobody can precisely control whether they land just below or just above 65, so crossing it is as-good-as-random in a narrow window.">來自<b>門檻的任意性</b>：沒人能精準控制自己剛好落在 65 歲的哪一側，所以在很窄的窗內，跨過門檻近似隨機。</p></div>
+      <div class="card"><h3 data-en="④ In What If">④ 對應《What If》</h3><p data-en="RDD is a natural experiment — see the chapters on confounding and randomised experiments. Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020). Free book online.">RDD 是一種自然實驗——可參照「混淆」與「隨機試驗」相關章節。Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020)。<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">免費電子書</a>。</p></div>
+    </div>
+  </section>
+
+  <section id="didwhatif" class="panel">
+    <h1 data-en="⑥ What if…? DiD in the language of counterfactuals">⑥ 如果……？用反事實的語言看「差異中的差異 DiD」</h1>
+    <p class="lead" data-en="For the treated group we want <b>Yᵃ⁼¹</b> (with the policy) vs their own <b>Yᵃ⁼⁰</b> (the policy never happened). We can't observe the second, so we borrow the control group's change as a stand-in for the treated group's would-be change.">
+      對受處置組，我們要的是<b>Yᵃ⁼¹</b>（有政策）vs 他們自己的<b>Yᵃ⁼⁰</b>（政策從沒發生）。第二個看不到，於是借<b>對照組的變化</b>來頂替「受處置組沒政策本來會有的變化」。
+    </p>
+    <div class="card scene"><h3 data-en="The treated group's missing counterfactual">受處置組那個看不到的反事實</h3><div id="whatifScene_did" class="chart"></div></div>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The <b>effect of treatment on the treated (ATT)</b>: in the treated group, observed post-change minus the change they would have had without the policy.">​<b>受處置者的效果（ATT）</b>：受處置組實際的前後變化，減掉他們「沒政策本來會有的變化」。</p></div>
+      <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b> takes the form of <b>parallel trends</b>: absent the policy, both groups would change by the same amount. <b>Positivity</b>: both groups exist pre and post. <b>Consistency</b>: a well-defined policy at a known time.">​<b>可交換性</b>以<b>平行趨勢</b>呈現：沒政策時兩組會一起變一樣多。<b>正性</b>：兩組前後期都有。<b>一致性</b>：政策在已知時點、定義明確。</p></div>
+      <div class="card"><h3 data-en="③ Where the &quot;exchangeability&quot; is borrowed from">③ 可交換性從哪借來</h3><p data-en="From the <b>control group's trend</b>. Differencing out fixed group gaps and the common time trend leaves the policy effect — <b>if</b> the trends really were parallel (check pre-trends in the event study).">來自<b>對照組的趨勢</b>。把固定的組間差與共同時間趨勢差掉，剩下的就是政策效果——<b>前提是</b>趨勢真的平行（用 event-study 看前期趨勢）。</p></div>
+      <div class="card"><h3 data-en="④ In What If">④ 對應《What If》</h3><p data-en="A controlled before-after comparison; relates to confounding and time-varying treatments. Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020). Free book online.">控制組前後比較；與「混淆」「時變治療」相關。Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020)。<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">免費電子書</a>。</p></div>
+    </div>
+  </section>
+
+  <section id="perrwhatif" class="panel">
+    <h1 data-en="⑥ What if…? PERR in the language of counterfactuals">⑥ 如果……？用反事實的語言看「事前事件率比 PERR」</h1>
+    <p class="lead" data-en="We want the treated group's <b>Yᵃ⁼¹</b> vs <b>Yᵃ⁼⁰</b>, but stable differences in frailty confound the contrast. PERR's trick: take the rate ratio in a <b>prior (untreated) period</b> and divide it out, so any <b>time-fixed, multiplicative</b> confounding cancels.">
+      我們要受處置組的<b>Yᵃ⁼¹</b> vs <b>Yᵃ⁼⁰</b>，但穩定的體質差異會混淆對比。PERR 的把戲：在<b>事前（未處置）期</b>也算一次率比、再相除，讓<b>時間不變、乘法型</b>的混淆相消。
+    </p>
+    <div class="card scene"><h3 data-en="Cancelling stable confounding by a ratio of ratios">用比值的比值消掉穩定混淆</h3><div id="whatifScene_perr" class="chart"></div></div>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The treatment's effect on the event rate ratio, <b>net of time-invariant frailty</b>. PERR = (post rate ratio) ÷ (prior rate ratio).">治療對事件率比的效果，<b>扣掉時間不變的體質</b>。PERR＝（事後率比）÷（事前率比）。</p></div>
+      <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b> is achieved <b>only if</b> confounding is time-fixed and acts multiplicatively (then it divides out). <b>Positivity</b>: both groups have events pre and post. <b>Consistency</b>: a defined treatment period.">只有當混淆<b>時間不變、且乘法作用</b>時，才達成<b>可交換性</b>（這樣才會相除消掉）。<b>正性</b>：兩組事前事後都有事件。<b>一致性</b>：處置期定義清楚。</p></div>
+      <div class="card"><h3 data-en="③ Where the &quot;exchangeability&quot; is borrowed from">③ 可交換性從哪借來</h3><p data-en="From the <b>prior period</b> itself: the prior rate ratio measures the stable confounding, which the division removes. It fails if confounding <b>changes over time</b> (then the prior period doesn't capture the post-period bias).">來自<b>事前期</b>本身：事前率比量到了穩定混淆，相除把它移掉。若混淆<b>會隨時間變</b>就失效（事前期捕捉不到事後的偏誤）。</p></div>
+      <div class="card"><h3 data-en="④ In What If">④ 對應《What If》</h3><p data-en="Confounding and ratio effect measures. Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020). Free book online.">混淆與比值型效應測度。Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020)。<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">免費電子書</a>。</p></div>
+    </div>
+  </section>
+
+  <section id="itswhatif" class="panel">
+    <h1 data-en="⑥ What if…? ITS in the language of counterfactuals">⑥ 如果……？用反事實的語言看「中斷時間序列 ITS」</h1>
+    <p class="lead" data-en="The counterfactual <b>Yᵃ⁼⁰</b> here is a projection: take the pre-intervention trend and extrapolate it as &quot;what would have happened if the intervention had never occurred.&quot; The effect is how far the observed path departs from that projection.">
+      這裡的反事實<b>Yᵃ⁼⁰</b>是一條投影：把介入前的趨勢外推，當作「如果沒介入會怎樣」。效果就是實際走勢偏離這條投影的幅度。
+    </p>
+    <div class="card scene"><h3 data-en="The counterfactual is the projected pre-trend">反事實＝投影出的介入前趨勢</h3><div id="whatifScene_its" class="chart"></div></div>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The <b>level change</b> and <b>slope change</b> at the intervention: observed minus the extrapolated counterfactual trend.">介入點的<b>水準跳變</b>與<b>斜率改變</b>：實際值減去外推的反事實趨勢。</p></div>
+      <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b> here means <b>no co-occurring events</b> at the same time (so the only thing that changed is the intervention). <b>Positivity</b>: enough periods before and after. <b>Consistency</b>: a sharp, well-defined intervention time.">這裡的<b>可交換性</b>＝<b>沒有同時發生的時代事件</b>（唯一改變的只有這個介入）。<b>正性</b>：前後期數夠。<b>一致性</b>：介入時點尖銳、明確。</p></div>
+      <div class="card"><h3 data-en="③ Where the &quot;exchangeability&quot; is borrowed from">③ 可交換性從哪借來</h3><p data-en="From the population's <b>own past</b>: the pre-trend is the counterfactual. It fails if something else changed at the same moment, or if the trend isn't the right shape (autocorrelation, seasonality).">來自族群<b>自己的過去</b>：介入前趨勢就是反事實。若同時還有別的事改變、或趨勢形狀抓錯（自相關、季節）就失效。</p></div>
+      <div class="card"><h3 data-en="④ In What If">④ 對應《What If》</h3><p data-en="A before-after design with a projected counterfactual; relates to time-varying treatments. Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020). Free book online.">前後比較＋投影反事實；與時變治療相關。Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020)。<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">免費電子書</a>。</p></div>
+    </div>
+  </section>
+
+  <section id="titwhatif" class="panel">
+    <h1 data-en="⑥ What if…? TiT in the language of counterfactuals">⑥ 如果……？用反事實的語言看「趨勢中的趨勢 TiT」</h1>
+    <p class="lead" data-en="If a drug truly causes an outcome, then where its uptake rises faster, the outcome should rise faster too. TiT compares the outcome trend across strata that adopt the drug at different speeds — a counterfactual logic that survives some unmeasured confounding.">
+      如果一個藥真的致病，那在「採用率漲得快」的層，結果也該漲得快。TiT 比較不同採用速度的層之間的結果趨勢——這套反事實邏輯能扛住部分未測混淆。
+    </p>
+    <div class="card scene"><h3 data-en="Does the outcome trend track the exposure trend?">結果趨勢有沒有跟著暴露趨勢走？</h3><div id="whatifScene_tit" class="chart"></div></div>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The exposure–outcome odds ratio, identified from how steeply outcomes rise in fast-adopting vs slow-adopting strata.">暴露–結果的勝算比，從「快採用 vs 慢採用」層的結果上升陡度差異辨識。</p></div>
+      <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b> is weakened to: no <b>unmeasured confounder whose trend correlates across strata</b>. <b>Positivity</b>: exposure varies over time and across strata. <b>Consistency</b>: a well-defined exposure; outcome rare.">​<b>可交換性</b>放寬成：沒有「<b>跨層相關趨勢</b>」的未測混淆。<b>正性</b>：暴露隨時間、跨層都有變化。<b>一致性</b>：暴露定義明確、結果罕見。</p></div>
+      <div class="card"><h3 data-en="③ Where the &quot;exchangeability&quot; is borrowed from">③ 可交換性從哪借來</h3><p data-en="From the <b>calendar-time trend</b> in uptake: a confounder only biases TiT if its trend happens to track the exposure trend across strata — a narrower requirement than &quot;no confounding&quot;.">來自採用率的<b>日曆時間趨勢</b>：混淆要偏到 TiT，得剛好其趨勢跨層跟著暴露趨勢走——比「無混淆」窄得多的要求。</p></div>
+      <div class="card"><h3 data-en="④ In What If">④ 對應《What If》</h3><p data-en="Confounding and trend-based identification. Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020). Free book online.">混淆與以趨勢辨識。Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020)。<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">免費電子書</a>。</p></div>
+    </div>
+  </section>
+
+  <section id="ccwwhatif" class="panel">
+    <h1 data-en="⑥ What if…? CCW in the language of counterfactuals">⑥ 如果……？用反事實的語言看「複製-設限-加權 CCW」</h1>
+    <p class="lead" data-en="The question is about <b>sustained strategies</b>: what if everyone followed &quot;start early&quot; (Yᵍ¹) vs &quot;start late&quot; (Yᵍ⁰)? Treatment unfolds over time, so naive grouping invites immortal-time bias. CCW clones everyone into both strategies at time zero, censors deviations, and re-weights — the g-methods recipe.">
+      問題是關於<b>持續策略</b>：如果大家都「早起始」（Yᵍ¹）vs 都「晚起始」（Yᵍ⁰）會怎樣？治療是隨時間展開的，直接分組會招來 immortal-time 偏誤。CCW 在時間零點把每個人複製到兩種策略、偏離就設限、再加權——就是 g-methods 的配方。
+    </p>
+    <div class="card scene"><h3 data-en="Counterfactual strategies, aligned at time zero">對齊時間零點的反事實策略</h3><div id="whatifScene_ccw" class="chart"></div></div>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The contrast of <b>treatment strategies</b> Yᵍ (e.g. early vs late initiation; stay-on vs discontinue) — a per-protocol effect over the whole population.">​<b>治療策略</b> Yᵍ 的對比（如早 vs 晚起始；持續 vs 停藥）——全體的依計畫效果。</p></div>
+      <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Sequential (time-varying) exchangeability</b>: at each time, no unmeasured confounding of the next treatment step, handled by inverse-probability-of-censoring weights. <b>Positivity</b>: each strategy is possible at each time. <b>Consistency</b>: well-defined strategies + a clear time zero.">​<b>序列（時變）可交換性</b>：每個時點下一步治療無未測混淆，用反設限機率加權處理。<b>正性</b>：每個時點各策略都可能。<b>一致性</b>：策略定義明確＋明確時間零點。</p></div>
+      <div class="card"><h3 data-en="③ Where the &quot;exchangeability&quot; is borrowed from">③ 可交換性從哪借來</h3><p data-en="From <b>measured time-varying covariates</b> via IPCW (g-methods), plus <b>time-zero alignment</b> that removes immortal time. For &quot;early vs late&quot;, both arms eventually treat, so confounding by indication largely cancels.">來自<b>已測的時變共變項</b>（IPCW，g-methods），加上<b>時間零點對齊</b>消掉 immortal time。「早 vs 晚」時兩臂最終都治療，因適應症而生的混淆大幅相消。</p></div>
+      <div class="card"><h3 data-en="④ In What If">④ 對應《What If》</h3><p data-en="Part III: time-varying treatments, IP weighting of marginal structural models, and target trial emulation. Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020). Free book online.">第三部：時變治療、邊際結構模型的 IP 加權、目標試驗模擬。Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020)。<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">免費電子書</a>。</p></div>
+    </div>
+  </section>
+
+  <section id="seqwhatif" class="panel">
+    <h1 data-en="⑥ What if…? Sequential trials in the language of counterfactuals">⑥ 如果……？用反事實的語言看「序列試驗 Seq」</h1>
+    <p class="lead" data-en="What if we could run the randomised trial we can't run? At each eligibility time, emulate a target trial: <b>initiate now</b> (Yᵃ⁼¹) vs <b>not yet</b> (Yᵃ⁼⁰), reset the clock to time zero, follow forward, then pool. This is target-trial emulation, and it sidesteps immortal-time bias.">
+      如果能把「做不到的隨機試驗」做出來呢？在每個資格時點模擬一場目標試驗：<b>當下啟動</b>（Yᵃ⁼¹）vs <b>先不啟動</b>（Yᵃ⁼⁰），把時鐘歸零、往前追蹤、再合併。這就是目標試驗模擬，並避開 immortal-time 偏誤。
+    </p>
+    <div class="card scene"><h3 data-en="One emulated trial per eligibility time, then pooled">每個資格時點一場模擬試驗，再合併</h3><div id="whatifScene_seq" class="chart"></div></div>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The effect of a <b>point treatment decision</b> (treat now vs not), averaged over the eligibility-time trials.">​<b>點治療決定</b>（當下治療 vs 不治療）的效果，跨資格時點各試驗合併。</p></div>
+      <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Baseline conditional exchangeability</b> within each emulated trial (adjust baseline covariates by IPTW). <b>Positivity</b>: at each time, eligible people can both initiate and not. <b>Consistency</b>: a clear time zero per trial — the heart of target-trial emulation.">每場模擬試驗內的<b>基線條件可交換性</b>（用 IPTW 校正基線共變項）。<b>正性</b>：每個時點合格者可啟動也可不啟動。<b>一致性</b>：每場有明確時間零點——目標試驗模擬的核心。</p></div>
+      <div class="card"><h3 data-en="③ Where the &quot;exchangeability&quot; is borrowed from">③ 可交換性從哪借來</h3><p data-en="From <b>explicitly emulating a trial</b> at each eligibility time and aligning time zero. The naive &quot;ever vs never&quot; contrast is biased because the ever-treated had to survive long enough to treat (immortal time); sequential trials remove that.">來自在每個資格時點<b>明確模擬一場試驗</b>並對齊時間零點。天真的「曾 vs 從未」會偏，因為曾治療者得活到能治療（immortal time）；序列試驗把它移除。</p></div>
+      <div class="card"><h3 data-en="④ In What If">④ 對應《What If》</h3><p data-en="Chapter 22 (target trial emulation) &amp; the g-methods of Part III. Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020). Free book online.">第 22 章（目標試驗模擬）＋第三部 g-methods。Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020)。<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">免費電子書</a>。</p></div>
+    </div>
+  </section>
+
+  <section id="cctcwhatif" class="panel">
+    <h1 data-en="⑥ What if…? CCTC in the language of counterfactuals">⑥ 如果……？用反事實的語言看「案例交叉與時間對照 CCTC」</h1>
+    <p class="lead" data-en="Instead of comparing different people, compare the <b>same person with themselves</b>: was exposure higher in the hazard window just before the event (Yᵃ⁼¹) than in an earlier reference window (Yᵃ⁼⁰)? Being one's own control cancels everything that doesn't change over time. CCTC further removes the exposure's calendar-time trend.">
+      不比不同的人，而是讓<b>同一個人跟自己比</b>：事件前的危險窗暴露（Yᵃ⁼¹）有沒有比更早的參考窗（Yᵃ⁼⁰）多？自己當對照，消掉所有不隨時間變的東西。CCTC 再扣掉暴露的日曆時間趨勢。
+    </p>
+    <div class="card scene"><h3 data-en="The same person, hazard vs reference window">同一個人：危險窗 vs 參考窗</h3><div id="whatifScene_cctc" class="chart"></div></div>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The effect of a <b>transient exposure</b> on the rate of an acute event, as a within-person odds ratio (with the time trend divided out by controls).">​<b>短暫暴露</b>對急性事件率的效果，以個人內勝算比表示（時間趨勢用對照除掉）。</p></div>
+      <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Within-person exchangeability</b>: a person's windows are comparable except for exposure (so time-fixed confounding cancels). <b>Positivity</b>: the person is exposed in some windows, not others. <b>Consistency</b>: a transient, well-defined exposure window.">​<b>個人內可交換性</b>：同一人各窗除了暴露外可比（時間不變混淆相消）。<b>正性</b>：此人有些窗暴露、有些沒。<b>一致性</b>：暴露短暫、窗定義明確。</p></div>
+      <div class="card"><h3 data-en="③ Where the &quot;exchangeability&quot; is borrowed from">③ 可交換性從哪借來</h3><p data-en="From <b>self-control</b> (time-fixed factors cancel) plus a <b>control series / future cases</b> that carry only the exposure time trend — CCTC divides that trend out, leaving the causal part.">來自<b>自我對照</b>（時間不變因子相消）＋一條只帶暴露時間趨勢的<b>對照序列／未來 case</b>——CCTC 把趨勢除掉，剩下因果部分。</p></div>
+      <div class="card"><h3 data-en="④ In What If">④ 對應《What If》</h3><p data-en="Self-controlled, conditional exchangeability; confounding &amp; selection bias chapters. Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020). Free book online.">自我對照、條件可交換性；混淆與選擇偏誤章。Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020)。<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">免費電子書</a>。</p></div>
+    </div>
+  </section>
+
+  <section id="ccwhatif" class="panel">
+    <h1 data-en="⑥ What if…? Case-control in the language of counterfactuals">⑥ 如果……？用反事實的語言看「病例對照 CC」</h1>
+    <p class="lead" data-en="A valid case-control study is just an <b>efficient sampling</b> of a cohort that emulates a target trial. The counterfactual contrast (Yᵃ⁼¹ vs Yᵃ⁼⁰) lives in the source population; we recover the odds ratio cheaply by measuring exposure only in cases and a representative sample of controls.">
+      一個有效的病例對照，其實是對「模擬目標試驗的世代」做<b>有效率的抽樣</b>。反事實對比（Yᵃ⁼¹ vs Yᵃ⁼⁰）存在於來源族群；我們只在病例與一組有代表性的對照量暴露，就能省力地還原勝算比。
+    </p>
+    <div class="card scene"><h3 data-en="Sampling the source population's two worlds">對來源族群的兩個世界抽樣</h3><div id="whatifScene_cc" class="chart"></div></div>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The exposure odds ratio (≈ the risk ratio when the outcome is rare), as an efficient estimate of the cohort/target-trial effect.">暴露勝算比（結果罕見時 ≈ 風險比），作為世代／目標試驗效果的有效率估計。</p></div>
+      <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b>: measured confounders adjusted (no unmeasured confounding), and controls drawn from the source population. <b>Positivity</b>: exposure varies in both groups. <b>Consistency</b>: a well-defined exposure and time zero (new users, not prevalent).">​<b>可交換性</b>：已測混淆校正（無未測混淆）、對照取自來源族群。<b>正性</b>：兩組暴露都有變化。<b>一致性</b>：暴露與時間零點定義明確（新使用者、非既有使用者）。</p></div>
+      <div class="card"><h3 data-en="③ Where the &quot;exchangeability&quot; is borrowed from">③ 可交換性從哪借來</h3><p data-en="From a <b>well-designed sample</b>: controls represent the population that produced the cases, exposure is measured the same way in both, and confounders are adjusted/matched — exactly a cohort that emulates a target trial, just sampled.">來自<b>設計良好的抽樣</b>：對照代表產生病例的族群、兩組暴露量得一樣、混淆校正或配對——就是一個模擬目標試驗的世代，只是抽樣而已。</p></div>
+      <div class="card"><h3 data-en="④ In What If">④ 對應《What If》</h3><p data-en="Case-control as cohort sampling; selection bias &amp; Chapter 22 (target trial). Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020). Free book online.">病例對照＝世代抽樣；選擇偏誤章＋第 22 章（目標試驗）。Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020)。<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">免費電子書</a>。</p></div>
+    </div>
+  </section>
+
+  <section id="sccswhatif" class="panel">
+    <h1 data-en="⑥ What if…? SCCS in the language of counterfactuals">⑥ 如果……？用反事實的語言看「自身對照病例系列 SCCS」</h1>
+    <p class="lead" data-en="Use only people who had the event, and make each their own control: was the event more likely in their <b>exposed</b> time (Yᵃ⁼¹) than their <b>unexposed</b> time (Yᵃ⁼⁰)? A within-person before-after that cancels <b>every</b> time-fixed factor — genes, constitution, socioeconomics — automatically.">
+      只用發生過事件的人，每個人當自己的對照：事件比較容易落在他的<b>暴露時段</b>（Yᵃ⁼¹）還是<b>非暴露時段</b>（Yᵃ⁼⁰）？這是個人內的前後比，<b>所有</b>不隨時間變的因子（基因、體質、社經）都自動相消。
+    </p>
+    <div class="card scene"><h3 data-en="The same person, exposed vs unexposed time">同一個人：暴露時段 vs 非暴露時段</h3><div id="whatifScene_sccs" class="chart"></div></div>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The within-person <b>incidence rate ratio</b>: the event rate in the post-exposure risk window relative to baseline.">個人內的<b>相對速率（IRR）</b>：暴露後危險窗的事件率相對於基線。</p></div>
+      <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b> within person for all time-fixed factors (they cancel); time-varying ones (age, season) handled by splitting. <b>Positivity</b>: the person has both exposed and unexposed time. <b>Consistency</b>: a transient exposure that the event itself doesn't change.">個人內對所有時間不變因子<b>可交換</b>（自動相消）；時變因子（年齡、季節）靠切分。<b>正性</b>：此人有暴露也有非暴露時段。<b>一致性</b>：暴露短暫、且事件本身不改變日後暴露。</p></div>
+      <div class="card"><h3 data-en="③ Where the &quot;exchangeability&quot; is borrowed from">③ 可交換性從哪借來</h3><p data-en="From <b>conditioning on the person</b>: a conditional-Poisson likelihood drops each person's baseline rate, so all stable confounding disappears by construction. The catch: the event must not alter later exposure.">來自<b>條件在「人」上</b>：條件 Poisson 概似消掉每個人的基線速率，所有穩定混淆依設計消失。代價：事件不可改變日後暴露。</p></div>
+      <div class="card"><h3 data-en="④ In What If">④ 對應《What If》</h3><p data-en="Self-controlled designs &amp; conditional exchangeability; confounding chapters. Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020). Free book online.">自我對照設計與條件可交換性；混淆章。Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020)。<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">免費電子書</a>。</p></div>
+    </div>
+  </section>
+
   <!-- ===================== 8. IV vs RDD：怎麼選 ===================== -->
   <section id="choose" class="panel">
     <h1 data-en="Many designs, one vaccine question — which to use?">怎麼選：同一個疫苗問題，多種攻法</h1>
@@ -3098,6 +3256,7 @@
 
     <p class="muted" id="refsIntro" data-en="References for this page:">本頁的參考文獻：</p>
     <ul class="reflist" id="refsList">
+      <li data-ref="all"><b data-en="Causal-inference foundations (tab ⑥)">因果推論基礎（分頁 ⑥）</b> · Hernán, M. A., &amp; Robins, J. M. (2020). <i>Causal Inference: What If.</i> Boca Raton: Chapman &amp; Hall/CRC. <span data-en="〔counterfactuals; exchangeability / positivity / consistency; g-methods; target trial — free book: hsph.harvard.edu/miguel-hernan/causal-inference-book〕">〔反事實；可交換性／正性／一致性；g-methods；目標試驗 —— 免費電子書：<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">hsph.harvard.edu/miguel-hernan/causal-inference-book</a>〕</span></li>
       <li data-ref="iv">Homayra, F., et al. (2024). Comparative Analysis of Instrumental Variables on the Assignment of Buprenorphine/Naloxone or Methadone for the Treatment of Opioid Use Disorder. <i>Epidemiology, 35</i>(2), 218–231. <span data-en="〔A1–A4b assumption framework〕">〔A1–A4b 假設檢驗框架〕</span></li>
       <li data-ref="iv">Singh, A., Hosanagar, K., &amp; Gandhi, A. (n.d.). <i>Machine Learning Instrument Variables for Causal Inference.</i> University of Pennsylvania. <span data-en="〔instrument synthesis〕">〔合成工具〕</span></li>
       <li data-ref="iv">Bakhitov, E. (2025). On machine learning instrumental variable estimators. <i>Economics Letters.</i> <span data-en="〔properties of ML IV estimators〕">〔ML 工具變數估計量的性質〕</span></li>
@@ -3169,7 +3328,7 @@
   </footer>
 </main>
 
-<script src="i18n.js?v=61"></script>
-<script src="app.js?v=61"></script>
+<script src="i18n.js?v=62"></script>
+<script src="app.js?v=62"></script>
 </body>
 </html>

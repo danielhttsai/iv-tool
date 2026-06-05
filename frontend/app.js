@@ -33,6 +33,10 @@ const PANEL_INIT = {
   ccassume: () => initCcAssume(), ccml: () => initCcMl(),
   sccslearn: () => initSccsLearn(), sccsplay: () => initSccsPlay(), sccsanalyze: () => initSccsAnalyze(),
   sccsassume: () => initSccsAssume(), sccsml: () => initSccsMl(),
+  whatif: () => drawWhatif("iv"), rddwhatif: () => drawWhatif("rdd"), didwhatif: () => drawWhatif("did"),
+  perrwhatif: () => drawWhatif("perr"), itswhatif: () => drawWhatif("its"), titwhatif: () => drawWhatif("tit"),
+  ccwwhatif: () => drawWhatif("ccw"), seqwhatif: () => drawWhatif("seq"), cctcwhatif: () => drawWhatif("cctc"),
+  ccwhatif: () => drawWhatif("cc"), sccswhatif: () => drawWhatif("sccs"),
   choose: () => initChoose(),
 };
 let curMethod = "iv", curSub = "learn";
@@ -1849,7 +1853,7 @@ function filterRefs(method) {
   if (!list) return;
   const showAll = refsContext === "choose";
   list.querySelectorAll("li").forEach((li) => {
-    li.style.display = (showAll || li.dataset.ref === refsContext) ? "" : "none";
+    li.style.display = (showAll || li.dataset.ref === refsContext || li.dataset.ref === "all") ? "" : "none";
   });
   if (intro) {
     const m = METHOD_REF[refsContext];
@@ -4132,6 +4136,96 @@ function drawSccsSelf(s) {
 }
 
 // ======================================================================
+// ⑥ What if — every method in the language of counterfactuals
+// (original plain-language take on Hernán & Robins, Causal Inference: What If;
+//  no text is copied from the book). One small counterfactual-contrast diagram
+//  per method, parameterised by the WHATIF config table.
+// ======================================================================
+const WHATIF = {
+  iv:   { wa: { zh: "如果「全部都接種」Yᵃ⁼¹", en: "if everyone were treated  Yᵃ⁼¹" },
+          wb: { zh: "如果「全部都不接種」Yᵃ⁼⁰", en: "if no one were treated  Yᵃ⁼⁰" },
+          pop: { zh: "順從者（被工具推動才改變治療的人）", en: "compliers (those the instrument moves)" },
+          exch: { zh: "工具 Z 近似隨機，且只透過治療影響結果（排除限制）", en: "instrument Z is as-good-as-random and affects Y only through treatment (exclusion)" } },
+  rdd:  { wa: { zh: "如果都拿到資格 Yᵃ⁼¹", en: "if all eligible  Yᵃ⁼¹" },
+          wb: { zh: "如果都沒拿到資格 Yᵃ⁼⁰", en: "if none eligible  Yᵃ⁼⁰" },
+          pop: { zh: "剛好落在斷點（65 歲）附近的人", en: "people right at the cutoff (age 65)" },
+          exch: { zh: "切點附近「局部隨機化／連續性」——上下兩側的人其他條件幾乎一樣", en: "local randomisation / continuity at the cutoff — just-below ≈ just-above" } },
+  did:  { wa: { zh: "受處置組「有政策」Yᵃ⁼¹", en: "treated group with the policy  Yᵃ⁼¹" },
+          wb: { zh: "受處置組「沒政策」的反事實 Yᵃ⁼⁰", en: "treated group's no-policy counterfactual  Yᵃ⁼⁰" },
+          pop: { zh: "受處置者（ATT）", en: "the treated (ATT)" },
+          exch: { zh: "平行趨勢——受處置組「沒政策的變化」＝對照組的變化", en: "parallel trends — the treated's no-policy change equals the control group's change" } },
+  perr: { wa: { zh: "處置組「有用藥」Yᵃ⁼¹", en: "treated group on drug  Yᵃ⁼¹" },
+          wb: { zh: "處置組「沒用藥」的反事實 Yᵃ⁼⁰", en: "treated group's no-drug counterfactual  Yᵃ⁼⁰" },
+          pop: { zh: "處置者，扣掉時間不變的體質差異", en: "the treated, net of time-fixed frailty" },
+          exch: { zh: "混淆「時間不變、且乘法型」——比值的比值把穩定的體質相消", en: "confounding is time-fixed and multiplicative — the ratio-of-ratios cancels stable frailty" } },
+  its:  { wa: { zh: "介入後實際走勢 Yᵃ⁼¹", en: "observed post-intervention path  Yᵃ⁼¹" },
+          wb: { zh: "介入前趨勢外推的反事實 Yᵃ⁼⁰", en: "pre-trend extrapolated counterfactual  Yᵃ⁼⁰" },
+          pop: { zh: "同一族群、介入前後", en: "the same population, before vs after" },
+          exch: { zh: "沒有同時發生的時代事件——介入前的趨勢就是「沒介入會怎樣」", en: "no co-occurring events — the pre-trend IS what would have happened without the intervention" } },
+  tit:  { wa: { zh: "暴露上升快的層 Yᵃ⁼¹", en: "strata where exposure rises fast  Yᵃ⁼¹" },
+          wb: { zh: "暴露上升慢的層 Yᵃ⁼⁰", en: "strata where exposure rises slow  Yᵃ⁼⁰" },
+          pop: { zh: "跨累積暴露機率（CPE）層的對比", en: "contrast across cumulative-probability-of-exposure strata" },
+          exch: { zh: "若暴露致病，結果率該在「暴露漲得快的層」也漲得快；對無跨層相關趨勢的混淆穩健", en: "if exposure is causal, outcomes rise faster where exposure rises faster; robust to confounders without correlated cross-stratum trends" } },
+  ccw:  { wa: { zh: "如果都「早起始」策略 Yᵍ¹", en: "if all followed the early-start strategy  Yᵍ¹" },
+          wb: { zh: "如果都「晚起始」策略 Yᵍ⁰", en: "if all followed the late-start strategy  Yᵍ⁰" },
+          pop: { zh: "全體，比較兩種「持續／動態策略」", en: "everyone, contrasting two sustained / dynamic strategies" },
+          exch: { zh: "序列（時變）可交換性，用 IPCW（g-methods）處理；時間零點對齊避免 immortal time", en: "sequential (time-varying) exchangeability handled by IPCW (g-methods); time-zero alignment avoids immortal time" } },
+  seq:  { wa: { zh: "如果都「當下啟動」Yᵃ⁼¹", en: "if all initiated now  Yᵃ⁼¹" },
+          wb: { zh: "如果都「先不啟動」Yᵃ⁼⁰", en: "if all did not yet initiate  Yᵃ⁼⁰" },
+          pop: { zh: "每個資格月各開一場試驗、對齊時間零點再合併", en: "one emulated trial per eligibility month, time-zero aligned, then pooled" },
+          exch: { zh: "每場試驗在基線條件可交換——這就是 target trial emulation", en: "baseline conditional exchangeability within each trial — i.e. target trial emulation" } },
+  cctc: { wa: { zh: "同一人「危險窗有暴露」Yᵃ⁼¹", en: "same person, exposed in the hazard window  Yᵃ⁼¹" },
+          wb: { zh: "同一人「參考窗沒暴露」Yᵃ⁼⁰", en: "same person, unexposed in the reference window  Yᵃ⁼⁰" },
+          pop: { zh: "每個 case 自己當對照（個人內對比）", en: "each case is their own control (within-person contrast)" },
+          exch: { zh: "自我對照→時間不變的混淆全部相消；CCTC 再扣掉暴露的時間趨勢（時變混淆）", en: "self-control cancels all time-fixed confounding; CCTC further removes the exposure time trend (a time-varying confounder)" } },
+  cc:   { wa: { zh: "來源族群「有暴露」Yᵃ⁼¹", en: "source population, exposed  Yᵃ⁼¹" },
+          wb: { zh: "來源族群「沒暴露」Yᵃ⁼⁰", en: "source population, unexposed  Yᵃ⁼⁰" },
+          pop: { zh: "對「模擬目標試驗的世代」做病例對照抽樣", en: "case-control sampling of a target-trial-emulating cohort" },
+          exch: { zh: "對照代表產生病例的來源族群＋把已測混淆校正掉（罕見時 OR≈RR）", en: "controls represent the source population + measured confounding adjusted (OR ≈ RR when rare)" } },
+  sccs: { wa: { zh: "同一人「暴露時段」Yᵃ⁼¹", en: "same person, exposed time  Yᵃ⁼¹" },
+          wb: { zh: "同一人「非暴露時段」Yᵃ⁼⁰", en: "same person, unexposed time  Yᵃ⁼⁰" },
+          pop: { zh: "只用 case、每個人當自己的對照", en: "cases only, each their own control" },
+          exch: { zh: "個人內→所有時間不變因子自動相消；年齡/季節等時變因子靠切分", en: "within-person → all time-fixed factors cancel; time-varying ones (age, season) handled by splitting" } },
+};
+
+const whatifShown = new Set();
+function drawWhatif(method) {
+  const id = "whatifScene_" + method;
+  if (!document.getElementById(id)) return;
+  whatifShown.add(method);
+  const c = WHATIF[method]; if (!c) return;
+  const L = (o) => (lang() === "en" ? o.en : o.zh);
+  const TEAL2 = TEAL, GREY = "#5b7aa8", yA = 2.55, yB = 1.05;
+  const shapes = [
+    { type: "rect", x0: 0.2, x1: 6.6, y0: yA - 0.34, y1: yA + 0.34, fillcolor: "rgba(63,130,104,.13)", line: { color: TEAL2, width: 1 } },
+    { type: "rect", x0: 0.2, x1: 6.6, y0: yB - 0.34, y1: yB + 0.34, fillcolor: "rgba(91,122,168,.13)", line: { color: GREY, width: 1 } },
+    { type: "line", x0: 7.25, x1: 7.25, y0: yB, y1: yA, line: { color: RED, width: 2 } },
+    { type: "line", x0: 7.1, x1: 7.4, y0: yA, y1: yA, line: { color: RED, width: 2 } },
+    { type: "line", x0: 7.1, x1: 7.4, y0: yB, y1: yB, line: { color: RED, width: 2 } },
+    // the design recovers the contrast only here → a highlighted band
+    { type: "rect", x0: 0.2, x1: 6.6, y0: -0.05, y1: 0.5, fillcolor: "rgba(245,158,11,.10)", line: { color: "rgba(245,158,11,.5)", width: 1 } },
+  ];
+  const traces = [
+    { x: [6.0], y: [yA], mode: "markers", type: "scatter", name: tr("結果：治療世界", "outcome: treated world"), marker: { color: TEAL2, size: 15 } },
+    { x: [6.0], y: [yB], mode: "markers", type: "scatter", name: tr("結果：未治療世界", "outcome: untreated world"), marker: { color: GREY, size: 15 } },
+  ];
+  const anns = [
+    Object.assign(_lbl(0.45, yA, L(c.wa), TEAL2, 10), { xanchor: "left" }),
+    Object.assign(_lbl(0.45, yB, L(c.wb), GREY, 10), { xanchor: "left" }),
+    Object.assign(_lbl(7.55, (yA + yB) / 2, tr("因果效果<br>＝兩個反事實的對比", "causal effect<br>= contrast of the two"), RED, 9.5), { xanchor: "left" }),
+    Object.assign(_lbl(0.45, 0.22, tr("這個設計救回對比的「對象／位置」：", "where/whom the design recovers it: ") + "<b>" + L(c.pop) + "</b>", "#b45309", 9.5), { xanchor: "left" }),
+    _lbl(3.4, -0.55, tr("借來的「可交換性」：", "the borrowed exchangeability: ") + "<b>" + L(c.exch) + "</b>", INK, 9.5),
+    Object.assign(_lbl(0.2, 3.25, tr("兩個世界（反事實）", "two worlds (counterfactuals)"), SLATE, 9), { xanchor: "left" }),
+  ];
+  Plotly.react(id, traces, schemaLayout({
+    height: 300, shapes, annotations: anns, showlegend: true, legend: { orientation: "h", y: 1.18 },
+    xaxis: { visible: false, range: [0, 9.2], fixedrange: true },
+    yaxis: { visible: false, range: [-0.85, 3.4] },
+    margin: { t: 28, r: 12, b: 30, l: 12 },
+  }), SCENE_CFG);
+}
+
+// ======================================================================
 // Sequential trials — tabs ①–⑤
 // ======================================================================
 const seqState = { source: null, columns: [], req: null };
@@ -4462,6 +4556,7 @@ window.addEventListener("iv-lang", async () => {
   if (sccsAnalyzeReady) runSccsAnalyze();              // SCCS ③ analysis + dashboard
   else if (sccsAssumeReady) runSccsAssumptions(sccsState.req);
   if (sccsSelfCache) drawSccsSelf(sccsSelfCache);      // SCCS ⑤ ML (re-render cache)
+  whatifShown.forEach((m) => drawWhatif(m));            // ⑥ What-if diagrams (re-render)
   if (chooseReady) { drawChooseChart(); renderDtree(); } // six-method chart + decision tree
 });
 
