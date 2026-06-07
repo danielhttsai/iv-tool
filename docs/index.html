@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>真實世界證據與準實驗工具箱 RWE and Quasi-experimental Toolbox</title>
-<link rel="stylesheet" href="styles.css?v=67" />
+<link rel="stylesheet" href="styles.css?v=68" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 <script src="pyodide-bridge.js?v=29"></script>
@@ -12,7 +12,7 @@
 </head>
 <body>
 <header class="topbar">
-  <div class="brand"><img class="brand-logo" src="assets/phdc-logo.png" alt="PHDc · Population Health Data Center" title="Population Health Data Center" /><span data-en="RWE &amp; Quasi-experimental toolbox">真實世界證據與準實驗工具箱</span> <span>IV</span> · <span>RDD</span> · <span>DiD</span> · <span>PERR</span> · <span>ITS</span> · <span>TiT</span> · <span>CCW</span> · <span>Seq</span> · <span>CCTC</span> · <span>CC</span> · <span>SCCS</span> · <span>ACNU</span> · <span>PNU</span></div>
+  <div class="brand"><img class="brand-logo" src="assets/phdc-logo.png" alt="PHDc · Population Health Data Center" title="Population Health Data Center" /><span data-en="RWE &amp; Quasi-experimental toolbox">真實世界證據與準實驗工具箱</span> <span>IV</span> · <span>RDD</span> · <span>DiD</span> · <span>PERR</span> · <span>ITS</span> · <span>TiT</span> · <span>CCW</span> · <span>Seq</span> · <span>CCTC</span> · <span>CC</span> · <span>SCCS</span> · <span>ACNU</span> · <span>PNU</span> · <span>NC</span></div>
   <nav class="tabs">
     <label class="method-pick"><span data-en="Method">方法</span>
       <select id="methodSelect">
@@ -29,6 +29,7 @@
         <option value="sccs" data-en="SCCS · Self-controlled case series">SCCS · 自身對照病例系列</option>
         <option value="acnu" data-en="ACNU · Active-comparator new-user">ACNU · 主動對照新使用者</option>
         <option value="pnu" data-en="PNU · Prevalent new-user">PNU · 盛行新使用者</option>
+        <option value="nc" data-en="NC · Negative control &amp; proximal">NC · 陰性對照與近端因果</option>
       </select>
     </label>
     <div class="subtabs">
@@ -3213,6 +3214,152 @@
     </div>
   </section>
 
+  <!-- ===================== NC ① 是什麼 ===================== -->
+  <section id="nclearn" class="panel">
+    <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1 data-en="Negative controls: detect — and even correct — unmeasured confounding">陰性對照：偵測——甚至校正——未測的混淆</h1>
+    <p class="lead" data-en="We want the causal effect of vaccination A on outcome Y, but an <b>unmeasured confounder</b> U (health / care-seeking) drives both, so a naive comparison is biased. Two <b>negative controls</b> help: a <b>negative-control outcome (NCO, W)</b> the vaccine cannot affect, and a <b>negative-control exposure (NCE, Z)</b> that cannot affect Y — both still associated with U. <b>(1) Detect</b>: a naive 'A → W' should be 0; if it isn't, that's the bias signal (Lipsitch 2010). <b>(2) Correct</b>: because W and Z are proxies of U, <b>double negative control / proximal causal inference (P2SLS)</b> backs out U's effect and recovers the true A → Y, even though U was never measured (Miao 2018; regression-based PCI 2025).">
+      我們要估「接種 A 對結果 Y 的因果效應」，但有個<b>沒測到的混淆 U</b>（健康／就醫傾向）同時影響兩者，天真比較就會偏。
+      兩個<b>陰性對照</b>能幫忙：一個疫苗<b>不可能影響</b>的<b>陰性對照結果（NCO，W）</b>，與一個<b>不可能影響 Y</b> 的
+      <b>陰性對照暴露（NCE，Z）</b>——兩者都仍與 U 相關。<b>(1) 偵測</b>：天真估「A → W」本應為 0；若不是，就是偏誤的警訊
+      （Lipsitch 2010）。<b>(2) 校正</b>：因為 W、Z 都是 U 的代理，<b>雙陰性對照／近端因果（P2SLS）</b>能把 U 的效應解出來、
+      還原真正的 A → Y——即使 U 從未被測到（Miao 2018；regression-based PCI 2025）。
+    </p>
+
+    <div class="card scene">
+      <h3 data-en="Detect (A→W should be 0) and correct (proximal recovers the truth)">偵測（A→W 應為 0）與校正（近端因果還原真值）</h3>
+      <div id="ncScene" class="chart"></div>
+    </div>
+
+    <details class="term">
+      <summary data-en="Show terminology">看專有名詞解釋</summary>
+      <div class="tdef">
+        <h4>陰性對照結果／暴露 <span class="en">negative-control outcome / exposure (NCO / NCE)</span></h4>
+        <p data-en="<b>Plain:</b> an outcome the exposure cannot cause (NCO), and an exposure that cannot cause the outcome (NCE) — both share the confounder.<br /><b>Why it matters:</b> a non-null association where the truth is null reveals confounding; the pair also enables proximal correction.<br /><b>Example:</b> NCO = a pre-vaccination event; NCE = a health-related exposure that can't affect Y.<br /><b>Origin:</b> Lipsitch, Tchetgen Tchetgen &amp; Cohen 2010.">
+          <b>白話：</b>一個暴露不可能造成的結果（NCO）、一個不可能造成結果的暴露（NCE）——兩者都和混淆同源。<br />
+          <b>為什麼重要：</b>真值為 0 卻看到關聯，就揭露了混淆；這一對還能用來做近端校正。<br />
+          <b>例子：</b>NCO＝接種前的事件；NCE＝與健康相關但不影響 Y 的暴露。<br />
+          <b>源頭：</b>Lipsitch, Tchetgen Tchetgen &amp; Cohen 2010。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>近端因果推論／混淆橋 <span class="en">proximal causal inference / confounding bridge</span></h4>
+        <p data-en="<b>Plain:</b> use the two proxies to 'reconstruct' the unmeasured confounder's effect and subtract it.<br /><b>Definition:</b> identification via a confounding-bridge function solving an integral equation under a completeness condition (Miao 2018; Tchetgen Tchetgen et al.).<br /><b>Linear special case — P2SLS:</b> stage 1 regress W on A+Z+X → Ŵ; stage 2 regress Y on A+Ŵ+X; the coefficient on A is the causal effect.<br /><b>Why it matters:</b> it <b>corrects</b> for unmeasured confounding, not just detects it.">
+          <b>白話：</b>用兩個代理把未測混淆的效應「還原」出來再扣掉。<br />
+          <b>定義：</b>透過解積分方程的混淆橋函數＋完備性條件來識別（Miao 2018；Tchetgen Tchetgen 等）。<br />
+          <b>線性特例—P2SLS：</b>第一階段 W ~ A+Z+X → Ŵ；第二階段 Y ~ A+Ŵ+X；A 的係數即因果效應。<br />
+          <b>為什麼重要：</b>它能<b>校正</b>未測混淆，不只偵測。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>實證校準 <span class="en">empirical calibration</span></h4>
+        <p data-en="<b>Plain:</b> use many known-null negative controls to measure a study's systematic error, then recalibrate its p-values / CIs.<br /><b>Why it matters:</b> naive p-values assume sampling error only; calibration restores honest false-positive rates.<br /><b>Origin:</b> Schuemie et al. 2014 (p-values), 2018 (CIs). See tab ⑤.">
+          <b>白話：</b>用一大批已知為虛無的陰性對照量出研究的系統誤差，再校準 p 值／信賴區間。<br />
+          <b>為什麼重要：</b>天真 p 值只假設抽樣誤差；校準後偽陽性率才誠實。<br />
+          <b>源頭：</b>Schuemie 等 2014（p 值）、2018（CI）。見 ⑤。
+        </p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===================== NC ② 互動講解 ===================== -->
+  <section id="ncplay" class="panel">
+    <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1 data-en="Interactive: the detection signal grows while proximal stays on the truth">互動：偵測訊號隨混淆放大，而近端因果穩在真值</h1>
+    <p class="lead" data-en="Drag the slider for the strength of the <b>unmeasured confounder</b> U. The <b>naive A→Y</b> estimate is pushed ever further off the truth; in lockstep the <b>negative-control A→W</b> (which should be 0) grows — that is the detection signal. The <b>proximal P2SLS</b> estimate, using the same negative-control pair, stays on the truth however strong the confounding.">
+      拉動滑桿改變<b>未測混淆</b> U 的強度。<b>天真 A→Y</b> 被推得離真值越來越遠；同時<b>陰性對照 A→W</b>（本應為 0）也跟著放大
+      ——這就是偵測訊號。用同一對陰性對照的<b>近端因果 P2SLS</b>，不管混淆多強都穩在真值。
+    </p>
+
+    <div class="controls">
+      <label>
+        <span data-en="Unmeasured-confounding strength:">未測混淆強度：</span><b id="ncConfVal">1.0</b>
+        <input type="range" id="ncConfSlider" min="0" max="1.5" value="1" step="0.05" />
+        <small data-en="0 = no unmeasured confounding (naive is fine, A→W is 0). Larger = stronger U, so naive drifts and the A→W signal grows — while proximal P2SLS holds the truth.">0＝沒有未測混淆（天真就準、A→W＝0）。越大＝U 越強，天真漂掉、A→W 訊號變大——而近端 P2SLS 穩住真值。</small>
+      </label>
+    </div>
+
+    <div class="play-grid">
+      <div class="stat"><div class="stat-label" data-en="Naive A→Y">天真 A→Y</div><div class="stat-num" id="ncNaive">–</div><div class="stat-foot" data-en="biased by unmeasured U">被未測 U 偏</div></div>
+      <div class="stat"><div class="stat-label" data-en="Detect A→W (should be 0)">偵測 A→W（應 0）</div><div class="stat-num" id="ncDetect">–</div><div class="stat-foot" data-en="the bias signal">偏誤訊號</div></div>
+      <div class="stat"><div class="stat-label" data-en="Proximal P2SLS">近端 P2SLS</div><div class="stat-num" id="ncProx">–</div><div class="stat-foot" data-en="should hug the truth 1.0">應緊貼真值 1.0</div></div>
+    </div>
+
+    <div id="ncPlayChart" class="chart"></div>
+    <p class="caption" id="ncPlayReading"></p>
+  </section>
+
+  <!-- ===================== NC ③ 資料分析 ===================== -->
+  <section id="ncanalyze" class="panel">
+    <h1 data-en="Data analysis: detect with A→W, correct with proximal P2SLS">資料分析：用 A→W 偵測、用近端 P2SLS 校正</h1>
+    <p class="lead" data-en="Load the built-in cohort (treatment A, outcome Y, covariate X, a negative-control outcome W, a negative-control exposure Z; the confounder U is unmeasured). The tool reports the naive estimate, the A→W detection signal, and the proximal P2SLS estimate (with a bootstrap CI) that recovers the truth.">
+      載入內建世代（治療 A、結果 Y、共變項 X、陰性對照結果 W、陰性對照暴露 Z；混淆 U 未測）。工具會給出天真估計、
+      A→W 偵測訊號，以及還原真值的近端 P2SLS 估計（附自助信賴區間）。
+    </p>
+
+    <div class="datasource">
+      <button id="useNcExample" class="btn primary" data-en="Load built-in cohort">載入內建世代範例</button>
+      <span class="or" data-en="or">或</span>
+      <label class="btn"><span data-en="Upload CSV">上傳 CSV</span><input type="file" id="ncFileInput" accept=".csv" hidden /></label>
+      <span id="ncDataStatus" class="muted" data-en="No data loaded yet">尚未載入資料</span>
+    </div>
+
+    <div id="ncColMap" class="colmap hidden">
+      <div class="field"><label data-en="Treatment A">治療 A</label><select id="ncSelA"></select></div>
+      <div class="field"><label data-en="Outcome Y">結果 Y</label><select id="ncSelY"></select></div>
+      <div class="field"><label data-en="Covariate X">共變項 X</label><select id="ncSelX"></select></div>
+      <div class="field"><label data-en="Neg-control outcome W (NCO)">陰性對照結果 W</label><select id="ncSelW"></select></div>
+      <div class="field"><label data-en="Neg-control exposure Z (NCE)">陰性對照暴露 Z</label><select id="ncSelZ"></select></div>
+      <button id="runNcAnalyze" class="btn primary" data-en="Run NC analysis">執行 NC 分析</button>
+    </div>
+
+    <div id="ncAnalyzeOut" class="hidden">
+      <h2 data-en="Detection &amp; proximal correction">偵測與近端校正</h2>
+      <div class="result-cards" id="ncAnalyzeCards"></div>
+      <div id="ncAnalyzeChart" class="chart"></div>
+      <p class="caption" data-en="The naive bar is far above the truth (unmeasured confounding); the A→W bar is the detection signal (should be 0); the proximal P2SLS bar lands on the dashed truth line.">
+        天真遠高於真值（未測混淆）；A→W 是偵測訊號（應為 0）；近端 P2SLS 落在虛線真值上。
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== NC ④ 假設檢驗 ===================== -->
+  <section id="ncassume" class="panel">
+    <h1 data-en="Can we trust this NC analysis? Five checks">這個 NC 分析可不可信？五道體檢</h1>
+    <p class="lead" data-en="The identifying assumptions are mostly about the <b>validity of the negative controls</b> and the existence of a confounding bridge — untestable from data (blue cards): the NCO has no exposure effect, the NCE has no outcome effect, and a bridge / completeness holds. The testable ones are proxy relevance (a first-stage strength, like IV) and enough data. Green = fine, amber = watch out, red = problem, blue = needs domain judgement.">
+      核心假設大多關於<b>陰性對照的有效性</b>與混淆橋的存在——無法用資料檢驗（藍卡）：NCO 不受暴露影響、NCE 不影響結果、
+      且混淆橋／完備性成立。可檢的是代理相關性（第一階段強度，類似 IV）與資料量。綠燈沒問題、黃燈要留意、紅燈有狀況、藍燈需領域判斷。
+    </p>
+    <div id="ncOverall" class="overall hidden"></div>
+    <div id="ncAssumeCards" class="assume-cards"></div>
+    <p id="ncAssumeHint" class="muted" data-en="Loading…">載入中…</p>
+  </section>
+
+  <!-- ===================== NC ⑤ 用 AI 強化 ===================== -->
+  <section id="ncml" class="panel">
+    <h1 data-en="Boost with AI: empirical calibration with a panel of negative controls">用 AI 強化：用一批陰性對照做實證校準</h1>
+    <p class="lead" data-en="Beyond a single negative control, a <b>panel</b> of known-null negative controls lets you measure a study's <b>systematic error</b> and recalibrate its p-values / CIs (Schuemie et al.). Naive analysis assumes sampling error only, so even truly-null controls look 'significant'; empirical calibration fits an empirical null and restores honest false-positive rates. (This is data-driven calibration; the ML frontier — DANCE for auto-finding controls, ML proximal bridges — is noted below.)">
+      除了單一陰性對照，用一<b>整批</b>已知為虛無的陰性對照，可以量出研究的<b>系統誤差</b>並校準 p 值／信賴區間（Schuemie 等）。
+      天真分析只假設抽樣誤差，於是連真值為 0 的陰性對照都顯得「顯著」；實證校準擬合經驗虛無、把偽陽性率拉回誠實水準。
+      （這是資料驅動的校準；ML 前沿——DANCE 自動找陰性對照、ML 近端橋函數——見下方註。）
+    </p>
+    <button id="runNcCal" class="btn primary" data-en="Run empirical calibration">跑實證校準</button>
+    <div id="ncCalOut" class="hidden">
+      <div id="ncCalChart" class="chart"></div>
+      <p class="caption" id="ncCalReading"></p>
+    </div>
+
+    <h2 data-en="Notes from the literature">文獻中的注意事項</h2>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Calibration is data-driven, not ML itself">① 校準是資料驅動，不是 ML 本身</h3>
+        <p data-en="Empirical calibration fits a simple empirical-null distribution to the negative-control estimates — powerful, but not machine learning per se. We label it honestly.">實證校準只是把陰性對照的估計擬合成簡單的經驗虛無分布——很有用，但本身不是機器學習。我們誠實標示。</p></div>
+      <div class="card"><h3 data-en="② The ML frontier: finding &amp; using controls">② ML 前沿：找到並用上陰性對照</h3>
+        <p data-en="ML enters in (a) DANCE — data-driven search/validation of negative controls (Kummerfeld 2024); and (b) flexible ML bridge functions for non-linear proximal causal inference. Not implemented here.">ML 用在 (a) DANCE——資料驅動地搜尋／驗證陰性對照（Kummerfeld 2024）；(b) 非線性近端因果的彈性 ML 橋函數。本頁未實作。</p></div>
+      <div class="card"><h3 data-en="③ Garbage controls in, garbage out">③ 對照選錯，校準也錯</h3>
+        <p data-en="Calibration assumes the controls really are null and share the study's systematic error. Invalid controls (truly non-null, or with different bias) distort the empirical null — choose them with domain knowledge.">校準假設這些對照真的虛無、且和研究共享系統誤差。無效的對照（其實非虛無、或偏誤結構不同）會扭曲經驗虛無——要靠領域知識挑選。</p></div>
+    </div>
+  </section>
+
   <!-- ===================== ⑥ What if（每法一個面板）===================== -->
   <!-- 內容為原創白話改寫的因果推論概念，標註出處《Causal Inference: What If》(Hernán & Robins 2020)，未照抄原文。 -->
 
@@ -3425,6 +3572,22 @@
     </div>
   </section>
 
+  <section id="ncwhatif" class="panel">
+    <h1 data-en="⑥ What if…? Negative controls &amp; proximal in the language of counterfactuals">⑥ 如果……？用反事實的語言看「陰性對照與近端因果 NC」</h1>
+    <p class="lead" data-en="What if everyone were vaccinated (Yᵃ⁼¹) vs no one (Yᵃ⁼⁰)? An unmeasured U makes A and Yᵃ non-exchangeable, so you cannot read the contrast off the data. Negative controls give two <b>proxies of U</b>; the proximal framework uses them to identify the counterfactual contrast despite never measuring U.">
+      如果大家都接種（Yᵃ⁼¹）vs 都不接種（Yᵃ⁼⁰）會怎樣？一個未測的 U 讓 A 與 Yᵃ 不可交換，所以無法直接從資料讀出對比。陰性對照給了兩個 <b>U 的代理</b>；近端因果用它們在沒測到 U 的情況下辨識這個反事實對比。
+    </p>
+    <div class="card scene"><h3 data-en="Unmeasured U, with two negative-control proxies">未測的 U，加兩個陰性對照代理</h3>
+      <p class="caption" data-en="Causal structure (DAG)">因果結構圖（DAG）</p><div id="whatifScene_nc" class="chart"></div>
+      <p class="caption" data-en="Counterfactual intervention graph (SWIG): the treatment node splits into A∣a and the outcome becomes the counterfactual Yᵃ">反事實介入圖（SWIG）：治療節點拆成 A∣a、結果變成反事實 Yᵃ</p><div id="swigScene_nc" class="chart"></div></div>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The average causal effect of A on Y (Yᵃ⁼¹ − Yᵃ⁼⁰) under an <b>unmeasured</b> confounder, identified <b>proximally</b> with a pair of negative controls.">在<b>未測</b>混淆下，A 對 Y 的平均因果效應（Yᵃ⁼¹ − Yᵃ⁼⁰），用一對陰性對照做<b>近端</b>辨識。</p></div>
+      <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability fails marginally</b> (U is unmeasured), so it is replaced by <b>proxy conditions</b>: A↛W (valid NCO), Z↛Y (valid NCE), both relevant to U, plus completeness. <b>Positivity</b>: treatment varies given the proxies. <b>Consistency</b>: a well-defined exposure.">​<b>邊際可交換性不成立</b>（U 未測），改用<b>代理條件</b>：A↛W（有效 NCO）、Z↛Y（有效 NCE）、兩者都與 U 相關，加完備性。<b>正性</b>：給定代理下治療有變異。<b>一致性</b>：暴露定義明確。</p></div>
+      <div class="card"><h3 data-en="③ Where the &quot;exchangeability&quot; is borrowed from">③ 可交換性從哪借來</h3><p data-en="From a <b>confounding bridge</b>: the negative-control exposure Z and outcome W are proxies of U, and a bridge function lets you subtract U's effect (linear case = P2SLS) — turning an unidentifiable problem into an identifiable one.">來自<b>混淆橋</b>：陰性對照暴露 Z 與結果 W 是 U 的代理，混淆橋函數讓你把 U 的效應扣掉（線性情形＝P2SLS）——把不可辨識變成可辨識。</p></div>
+      <div class="card"><h3 data-en="④ In What If &amp; the proximal literature">④ 對應《What If》與近端文獻</h3><p data-en="Confounding &amp; exchangeability (Hernán &amp; Robins, <i>What If</i>, 2020); negative controls (Lipsitch 2010) and proximal causal learning (Miao 2018; Tchetgen Tchetgen et al.). Free book online.">混淆與可交換性（Hernán &amp; Robins, <i>What If</i>, 2020）；陰性對照（Lipsitch 2010）與近端因果學習（Miao 2018；Tchetgen Tchetgen 等）。<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">免費電子書</a>。</p></div>
+    </div>
+  </section>
+
   <!-- ===================== 8. IV vs RDD：怎麼選 ===================== -->
   <section id="choose" class="panel">
     <h1 data-en="Many designs, one vaccine question — which to use?">怎麼選：同一個疫苗問題，多種攻法</h1>
@@ -3531,6 +3694,11 @@
             <td data-en="Find people who had the event (cases) vs who didn't (controls), then look back at vaccination">找有事件的人（病例）vs 沒事件的人（對照），再回頭看接種史</td>
             <td data-en="Efficient sampling of a target-trial cohort by outcome, then adjust">依結果對「模擬目標試驗的世代」做有效率抽樣，再校正</td>
             <td data-en="Controls represent the source population; measured confounders adjusted">對照代表來源族群；已測混淆校正</td></tr>
+          <tr><td colspan="4" class="famhdr" data-en="Family · proxies / negative controls (proximal causal inference)">家族 · 代理／陰性對照（近端因果）</td></tr>
+          <tr><td>NC</td>
+            <td data-en="Health-seeking (unmeasured) drives both vaccination and the outcome; you have a negative-control outcome (a pre-vaccination event) and a negative-control exposure">健康／就醫傾向（未測）同時影響接種與結果；你有陰性對照結果（接種前事件）與陰性對照暴露</td>
+            <td data-en="A pair of negative controls — proxies of the unmeasured confounder (no A→W, no Z→Y)">一對陰性對照——未測混淆的代理（A 不影響 W、Z 不影響 Y）</td>
+            <td data-en="The negative controls' 'no causal effect' + a confounding bridge / completeness">陰性對照的「無因果」＋混淆橋／完備性</td></tr>
         </tbody>
       </table>
     </div>
@@ -3563,6 +3731,8 @@
           <tr><td>PNU</td><td data-en="A cohort including prevalent users, with time-since-start &amp; start history">含盛行使用者的世代，含距起始時間與起始史</td><td data-en="A-vs-B rate ratio in a population that includes prevalent users">含盛行使用者族群中 A vs B 的率比</td></tr>
           <tr><td colspan="3" class="famhdr" data-en="Family · sampling design">家族 · 抽樣設計</td></tr>
           <tr><td>CC</td><td data-en="Cases + controls representing the source population, with exposure history">病例＋代表來源族群的對照，含暴露史</td><td data-en="An odds ratio (≈ relative risk when the outcome is rare)">勝算比（結果罕見時 ≈ 相對風險）</td></tr>
+          <tr><td colspan="3" class="famhdr" data-en="Family · proxies / negative controls">家族 · 代理／陰性對照（近端因果）</td></tr>
+          <tr><td>NC</td><td data-en="Treatment, outcome, covariates + a negative-control outcome (NCO) and a negative-control exposure (NCE)">治療、結果、共變項＋一個陰性對照結果（NCO）與一個陰性對照暴露（NCE）</td><td data-en="The causal effect under unmeasured confounding (identified proximally via the NC pair)">在未測混淆下的因果效應（用陰性對照對近端辨識）</td></tr>
         </tbody>
       </table>
     </div>
@@ -3598,6 +3768,10 @@
     <h4 class="fam-sub" data-en="Sampling design">抽樣設計</h4>
     <div class="cards">
       <div class="card info"><h3>CC</h3><p data-en="The outcome is <b>rare</b> and a full cohort is wasteful — sample <b>cases + representative controls</b> and look back at exposure (efficient sampling of a target-trial cohort).">結果<b>罕見</b>、追蹤整個世代太浪費——抽<b>病例＋有代表性的對照</b>再回頭看暴露（對目標試驗世代的有效率抽樣）。</p></div>
+    </div>
+    <h4 class="fam-sub" data-en="Proxies / negative controls (proximal causal inference)">代理／陰性對照（近端因果）</h4>
+    <div class="cards">
+      <div class="card info"><h3>NC</h3><p data-en="You suspect <b>unmeasured confounding</b> and have a pair of <b>negative controls</b> — an exposure proxy that can't affect the outcome and an outcome proxy the exposure can't affect. Detect the bias (A→NCO should be 0), then correct it proximally (P2SLS).">你懷疑有<b>未測混淆</b>，且有一對<b>陰性對照</b>——一個不影響結果的暴露代理＋一個不被暴露影響的結果代理。先偵測偏誤（A→NCO 應為 0），再用近端因果（P2SLS）校正。</p></div>
     </div>
 
     <h2 data-en="Decision tree: click through to your best-fit design">決策樹：點一點，挑出最適合的設計</h2>
@@ -3738,11 +3912,15 @@
       <li data-ref="pnu"><b data-en="Design">方法</b> · Suissa, S., Moodie, E. E. M., &amp; Dell'Aniello, S. (2017). Prevalent new-user cohort designs for comparative drug effect studies by time-conditional propensity scores. <i>Pharmacoepidemiology and Drug Safety, 26</i>(4), 459–468. <span data-en="〔the canonical PNU design — PNU tabs ①–④〕">〔PNU 設計經典 —— PNU 分頁 ①–④〕</span></li>
       <li data-ref="pnu">Suissa, S. (2008). Immortal time bias in pharmacoepidemiology. <i>American Journal of Epidemiology, 167</i>(4), 492–499. · <span data-en="on depletion of susceptibles &amp; prevalent-user bias">關於易感者耗竭與既有使用者偏誤</span></li>
       <li data-ref="pnu"><b data-en="AI / machine learning">AI／機器學習</b> · Schneeweiss, S., et al. (2009). High-dimensional propensity score. <i>Epidemiology, 20</i>(4), 512–522. · Lee, B. K., Lessler, J., &amp; Stuart, E. A. (2010). Improving propensity score weighting using machine learning. <i>Statistics in Medicine, 29</i>(3), 337–346. <span data-en="〔ML time-conditional propensity score — PNU tab ⑤〕">〔機器學習時間條件傾向分數 —— PNU 分頁 ⑤〕</span></li>
+      <li data-ref="nc"><b data-en="Concept">概念</b> · Lipsitch, M., Tchetgen Tchetgen, E., &amp; Cohen, T. (2010). Negative controls: a tool for detecting confounding and bias in observational studies. <i>Epidemiology, 21</i>(3), 383–388. <span data-en="〔the canonical negative-control idea — NC tabs ①②〕">〔陰性對照經典——NC 分頁 ①②〕</span></li>
+      <li data-ref="nc"><b data-en="Proximal correction">近端校正</b> · Miao, W., Geng, Z., &amp; Tchetgen Tchetgen, E. J. (2018). Identifying causal effects with proxy variables of an unmeasured confounder. <i>Biometrika, 105</i>(4), 987–993. · Tchetgen Tchetgen, E. J., Ying, A., Cui, Y., Shi, X., &amp; Miao, W. (2024). An introduction to proximal causal inference. <i>Statistical Science.</i> · regression-based proximal causal inference (<i>Epidemiology</i>, 2025). <span data-en="〔double negative control / P2SLS — NC tabs ②③〕">〔雙陰性對照／P2SLS——NC 分頁 ②③〕</span></li>
+      <li data-ref="nc"><b data-en="AI / calibration">AI／校準</b> · Schuemie, M. J., Ryan, P. B., DuMouchel, W., Suchard, M. A., &amp; Madigan, D. (2014). Interpreting observational studies: why empirical calibration is needed to correct p-values. <i>Statistics in Medicine, 33</i>(2), 209–218. · Schuemie, M. J., et al. (2018). Empirical confidence interval calibration. <i>PNAS, 115</i>(11), 2571–2577. <span data-en="〔empirical calibration — NC tab ⑤〕">〔實證校準——NC 分頁 ⑤〕</span></li>
+      <li data-ref="nc"><b data-en="Vaccine application">疫苗應用</b> · Li, K. Q., Shi, X., Miao, W., &amp; Tchetgen Tchetgen, E. (2023). Double negative control inference in test-negative design studies of vaccine effectiveness. <i>JASA.</i> · Tchetgen Tchetgen, E. (2014). The control outcome calibration approach. <i>AJE, 179</i>(5), 633–640. <span data-en="〔negative controls for vaccine studies〕">〔陰性對照用於疫苗研究〕</span></li>
     </ul>
   </footer>
 </main>
 
-<script src="i18n.js?v=67"></script>
-<script src="app.js?v=67"></script>
+<script src="i18n.js?v=68"></script>
+<script src="app.js?v=68"></script>
 </body>
 </html>

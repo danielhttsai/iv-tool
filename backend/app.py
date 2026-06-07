@@ -60,6 +60,10 @@ import pnu_core
 import pnu_gen
 import pnu_assumptions
 import pnu_ml
+import nc_core
+import nc_gen
+import nc_assumptions
+import nc_ml
 import seq_core
 import seq_gen
 import seq_assumptions
@@ -1149,6 +1153,66 @@ def pnu_interactive(depletion: float = 1.0, lang: str = "zh"):
 def pnu_psml(seed: int = 53, lang: str = "zh"):
     """PNU ⑤: real sklearn ML time-conditional propensity score."""
     return _clean(pnu_ml.ps_ml_demo(seed=seed, lang=lang))
+
+
+# ---------------------------------------------------------------------------
+# NC (negative control & proximal causal inference)
+# ---------------------------------------------------------------------------
+class NcRequest(BaseModel):
+    source: str = "example_nc"
+    treat: str = "A"
+    outcome: str = "Y"
+    cov: str = "X"
+    nco: str = "W"
+    nce: str = "Z"
+    lang: str = "zh"
+
+
+def _load_nc(source: str) -> pd.DataFrame:
+    if source in ("example_nc", "example"):
+        return nc_gen.generate()
+    df = _UPLOADS.get(source)
+    if df is None:
+        raise HTTPException(404, "找不到資料，請重新上傳。")
+    return df
+
+
+@app.get("/api/nc_example")
+def nc_example():
+    df = nc_gen.generate()
+    return _clean({
+        "columns": list(df.columns), "defaults": {"treat": "A", "outcome": "Y", "cov": "X", "nco": "W", "nce": "Z"},
+        "n": len(df), "synthetic": True, "disclaimer": DISCLAIMER,
+        "preview": df.head(8).to_dict(orient="records"),
+        "story": {
+            "A": "A（接種 1／否 0）；Y（健康結果，連續）",
+            "W": "W＝陰性對照結果 NCO（疫苗不可能影響、但與未測混淆 U 相關）",
+            "Z": "Z＝陰性對照暴露 NCE（不可能影響 Y、但與 U 相關）；X＝已測共變項",
+        },
+    })
+
+
+@app.post("/api/nc_analyze")
+def nc_analyze(req: NcRequest):
+    df = _load_nc(req.source)
+    return _clean(nc_core.full_nc(df, req.treat, req.outcome, req.cov, req.nco, req.nce, lang=req.lang))
+
+
+@app.post("/api/nc_assumptions")
+def nc_assumptions_check(req: NcRequest):
+    df = _load_nc(req.source)
+    return _clean(nc_assumptions.run_dashboard(df, req.treat, req.outcome, req.cov, req.nco, req.nce, lang=req.lang))
+
+
+@app.get("/api/nc_interactive")
+def nc_interactive(conf: float = 1.0, lang: str = "zh"):
+    return _clean(nc_core.nc_interactive(float(np.clip(conf, 0.0, 1.5)), lang=lang))
+
+
+@app.get("/api/nc_calibrate")
+def nc_calibrate(seed: int = 67, lang: str = "zh"):
+    """NC ⑤: empirical calibration (Schuemie) with a panel of negative controls."""
+    return _clean(nc_ml.calibration_demo(seed=seed, lang=lang))
 
 
 @app.get("/api/tit_interactive")
