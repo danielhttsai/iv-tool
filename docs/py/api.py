@@ -63,6 +63,9 @@ import nc_assumptions
 import med_core
 import med_gen
 import med_assumptions
+import ps_core
+import ps_gen
+import ps_assumptions
 
 EXAMPLE_DEFAULTS = {
     "outcome": "health_score_change",
@@ -1129,6 +1132,57 @@ def _med_ml(q: dict) -> dict:
     return med_ml.natural_effects_ml_demo(seed=int(q.get("seed", 31)), lang=q.get("lang", "zh"))
 
 
+# ---------------------------------------------------------------------------
+# Propensity Score (PS)
+# ---------------------------------------------------------------------------
+PS_DEFAULTS = {"treat": "A", "outcome": "Y", "cov": "X"}
+
+
+def _load_ps(source: str) -> pd.DataFrame:
+    if source in ("example_ps", "example"):
+        return ps_gen.generate()
+    df = _UPLOADS.get(source)
+    if df is None:
+        raise ValueError("找不到資料，請重新上傳。")
+    return df
+
+
+def _ps_example() -> dict:
+    df = ps_gen.generate()
+    return {
+        "columns": list(df.columns), "defaults": PS_DEFAULTS, "n": len(df),
+        "synthetic": True, "disclaimer": DISCLAIMER,
+        "preview": df.head(8).to_dict(orient="records"),
+        "story": {
+            "A": "A（接種 1／否 0）",
+            "Y": "Y（結果分數，連續）",
+            "X": "X＝已測共變項（嚴重度／體弱）；病重者較易接種、也較易出事＝適應症混淆",
+        },
+    }
+
+
+def _ps_analyze(req: dict) -> dict:
+    df = _load_ps(req.get("source", "example_ps"))
+    return ps_core.full_ps(df, req.get("treat", "A"), req.get("outcome", "Y"),
+                           req.get("cov", "X"), lang=req.get("lang", "zh"))
+
+
+def _ps_assumptions(req: dict) -> dict:
+    df = _load_ps(req.get("source", "example_ps"))
+    return ps_assumptions.run_dashboard(df, req.get("treat", "A"), req.get("outcome", "Y"),
+                                        req.get("cov", "X"), lang=req.get("lang", "zh"))
+
+
+def _ps_interactive(q: dict) -> dict:
+    conf = float(np.clip(float(q.get("conf", 1.0)), 0.0, 1.5))
+    return ps_core.ps_interactive(conf, lang=q.get("lang", "zh"))
+
+
+def _ps_ml(q: dict) -> dict:
+    import ps_ml
+    return ps_ml.ml_ps_demo(seed=int(q.get("seed", 41)), lang=q.get("lang", "zh"))
+
+
 def _tit_interactive(q: dict) -> dict:
     trend = float(np.clip(float(q.get("trend", 1.0)), 0.2, 1.5))
     df = tit_gen.generate(n=2500, trend=trend)   # smaller sample → snappy slider
@@ -1227,6 +1281,11 @@ _ROUTES = {
     ("POST", "/api/med_assumptions"): lambda q, b: _med_assumptions(b),
     ("GET", "/api/med_interactive"): lambda q, b: _med_interactive(q),
     ("GET", "/api/med_natural_ml"): lambda q, b: _med_ml(q),
+    ("GET", "/api/ps_example"): lambda q, b: _ps_example(),
+    ("POST", "/api/ps_analyze"): lambda q, b: _ps_analyze(b),
+    ("POST", "/api/ps_assumptions"): lambda q, b: _ps_assumptions(b),
+    ("GET", "/api/ps_interactive"): lambda q, b: _ps_interactive(q),
+    ("GET", "/api/ps_ml"): lambda q, b: _ps_ml(q),
 }
 
 

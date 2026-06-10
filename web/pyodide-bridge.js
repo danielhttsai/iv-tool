@@ -14,8 +14,8 @@
   var PYODIDE_INDEX = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
   // Cache-bust for the Python sources fetched below. Bump whenever any backend
   // .py changes so returning browsers don't run a stale module from HTTP cache.
-  var PY_VER = "77";
-  var PY_MODULES = ["i18n", "iv_core", "assumptions", "ml_iv", "gen_data", "rdd_core", "rdd_survival", "rdd_assumptions", "rdd_gen", "rdd_ml", "did_core", "did_gen", "did_assumptions", "did_ml", "tit_core", "tit_gen", "tit_assumptions", "its_core", "its_gen", "its_assumptions", "its_ml", "perr_core", "perr_gen", "perr_assumptions", "ccw_core", "ccw_gen", "ccw_assumptions", "cctc_core", "cctc_gen", "cctc_assumptions", "seq_core", "seq_gen", "seq_assumptions", "cc_core", "cc_gen", "cc_assumptions", "cc_ml", "sccs_core", "sccs_gen", "sccs_assumptions", "sccs_ml", "acnu_core", "acnu_gen", "acnu_assumptions", "acnu_ml", "pnu_core", "pnu_gen", "pnu_assumptions", "pnu_ml", "nc_core", "nc_gen", "nc_assumptions", "nc_ml", "med_core", "med_gen", "med_assumptions", "med_ml", "api"];
+  var PY_VER = "78";
+  var PY_MODULES = ["i18n", "iv_core", "assumptions", "ml_iv", "gen_data", "rdd_core", "rdd_survival", "rdd_assumptions", "rdd_gen", "rdd_ml", "did_core", "did_gen", "did_assumptions", "did_ml", "tit_core", "tit_gen", "tit_assumptions", "its_core", "its_gen", "its_assumptions", "its_ml", "perr_core", "perr_gen", "perr_assumptions", "ccw_core", "ccw_gen", "ccw_assumptions", "cctc_core", "cctc_gen", "cctc_assumptions", "seq_core", "seq_gen", "seq_assumptions", "cc_core", "cc_gen", "cc_assumptions", "cc_ml", "sccs_core", "sccs_gen", "sccs_assumptions", "sccs_ml", "acnu_core", "acnu_gen", "acnu_assumptions", "acnu_ml", "pnu_core", "pnu_gen", "pnu_assumptions", "pnu_ml", "nc_core", "nc_gen", "nc_assumptions", "nc_ml", "med_core", "med_gen", "med_assumptions", "med_ml", "ps_core", "ps_gen", "ps_assumptions", "ps_ml", "api"];
 
   var pyodide = null;
   var routeFn = null;
@@ -145,6 +145,8 @@
       ["POST", "/api/nc_analyze", "{}", JSON.stringify({ source: "example_nc", lang: "zh" })],
       ["GET", "/api/med_example", "{}", "{}"],
       ["POST", "/api/med_analyze", "{}", JSON.stringify({ source: "example_med", lang: "zh" })],
+      ["GET", "/api/ps_example", "{}", "{}"],
+      ["POST", "/api/ps_analyze", "{}", JSON.stringify({ source: "example_ps", lang: "zh" })],
     ];
     for (var i = 0; i < calls.length; i++) {
       try { routeFn(calls[i][0], calls[i][1], calls[i][2], calls[i][3]); }
@@ -176,7 +178,7 @@
       }
     }
 
-    if (path === "/api/ml_forbidden" || path === "/api/did_dml" || path === "/api/its_mlcf" || path === "/api/cc_forest" || path === "/api/sccs_selfmatch" || path === "/api/acnu_psml" || path === "/api/pnu_psml" || path === "/api/med_natural_ml") {
+    if (path === "/api/ml_forbidden" || path === "/api/did_dml" || path === "/api/its_mlcf" || path === "/api/cc_forest" || path === "/api/sccs_selfmatch" || path === "/api/acnu_psml" || path === "/api/pnu_psml" || path === "/api/med_natural_ml" || path === "/api/ps_ml") {
       setStatus && null; // sklearn 首次載入(無遮罩,由按鈕顯示「計算中」)
       await ensureSklearn();
     }

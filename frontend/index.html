@@ -4,12 +4,12 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>真實世界證據與準實驗工具箱 RWE and Quasi-experimental Toolbox</title>
-<link rel="stylesheet" href="/styles.css?v=86" />
+<link rel="stylesheet" href="/styles.css?v=87" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 </head>
 <body>
 <header class="topbar">
-  <div class="brand"><img class="brand-logo" src="assets/phdc-logo.png" alt="PHDc · Population Health Data Center" title="Population Health Data Center" /><span data-en="RWE &amp; Quasi-experimental toolbox">真實世界證據與準實驗工具箱</span> <span>IV</span> · <span>RDD</span> · <span>DiD</span> · <span>PERR</span> · <span>ITS</span> · <span>TiT</span> · <span>CCW</span> · <span>Seq</span> · <span>CCTC</span> · <span>CC</span> · <span>SCCS</span> · <span>ACNU</span> · <span>PNU</span> · <span>NC</span> · <span>MED</span></div>
+  <div class="brand"><img class="brand-logo" src="assets/phdc-logo.png" alt="PHDc · Population Health Data Center" title="Population Health Data Center" /><span data-en="RWE &amp; Quasi-experimental toolbox">真實世界證據與準實驗工具箱</span> <span>IV</span> · <span>RDD</span> · <span>DiD</span> · <span>PERR</span> · <span>ITS</span> · <span>TiT</span> · <span>CCW</span> · <span>Seq</span> · <span>CCTC</span> · <span>CC</span> · <span>SCCS</span> · <span>ACNU</span> · <span>PNU</span> · <span>NC</span> · <span>MED</span> · <span>PS</span></div>
   <nav class="tabs">
     <label class="method-pick"><span data-en="Method">方法</span>
       <select id="methodSelect">
@@ -28,6 +28,7 @@
         <option value="pnu" data-en="PNU · Prevalent new-user">PNU · 盛行新使用者</option>
         <option value="nc" data-en="NC · Negative control &amp; proximal">NC · 陰性對照與近端因果</option>
         <option value="med" data-en="MED · Mediation analysis">MED · 中介分析</option>
+        <option value="ps" data-en="PS · Propensity score">PS · 傾向分數</option>
       </select>
     </label>
     <div class="subtabs">
@@ -3697,6 +3698,150 @@
     </div>
   </section>
 
+  <!-- ===================== PS ① 是什麼 ===================== -->
+  <section id="pslearn" class="panel">
+    <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1 data-en="Propensity score: balance the confounders, then compare like with like">傾向分數：先把混淆平衡掉，再「拿相似的人比相似的人」</h1>
+    <p class="lead" data-en="We want the causal effect of a vaccine A on outcome Y, but sicker / frailer people (covariate X large) are <b>both</b> more likely to be vaccinated <b>and</b> more likely to have the outcome — <b>confounding by indication</b>. Comparing vaccinated vs unvaccinated directly is biased. The <b>propensity score</b> PS = P(A=1 | X), the probability of being treated given the measured covariates. Once you balance the PS — by <b>matching</b>, <b>IPTW weighting</b>, or <b>overlap weighting</b> — the treated and untreated groups look alike on X, and the comparison recovers the true effect (Rosenbaum &amp; Rubin 1983).">
+      我們想估疫苗 A 對結果 Y 的因果效應，但病重／體弱的人（共變項 X 大）<b>既</b>較容易接種、<b>也</b>較容易出事——這就是<b>適應症混淆</b>。
+      直接比較接種 vs 未接種會偏。<b>傾向分數</b> PS ＝ P(A=1 | X)，是「在已測共變項 X 下會接種的機率」。只要把 PS 平衡掉——用
+      <b>配對</b>、<b>IPTW 反機率加權</b>或<b>重疊權重</b>——接種與未接種兩組在 X 上就看起來一樣，比較就能還原真正的效果（Rosenbaum &amp; Rubin 1983）。
+    </p>
+
+    <div class="card scene">
+      <h3 data-en="Confounding by indication: X drives both treatment A and outcome Y">適應症混淆：X 同時驅動治療 A 與結果 Y</h3>
+      <div id="psScene" class="chart"></div>
+    </div>
+
+    <details class="term">
+      <summary data-en="Show terminology">看專有名詞解釋</summary>
+      <div class="tdef">
+        <h4>傾向分數 <span class="en">propensity score</span></h4>
+        <p data-en="<b>Plain:</b> one number per person — the modelled probability they would be treated given their measured covariates X.<br /><b>The key fact (Rosenbaum &amp; Rubin 1983):</b> conditioning on this single score balances <b>all</b> the covariates in it — you reduce many X's to one dimension.<br /><b>How to use it:</b> match treated to untreated with a similar PS, or weight by it (IPTW / overlap), then compare.">
+          <b>白話：</b>每人一個數字——在其已測共變項 X 下，被模型估出「會接種」的機率。<br />
+          <b>關鍵事實（Rosenbaum &amp; Rubin 1983）：</b>只要條件在這<b>一個</b>分數上，就能把放進去的<b>所有</b>共變項一起平衡——把很多個 X 壓成一維。<br />
+          <b>怎麼用：</b>把 PS 相近的接種者與未接種者<b>配對</b>，或用它<b>加權</b>（IPTW／重疊），再比較。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>IPTW／重疊權重／估計目標 <span class="en">IPTW / overlap weights / estimand</span></h4>
+        <p data-en="<b>IPTW:</b> weight w = A/PS + (1−A)/(1−PS); builds a pseudo-population where treatment is independent of X → the <b>ATE</b>.<br /><b>Overlap weights (ATO):</b> w = A·(1−PS) + (1−A)·PS; give most weight to people who could plausibly go either way — the most stable, bounded weights (Li, Morgan &amp; Zaslavsky 2018).<br /><b>PS matching:</b> 1:1 nearest-neighbour on the PS → the <b>ATT</b> (effect among the treated).">
+          <b>IPTW：</b>權重 w ＝ A/PS + (1−A)/(1−PS)；造出一個「治療與 X 獨立」的擬母體 → 估 <b>ATE</b>。<br />
+          <b>重疊權重（ATO）：</b>w ＝ A·(1−PS) + (1−A)·PS；給「兩組都可能出現」的人最大權重——權重有界、最穩定（Li, Morgan &amp; Zaslavsky 2018）。<br />
+          <b>PS 配對：</b>用 PS 做 1:1 最近鄰配對 → 估 <b>ATT</b>（接種者身上的效果）。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>平衡 vs 預測／正性 <span class="en">balance vs prediction / positivity</span></h4>
+        <p data-en="<b>Judge a PS by balance, not accuracy:</b> after matching/weighting, the <b>standardized mean difference (SMD)</b> of every covariate should be &lt; 0.1 — not by how well the PS predicts treatment (AUC is irrelevant).<br /><b>Positivity / overlap:</b> everyone must have a PS strictly between 0 and 1; people almost certain to be (un)treated blow up IPTW weights. Fixes: trim, or use overlap weights.">
+          <b>PS 的好壞看平衡，不看預測：</b>配對／加權後，每個共變項的<b>標準化差異（SMD）</b>都該 &lt; 0.1——而不是看 PS 多會預測接種（AUC 不重要）。<br />
+          <b>正性／重疊：</b>每個人的 PS 都要嚴格落在 0 與 1 之間；幾乎一定（不）接種的人會讓 IPTW 權重爆大。修法：截斷，或改用重疊權重。
+        </p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===================== PS ② 互動講解 ===================== -->
+  <section id="psplay" class="panel">
+    <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1 data-en="Interactive: strengthen the confounding, watch the crude estimate drift but PS hold">互動：加強混淆，看粗估漂掉、PS 卻穩住</h1>
+    <p class="lead" data-en="Drag the slider for the strength of <b>confounding by indication</b> (how strongly severity X drives both vaccination and the outcome). As it grows, the <b>crude</b> vaccinated-vs-unvaccinated estimate drifts ever further from the truth, while <b>IPTW</b> and <b>overlap weighting</b> stay locked on the true effect. At strength 0 there is no confounding and even the crude estimate is correct.">
+      拉動滑桿改變<b>適應症混淆</b>的強度（嚴重度 X 同時驅動接種與結果的力道）。強度越大，<b>粗估</b>（接種 vs 未接種）越來越偏離真值，
+      而 <b>IPTW</b> 與<b>重疊權重</b>始終鎖在真正的效果上。強度為 0 時沒有混淆，連粗估都準。
+    </p>
+
+    <div class="controls">
+      <label>
+        <span data-en="Confounding-by-indication strength:">適應症混淆強度：</span><b id="psConfVal">1.0</b>
+        <input type="range" id="psConfSlider" min="0" max="1.5" value="1" step="0.05" />
+        <small data-en="0 = no confounding (crude is already right). Larger = severity drives treatment &amp; outcome more, so the crude estimate is more biased — but PS weighting holds.">0＝沒有混淆（粗估本來就準）。越大＝嚴重度越強地驅動治療與結果，粗估越偏——但 PS 加權穩住。</small>
+      </label>
+    </div>
+
+    <div class="play-grid">
+      <div class="stat"><div class="stat-label" data-en="Crude difference">粗估差異</div><div class="stat-num" id="psCrude">–</div><div class="stat-foot" data-en="biased by X">被 X 偏掉</div></div>
+      <div class="stat"><div class="stat-label" data-en="IPTW (ATE)">IPTW（ATE）</div><div class="stat-num" id="psIptw">–</div><div class="stat-foot" data-en="balanced">已平衡</div></div>
+      <div class="stat"><div class="stat-label" data-en="Overlap weighting">重疊權重</div><div class="stat-num" id="psOverlap">–</div><div class="stat-foot" data-en="most stable">最穩定</div></div>
+    </div>
+
+    <div id="psPlayChart" class="chart"></div>
+    <p class="caption" id="psPlayReading"></p>
+  </section>
+
+  <!-- ===================== PS ③ 資料分析 ===================== -->
+  <section id="psanalyze" class="panel">
+    <h1 data-en="Data analysis: crude vs regression adjustment vs PS matching / IPTW / overlap">資料分析：粗估 vs 迴歸校正 vs PS 配對／IPTW／重疊權重</h1>
+    <p class="lead" data-en="Load the built-in cohort (treatment A, outcome Y, covariate X = severity). The tool reports the <b>crude</b> difference (biased), <b>regression adjustment</b>, <b>IPTW</b> (ATE), <b>overlap weighting</b> (ATO) and <b>PS matching</b> (ATT) — with a bootstrap CI for IPTW — plus the <b>balance evidence</b>: the standardized mean difference (SMD) of X before vs after weighting.">
+      載入內建世代（治療 A、結果 Y、共變項 X＝嚴重度）。工具回報<b>粗估</b>差異（偏）、<b>迴歸校正</b>、<b>IPTW</b>（ATE）、<b>重疊權重</b>（ATO）
+      與 <b>PS 配對</b>（ATT），IPTW 附自助信賴區間；並給出<b>平衡證據</b>：共變項 X 的標準化差異（SMD）加權前 vs 加權後。
+    </p>
+
+    <div class="datasource">
+      <button id="usePsExample" class="btn primary" data-en="Load built-in cohort">載入內建世代範例</button>
+      <span class="or" data-en="or">或</span>
+      <label class="btn"><span data-en="Upload CSV">上傳 CSV</span><input type="file" id="psFileInput" accept=".csv" hidden /></label>
+      <span id="psDataStatus" class="muted" data-en="No data loaded yet">尚未載入資料</span>
+    </div>
+
+    <div id="psColMap" class="colmap hidden">
+      <div class="field"><label data-en="Treatment A">治療 A</label><select id="psSelA"></select></div>
+      <div class="field"><label data-en="Outcome Y">結果 Y</label><select id="psSelY"></select></div>
+      <div class="field"><label data-en="Covariate X">共變項 X</label><select id="psSelX"></select></div>
+      <button id="runPsAnalyze" class="btn primary" data-en="Run PS analysis">執行 PS 分析</button>
+    </div>
+
+    <div id="psAnalyzeOut" class="hidden">
+      <h2 data-en="Estimates &amp; balance">估計值與平衡</h2>
+      <div class="result-cards" id="psAnalyzeCards"></div>
+      <div id="psAnalyzeChart" class="chart"></div>
+      <p class="caption" data-en="The crude bar is inflated by confounding by indication; regression adjustment, IPTW, overlap weighting and PS matching all fall back near the dashed truth line. Balancing the PS made the comparison fair.">
+        粗估那條被適應症混淆撐高；迴歸校正、IPTW、重疊權重與 PS 配對都回落到虛線真值附近。把 PS 平衡掉，比較就公平了。
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== PS ④ 假設檢驗 ===================== -->
+  <section id="psassume" class="panel">
+    <h1 data-en="Can we trust this PS analysis? Five checks">這個 PS 分析可不可信？五道體檢</h1>
+    <p class="lead" data-en="The propensity score only removes confounding from the covariates you <b>measured</b>. The crucial assumption — <b>no unmeasured confounding</b> — is untestable (blue card). What you <b>can</b> check: positivity/overlap of the PS, covariate balance after weighting (SMD), and the effective sample size; covariate selection is design judgement. Green = fine, amber = watch out, red = problem, blue = needs domain judgement.">
+      傾向分數只能把<b>有測到</b>的共變項的混淆清掉。最關鍵的假設——<b>無未測混淆</b>——無法用資料檢驗（藍卡）。<b>可以</b>檢的是：
+      PS 的正性／重疊、加權後的共變項平衡（SMD）、以及有效樣本數；共變項該放哪些則是設計判斷。綠燈沒問題、黃燈要留意、紅燈有狀況、藍燈需領域判斷。
+    </p>
+    <div id="psOverall" class="overall hidden"></div>
+    <div id="psAssumeCards" class="assume-cards"></div>
+    <p id="psAssumeHint" class="muted" data-en="Loading…">載入中…</p>
+  </section>
+
+  <!-- ===================== PS ⑤ 用 AI 強化 ===================== -->
+  <section id="psml" class="panel">
+    <h1 data-en="Boost with AI: a high-dimensional / ML propensity score">用 AI 強化：高維／機器學習傾向分數</h1>
+    <details class="term causalml">
+      <summary data-en="Causal ML in one box: from the average effect (ATE) to individualised effects (CATE)">因果機器學習一次看懂：從平均效果（ATE）到個體化效果（CATE）</summary>
+      <div class="tdef">
+        <p data-en="<b>Beyond the ATE.</b> Classical methods target one <b>average treatment effect</b>. Causal ML aims further — at <b>individualised / conditional effects (CATE)</b>: who benefits, and by how much. <b>Meta-learners</b> (S-/T-/X-/DR-learner) are model-agnostic recipes that plug flexible ML into the <b>nuisance</b> pieces (outcome &amp; propensity models) while the <b>causal identification still rests on the same assumptions</b> as here — no unmeasured confounding, overlap/positivity, consistency. <b>Caution on real-world data</b> (EHRs, registries): flexible ML reduces bias from model mis-specification but <b>cannot fix unmeasured confounding</b>, and a good predictor is <b>not</b> a causal effect. The ⑤ demo on this page is one concrete instance of this idea — flexible ML for a nuisance model, identification still from the design. <i>Sources: Feuerriegel et al., Nature Medicine 2024; Kaddour et al., arXiv:2206.15475; Li &amp; Chu (eds.), Springer 2023.</i>">
+          <b>超越單一平均效果。</b>傳統方法估的是一個<b>平均處置效果（ATE）</b>。因果機器學習更進一步——瞄準<b>個體化／條件效果（CATE）</b>：誰受益、受益多少。<b>Meta-learners</b>（S-／T-／X-／DR-learner）是 model-agnostic 的套法，把彈性 ML 放進<b>輔助</b>模型（結果與傾向模型），而<b>因果識別仍靠和本頁相同的假設</b>——無未測混淆、重疊／正性、一致性。<b>對真實世界資料（EHR、登錄）要小心</b>：彈性 ML 能減少模型設定錯誤的偏誤，但<b>救不了未測混淆</b>，而且「預測得準」<b>不等於</b>「因果效果」。本頁 ⑤ 的示範正是這個想法的一個具體案例——用彈性 ML 處理輔助模型，識別仍來自設計。<i>出處：Feuerriegel 等, Nature Medicine 2024；Kaddour 等, arXiv:2206.15475；Li &amp; Chu 主編, Springer 2023。</i>
+        </p>
+      </div>
+    </details>
+    <p class="lead" data-en="When the propensity to be treated depends on the covariates <b>non-linearly</b> (interactions, thresholds), a main-effects <b>logistic PS</b> mis-specifies the model: after IPTW the covariates stay <b>imbalanced</b> and the estimate is <b>biased</b>. A <b>gradient-boosting</b> PS (the spirit of high-dimensional / hdPS, Schneeweiss et al. 2009) learns the non-linearity, so weighting <b>balances better</b> and the ATE returns to the truth. Remember: a PS is judged by <b>balance</b>, not prediction accuracy. Click to run (fitting the ML model loads scikit-learn the first time, ~5–10 s):">
+      當「會不會接種」和共變項是<b>非線性</b>（交互、門檻）的關係時，只放主效應的<b>邏輯斯 PS</b> 把模型設定錯了：IPTW 加權後共變項<b>仍失衡</b>、估計<b>偏</b>。
+      改用<b>梯度提升</b>估 PS（高維 PS／hdPS 的精神，Schneeweiss 等 2009）把非線性學對，加權後<b>平衡更好</b>、ATE 回到真值。切記：PS 的標準是<b>平衡</b>，不是預測準度。按下執行（首次會載入 scikit-learn，約 5–10 秒）：
+    </p>
+    <button id="runPsMl" class="btn primary" data-en="Run the real-ML propensity-score demo">跑真正的 ML 傾向分數示範</button>
+    <div id="psMlOut" class="hidden">
+      <div id="psMlChart" class="chart"></div>
+      <p class="caption" id="psMlReading"></p>
+    </div>
+
+    <h2 data-en="Notes from the literature">文獻中的注意事項</h2>
+    <div class="cards">
+      <div class="card"><h3 data-en="① ML makes the PS flexible, not the assumptions weaker">① ML 讓 PS 更彈性，不會讓假設變鬆</h3>
+        <p data-en="A gradient-boosting / high-dimensional PS fits a richer treatment model, but identification still rests on no unmeasured confounding + positivity. ML cannot rescue an unmeasured confounder.">梯度提升／高維 PS 配出更豐富的治療模型，但識別仍靠無未測混淆＋正性。ML 救不了未測的混淆。</p></div>
+      <div class="card"><h3 data-en="② Balance is the yardstick, not AUC">② 標準是平衡，不是 AUC</h3>
+        <p data-en="A PS with high predictive accuracy can still leave covariates imbalanced; always check the SMD after weighting and refit until balanced (Brookhart; Westreich).">預測準度高的 PS 仍可能讓共變項失衡；永遠檢查加權後的 SMD，配到平衡為止（Brookhart；Westreich）。</p></div>
+    </div>
+  </section>
+
   <!-- ===================== ⑥ What if（每法一個面板）===================== -->
   <!-- 內容為原創白話改寫的因果推論概念，標註出處《Causal Inference: What If》(Hernán & Robins 2020)，未照抄原文。 -->
 
@@ -4103,6 +4248,34 @@
       <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="Natural effects need <b>sequential</b> exchangeability: no unmeasured A–Y, A–M, and (the crux) <b>M–Y</b> confounding, plus the <b>cross-world</b> 'no exposure-induced M–Y confounder'. <b>Positivity</b>: every mediator value is possible under both treatments. <b>Consistency</b>: well-defined A and M.">自然效果需要<b>序列</b>可交換：無未測的 A–Y、A–M、以及（命門）<b>M–Y</b> 混淆，加上 <b>cross-world</b>「無暴露誘發的 M–Y 混淆」。<b>正性</b>：兩種治療下每個中介值都可能出現。<b>一致性</b>：A 與 M 定義明確。</p></div>
       <div class="card"><h3 data-en="③ Where the &quot;exchangeability&quot; is borrowed from">③ 可交換性從哪借來</h3><p data-en="<b>Nowhere automatic</b> — unlike the other designs, randomising A does <b>not</b> deliver the M–Y exchangeability. You must rely on measured confounders for the M–Y arm plus a <b>sensitivity analysis</b>; if the cross-world condition is doubtful, switch to the <b>controlled direct effect</b> (fix M).">​<b>沒有自動來源</b>——和其他設計不同，把 A 隨機分派<b>換不到</b> M–Y 的可交換。M–Y 這條只能靠已測共變項＋<b>敏感度分析</b>；若 cross-world 條件可疑，改估<b>控制直接效果</b>（固定 M）。</p></div>
       <div class="card"><h3 data-en="④ In What If &amp; the mediation literature">④ 對應《What If》與中介文獻</h3><p data-en="Mediation, natural &amp; controlled direct effects, cross-world assumptions (Hernán &amp; Robins, <i>What If</i>, Ch 21); Imai, Keele &amp; Yamamoto; VanderWeele 2015. Free book online.">中介、自然與控制直接效果、跨世界假設（Hernán &amp; Robins, <i>What If</i>, 第 21 章）；Imai, Keele &amp; Yamamoto；VanderWeele 2015。<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">免費電子書</a>。</p></div>
+    </div>
+  </section>
+
+  <section id="pswhatif" class="panel">
+    <h1 data-en="⑥ What if…? Propensity score in the language of counterfactuals">⑥ 如果……？用反事實的語言看「傾向分數 PS」</h1>
+    <p class="lead" data-en="The estimand is a <b>contrast of counterfactuals</b>: what would the outcome be <b>if everyone were vaccinated</b> (Yᵃ⁼¹) vs <b>if no one were</b> (Yᵃ⁼⁰)? The two groups differ on severity X, so the raw comparison is confounded. PS methods <b>block the back door through X</b> — matching or weighting on the score makes the treated and untreated exchangeable given X, so the adjusted contrast equals the causal effect.">
+      估計目標是<b>兩個反事實的對比</b>：如果<b>大家都接種</b>（Yᵃ⁼¹）vs 如果<b>都不接種</b>（Yᵃ⁼⁰），結果會差多少？兩組在嚴重度 X 上不同，
+      所以原始比較被混淆。PS 方法把<b>經過 X 的後門擋住</b>——對分數做配對或加權，讓接種與未接種在 X 下可交換，校正後的對比就等於因果效果。
+    </p>
+    <div class="card scene"><h3 data-en="The PS DAG: X is a back-door confounder of A and Y">PS 的 DAG：X 是 A 與 Y 的後門混淆</h3>
+      <p class="caption" data-en="Causal structure (DAG)">因果結構圖（DAG）</p><div id="whatifScene_ps" class="chart"></div>
+      <p class="caption" data-en="Counterfactual intervention graph (SWIG): the treatment node splits into A∣a and the outcome becomes the counterfactual Yᵃ">反事實介入圖（SWIG）：治療節點拆成 A∣a、結果變成反事實 Yᵃ</p><div id="swigScene_ps" class="chart"></div></div>
+    <details class="term">
+      <summary data-en="New to these two diagrams? A plain-language guide to DAGs &amp; SWIGs">看不懂這兩張圖？DAG 與 SWIG 的白話導讀</summary>
+      <div class="tdef">
+        <h4>因果結構圖 DAG <span class="en">directed acyclic graph</span></h4>
+        <p data-en="<b>Think of it as a &quot;who-causes-who&quot; map.</b> Each <b>circle</b> is a variable (treatment A, outcome Y, a confounder U, a covariate…); each <b>arrow</b> is a direct causal direction — A→Y reads &quot;A affects Y&quot;. How to read it: <b>(1)</b> the arrow from treatment to outcome is the effect you want; <b>(2)</b> any path that does <b>not</b> go through the treatment yet connects to <b>both</b> treatment and outcome (a <b>back door</b>, usually a confounder U) dirties the estimate; <b>(3)</b> a good design is just a way to <b>block those back doors</b> — by adjusting, matching, borrowing an instrument, or self-control. In the picture, <b>red arrows</b> are sources of bias and the <b>teal arrow</b> is the effect you are after."><b>把它想成「誰造成誰」的地圖。</b>每個<b>圓圈</b>是一個變數（治療 A、結果 Y、混淆 U、共變項…）；每個<b>箭頭</b>是一個直接的因果方向——A→Y 讀作「A 影響 Y」。看圖三步：<b>(1)</b> 從治療指到結果的箭頭，就是你想估的效果；<b>(2)</b> 任何<b>不經過治療</b>、卻同時連到<b>治療與結果</b>的路徑（<b>後門 back door</b>，通常就是混淆 U）會把估計弄髒；<b>(3)</b> 一個好的設計，本質就是想辦法<b>把這些後門擋住</b>——校正、配對、借工具、或自我對照。圖中<b>紅色箭頭</b>＝偏誤來源，<b>青色箭頭</b>＝你要的效果。</p>
+      </div>
+      <div class="tdef">
+        <h4>反事實介入圖 SWIG <span class="en">single-world intervention graph</span></h4>
+        <p data-en="<b>A SWIG is a DAG after you &quot;operate&quot; on it.</b> It <b>splits the treatment node into two halves, A∣a</b>: the left half is the treatment as actually observed; the small <b>a</b> on the right is the value you would <b>set it to if you intervened</b>. Once you set it, every downstream outcome becomes a <b>counterfactual Yᵃ</b> — &quot;the outcome that <i>would</i> happen if treatment were set to a&quot;. Why it helps: it draws <b>exchangeability</b> for you — after you adjust for what needs adjusting, the set treatment becomes <b>independent of the counterfactual (A ⫫ Yᵃ)</b>, and only then does the association in your data equal the causal effect. In short: the <b>DAG</b> shows what the world looks like; the <b>SWIG</b> shows how to read the effect once you imagine intervening."><b>SWIG 是把 DAG「動一刀」之後的反事實圖。</b>它把<b>治療節點切成兩半 A∣a</b>：左半是真實世界觀察到的治療；右邊那個小 <b>a</b>，是「假如我們<b>介入</b>、把治療設成的值」。一旦這樣設定，下游所有結果就變成<b>反事實 Yᵃ</b>——「如果治療被設成 a，<i>會</i>發生的結果」。它的好處：把<b>可交換性</b>畫了出來——只要把該校正的校正掉，被設定的治療就和<b>反事實獨立（A ⫫ Yᵃ）</b>，這時資料裡的關聯才等於因果效果。一句話：<b>DAG</b> 告訴你「世界長怎樣」；<b>SWIG</b> 告訴你「假想動手介入後，效果該怎麼讀」。</p>
+      </div>
+    </details>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The contrast E[Yᵃ⁼¹] − E[Yᵃ⁼⁰] = the ATE (with IPTW / overlap weights) or the ATT (with PS matching, the effect among the treated). The estimand is chosen by which weight you use.">對比 E[Yᵃ⁼¹] − E[Yᵃ⁼⁰] ＝ ATE（用 IPTW／重疊權重）或 ATT（用 PS 配對，接種者身上的效果）。估計目標由你用哪種權重決定。</p></div>
+      <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Conditional exchangeability</b>: given the measured X, treatment is as-good-as random (no unmeasured confounding). <b>Positivity</b>: 0 &lt; PS &lt; 1 for everyone (overlap). <b>Consistency</b>: a well-defined vaccination. PS balances X to deliver the first.">​<b>條件可交換性</b>：在已測 X 下，接種近似隨機（無未測混淆）。<b>正性</b>：每人 0 &lt; PS &lt; 1（重疊）。<b>一致性</b>：接種定義明確。PS 平衡 X 來換取第一條。</p></div>
+      <div class="card"><h3 data-en="③ Where the &quot;exchangeability&quot; is borrowed from">③ 可交換性從哪借來</h3><p data-en="From <b>measured covariates only</b>. PS makes the comparison fair on the X you put in — it cannot manufacture exchangeability for an unmeasured confounder. That gap is why no-unmeasured-confounding is the headline assumption.">只靠<b>已測共變項</b>。PS 讓比較在你放進去的 X 上公平——它<b>無法</b>替未測混淆製造可交換。這個缺口正是「無未測混淆」成為頭號假設的原因。</p></div>
+      <div class="card"><h3 data-en="④ In What If &amp; the PS literature">④ 對應《What If》與 PS 文獻</h3><p data-en="Confounding, back-door adjustment, IPW &amp; the propensity score (Hernán &amp; Robins, <i>What If</i>, Ch 7, 12–15); Rosenbaum &amp; Rubin 1983; Austin 2011; Li, Morgan &amp; Zaslavsky 2018. Free book online.">混淆、後門校正、IPW 與傾向分數（Hernán &amp; Robins, <i>What If</i>, 第 7、12–15 章）；Rosenbaum &amp; Rubin 1983；Austin 2011；Li, Morgan &amp; Zaslavsky 2018。<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">免費電子書</a>。</p></div>
     </div>
   </section>
 
@@ -4579,6 +4752,41 @@ run;
       <p data-en="Because no-unmeasured-M–Y-confounding cannot be tested, always pair the estimate with a sensitivity analysis (R's medsens varies a correlation ρ to see how strong hidden confounding must be to overturn the result). R's mediation package and Stata's mediate give the same decomposition.">因為「M–Y 無未測混淆」無法檢驗，務必配敏感度分析（R 的 medsens 用相關 ρ 看隱藏混淆要多強才會翻盤）。R 的 mediation 套件與 Stata 的 mediate 給出同一套分解。</p></div>
   </section>
 
+  <section id="pssas" class="panel">
+    <h1 data-en="⑦ SAS code: the key steps for propensity scores">⑦ SAS 程式：傾向分數的關鍵步驟</h1>
+    <p class="lead" data-en="SAS has two built-in procedures: PROC PSMATCH estimates the propensity score and does matching / weighting / balance diagnostics; PROC CAUSALTRT gives the IPTW (or doubly-robust) treatment effect directly.">SAS 內建兩個程序：<code>PROC PSMATCH</code> 估傾向分數並做配對／加權／平衡診斷；<code>PROC CAUSALTRT</code> 直接給 IPTW（或雙重穩健）的處置效應。</p>
+    <div class="sas-note" data-en="Illustrative <b>key steps</b>, not a full runnable program — swap in your own dataset / variable names.">教學用的<b>關鍵步驟</b>示意，非可直接執行的完整程式；資料集／變數名稱請換成你自己的。</div>
+    <div class="card"><h3 data-en="Step 0 — from longitudinal records to one analysis row per person">步驟 0 — 從縱貫紀錄整理成每人一列</h3>
+      <pre class="sas"><code><span class="cm">/* assemble treatment A, outcome Y, and covariates X measured BEFORE treatment. */</span>
+<span class="cm">/* covariates must be pre-treatment — never a post-treatment variable.          */</span>
+proc sql;
+   create table ps as
+   select c.pid,
+          c.vaccinated                 as A,    <span class="cm">/* treatment (time zero)      */</span>
+          (y.pid is not null)          as Y,    <span class="cm">/* outcome: later infection   */</span>
+          c.severity                   as X     <span class="cm">/* baseline covariate         */</span>
+   from cohort c
+      left join infection y on y.pid=c.pid and y.event_date &gt; c.index_date;
+quit;</code></pre>
+      <p data-en="Collapse the longitudinal file to one row per person; the covariates X must be measured in the window BEFORE treatment (confounders + outcome risk factors), never afterwards.">把縱貫檔收成每人一列；共變項 X 必須量在治療<b>之前</b>的窗（混淆＋結果風險因子），絕不能用治療之後的變項。</p></div>
+    <div class="card"><h3 data-en="Step 1 — propensity score, matching &amp; balance (PROC PSMATCH)">步驟 1 — 傾向分數、配對與平衡（PROC PSMATCH）</h3>
+      <pre class="sas"><code>proc psmatch data=ps region=cs;
+   class A;
+   psmodel A(treated='1') = X;        <span class="cm">/* logistic propensity model    */</span>
+   match method=greedy(k=1) distance=lps;   <span class="cm">/* 1:1 nearest-neighbour → ATT */</span>
+   assess ps var=(X) / stddiff;       <span class="cm">/* standardized mean difference */</span>
+   output out=matched;
+run;</code></pre>
+      <p data-en="PROC PSMATCH fits the PS, matches 1:1 on it (the ATT), and reports the standardized mean difference (SMD) before vs after — the balance check that decides whether the PS model is good (target SMD &lt; 0.1), not its AUC.">PSMATCH 配 PS、用它做 1:1 配對（ATT），並回報配對前後的標準化差異（SMD）——這是判斷 PS 模型好不好的平衡檢查（目標 SMD &lt; 0.1），而非看 AUC。</p></div>
+    <div class="card"><h3 data-en="Step 2 — IPTW treatment effect (PROC CAUSALTRT)">步驟 2 — IPTW 處置效應（PROC CAUSALTRT）</h3>
+      <pre class="sas"><code>proc causaltrt data=ps method=ipw;   <span class="cm">/* or method=aipw for doubly-robust */</span>
+   class A;
+   psmodel A(ref='0') = X;            <span class="cm">/* propensity model  */</span>
+   model Y = X;                       <span class="cm">/* outcome model (used by AIPW)  */</span>
+run;   <span class="cm">/* reports the ATE with a robust SE; overlap weights via a weighted PROC GENMOD */</span></code></pre>
+      <p data-en="PROC CAUSALTRT gives the IPTW ATE directly (method=ipw), or the doubly-robust AIPW (method=aipw) — unbiased if EITHER the PS or the outcome model is correct. For overlap weights (ATO), build w = A(1−PS)+(1−A)PS and run a weighted PROC GENMOD.">CAUSALTRT 直接給 IPTW 的 ATE（method=ipw），或雙重穩健 AIPW（method=aipw）——只要 PS 或結果模型其一對就不偏。要重疊權重（ATO），自建 w = A(1−PS)+(1−A)PS 再跑加權的 <code>PROC GENMOD</code>。</p></div>
+  </section>
+
   <!-- ===================== 8. IV vs RDD：怎麼選 ===================== -->
   <section id="choose" class="panel">
     <h1 data-en="Many designs, one vaccine question — which to use?">怎麼選：同一個疫苗問題，多種攻法</h1>
@@ -4961,11 +5169,16 @@ run;
       <li data-ref="med">Valeri, L., &amp; VanderWeele, T. J. (2013). Mediation analysis allowing for exposure-mediator interactions and causal interpretation: theoretical assumptions and implementation with SAS and SPSS macros. <i>Psychological Methods, 18</i>(2), 137–150. <span data-en="〔exposure-mediator interaction; NDE/NIE/CDE — MED tabs ①③⑦〕">〔暴露–中介交互；NDE／NIE／CDE —— MED 分頁 ①③⑦〕</span></li>
       <li data-ref="med">VanderWeele, T. J. (2015). <i>Explanation in Causal Inference: Methods for Mediation and Interaction.</i> Oxford University Press. · Baron, R. M., &amp; Kenny, D. A. (1986). The moderator-mediator variable distinction in social psychological research. <i>JPSP, 51</i>(6), 1173–1182. <span data-en="〔the modern counterfactual treatment &amp; the classic Baron–Kenny steps〕">〔現代反事實取徑與經典 Baron–Kenny 步驟〕</span></li>
       <li data-ref="med"><b data-en="Applied guidance">應用指引</b> · Schuler, M. S., Coffman, D. L., Stuart, E. A., Nguyen, T. Q., Vegetabile, B., &amp; McCaffrey, D. F. (2025). Practical challenges in mediation analysis: a guide for applied researchers. <i>Health Services and Outcomes Research Methodology, 25</i>, 57–84. · StataCorp. <i>causal mediation analysis</i> (the <code>mediate</code> command). <span data-en="〔practical pitfalls; Stata mediate (NDE/NIE/CDE, RD/OR/RR/IRR scales) — MED tab ⑦〕">〔實務陷阱；Stata mediate（NDE/NIE/CDE、RD/OR/RR/IRR 尺度）—— MED 分頁 ⑦〕</span></li>
+      <li data-ref="ps"><b data-en="Foundational">奠基</b> · Rosenbaum, P. R., &amp; Rubin, D. B. (1983). The central role of the propensity score in observational studies for causal effects. <i>Biometrika, 70</i>(1), 41–55. https://doi.org/10.1093/biomet/70.1.41. <span data-en="〔the propensity score &amp; balancing property — PS tabs ①③⑥〕">〔傾向分數與平衡性質 —— PS 分頁 ①③⑥〕</span></li>
+      <li data-ref="ps">Austin, P. C. (2011). An Introduction to Propensity Score Methods for Reducing the Effects of Confounding in Observational Studies. <i>Multivariate Behavioral Research, 46</i>(3), 399–424. https://doi.org/10.1080/00273171.2011.568786. <span data-en="〔matching, IPTW, stratification &amp; the SMD balance diagnostic — PS tabs ③④〕">〔配對、IPTW、分層與 SMD 平衡診斷 —— PS 分頁 ③④〕</span></li>
+      <li data-ref="ps">Brookhart, M. A., Schneeweiss, S., Rothman, K. J., Glynn, R. J., Avorn, J., &amp; Stürmer, T. (2006). Variable Selection for Propensity Score Models. <i>American Journal of Epidemiology, 163</i>(12), 1149–1156. https://doi.org/10.1093/aje/kwj149. <span data-en="〔which covariates to include: confounders &amp; outcome risk factors, not instruments (Z-bias) — PS tab ④〕">〔該放哪些共變項：混淆與結果風險因子、別放工具（Z-bias）—— PS 分頁 ④〕</span></li>
+      <li data-ref="ps">Li, F., Morgan, K. L., &amp; Zaslavsky, A. M. (2018). Balancing Covariates via Propensity Score Weighting. <i>Journal of the American Statistical Association, 113</i>(521), 390–400. https://doi.org/10.1080/01621459.2016.1260466. <span data-en="〔overlap weights (ATO): exact balance, bounded weights — PS tabs ①②③〕">〔重疊權重（ATO）：精確平衡、權重有界 —— PS 分頁 ①②③〕</span></li>
+      <li data-ref="ps"><b data-en="ML / high-dimensional PS">機器學習／高維 PS</b> · Schneeweiss, S., Rassen, J. A., Glynn, R. J., Avorn, J., Mogun, H., &amp; Brookhart, M. A. (2009). High-dimensional Propensity Score Adjustment in Studies of Treatment Effects Using Health Care Claims Data. <i>Epidemiology, 20</i>(4), 512–522. · Desai, R. J., &amp; Franklin, J. M. (2019). Alternative approaches for confounding adjustment in observational studies using weighting based on the propensity score: a primer for practitioners. <i>BMJ, 367</i>, l5657. https://doi.org/10.1136/bmj.l5657. <span data-en="〔hdPS &amp; ML propensity scores; a weighting primer — PS tab ⑤〕">〔hdPS 與機器學習傾向分數；加權實務入門 —— PS 分頁 ⑤〕</span></li>
     </ul>
   </footer>
 </main>
 
-<script src="i18n.js?v=86"></script>
-<script src="app.js?v=86"></script>
+<script src="i18n.js?v=87"></script>
+<script src="app.js?v=87"></script>
 </body>
 </html>

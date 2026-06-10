@@ -68,6 +68,10 @@ import med_core
 import med_gen
 import med_assumptions
 import med_ml
+import ps_core
+import ps_gen
+import ps_assumptions
+import ps_ml
 import seq_core
 import seq_gen
 import seq_assumptions
@@ -1274,6 +1278,62 @@ def med_interactive(strength: float = 1.0, lang: str = "zh"):
 def med_natural_ml(seed: int = 31, lang: str = "zh"):
     """MED ⑤: real-sklearn g-computation natural effects under a non-linear mediator."""
     return _clean(med_ml.natural_effects_ml_demo(seed=seed, lang=lang))
+
+
+# ----------------------------- Propensity Score (PS) -----------------------------
+class PsRequest(BaseModel):
+    source: str = "example_ps"
+    treat: str = "A"
+    outcome: str = "Y"
+    cov: str = "X"
+    lang: str = "zh"
+
+
+def _load_ps(source: str) -> pd.DataFrame:
+    if source in ("example_ps", "example"):
+        return ps_gen.generate()
+    df = _UPLOADS.get(source)
+    if df is None:
+        raise HTTPException(404, "找不到資料，請重新上傳。")
+    return df
+
+
+@app.get("/api/ps_example")
+def ps_example():
+    df = ps_gen.generate()
+    return _clean({
+        "columns": list(df.columns), "defaults": {"treat": "A", "outcome": "Y", "cov": "X"},
+        "n": len(df), "synthetic": True, "disclaimer": DISCLAIMER,
+        "preview": df.head(8).to_dict(orient="records"),
+        "story": {
+            "A": "A（接種 1／否 0）",
+            "Y": "Y（結果分數，連續）",
+            "X": "X＝已測共變項（嚴重度／體弱）；病重者較易接種、也較易出事＝適應症混淆",
+        },
+    })
+
+
+@app.post("/api/ps_analyze")
+def ps_analyze(req: PsRequest):
+    df = _load_ps(req.source)
+    return _clean(ps_core.full_ps(df, req.treat, req.outcome, req.cov, lang=req.lang))
+
+
+@app.post("/api/ps_assumptions")
+def ps_assumptions_check(req: PsRequest):
+    df = _load_ps(req.source)
+    return _clean(ps_assumptions.run_dashboard(df, req.treat, req.outcome, req.cov, lang=req.lang))
+
+
+@app.get("/api/ps_interactive")
+def ps_interactive(conf: float = 1.0, lang: str = "zh"):
+    return _clean(ps_core.ps_interactive(float(np.clip(conf, 0.0, 1.5)), lang=lang))
+
+
+@app.get("/api/ps_ml")
+def ps_ml_endpoint(seed: int = 41, lang: str = "zh"):
+    """PS ⑤: real-sklearn high-dimensional / ML propensity score (logistic vs gradient boosting)."""
+    return _clean(ps_ml.ml_ps_demo(seed=seed, lang=lang))
 
 
 @app.get("/api/tit_interactive")
