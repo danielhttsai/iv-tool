@@ -65,6 +65,35 @@
     setTimeout(function () { if (o.parentNode) o.parentNode.removeChild(o); }, 600);
   }
 
+  // ---- 背景載入小提示(角落膠囊)------------------------------------------
+  // 主遮罩在「運算核心」就緒後就移除,讓使用者馬上閱讀教學;數學套件改在背景載入,
+  // 這顆膠囊只是告知「運算還在熱機」,不擋住畫面。
+  function buildPill() {
+    if (document.getElementById("pycompute")) return;
+    var en = (document.documentElement.lang || "").indexOf("en") === 0;
+    var p = document.createElement("div");
+    p.id = "pycompute";
+    p.innerHTML = '<span class="pyc-dot"></span><span id="pyc-msg">' +
+      (en ? "Warming up the compute core… (you can read the teaching tabs now)"
+          : "運算核心熱機中…（教學分頁已可閱讀）") + "</span>";
+    var css = document.createElement("style");
+    css.textContent =
+      "#pycompute{position:fixed;right:14px;bottom:14px;z-index:9998;display:flex;align-items:center;gap:.5rem;" +
+      "background:#14283c;color:#fff;padding:.5rem .9rem;border-radius:999px;max-width:80vw;" +
+      "font:600 .82rem system-ui,'Noto Sans TC',sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.18);" +
+      "opacity:.96;transition:opacity .4s}" +
+      ".pyc-dot{width:9px;height:9px;border-radius:50%;background:#79c2a2;flex:0 0 auto;animation:pycpulse 1s infinite}" +
+      "@keyframes pycpulse{0%,100%{opacity:.35}50%{opacity:1}}";
+    document.head.appendChild(css);
+    (document.body || document.documentElement).appendChild(p);
+  }
+  function setPill(msg) { var m = document.getElementById("pyc-msg"); if (m && msg) m.textContent = msg; }
+  function removePill() {
+    var p = document.getElementById("pycompute"); if (!p) return;
+    p.style.opacity = "0";
+    setTimeout(function () { if (p.parentNode) p.parentNode.removeChild(p); }, 400);
+  }
+
   // ---- 初始化 Pyodide -----------------------------------------------------
   async function init() {
     // 先同步蓋上遮罩(此時還在 <head> 解析、<body> 尚未繪出),
@@ -74,33 +103,37 @@
       await new Promise(function (r) { document.addEventListener("DOMContentLoaded", r); });
     }
     try {
-      setStatus("正在載入運算核心(Pyodide)…", 12);
+      setStatus("正在載入運算核心(Pyodide)…", 25);
       pyodide = await loadPyodide({ indexURL: PYODIDE_INDEX });
 
-      setStatus("正在載入數學套件(numpy / scipy / pandas)…", 38);
-      await pyodide.loadPackage(["numpy", "scipy", "pandas"]);
+      // 核心就緒就立刻撤遮罩:①是什麼、⑥如果……、⑦SAS、怎麼選 等教學內容都是純前端、
+      // 不需 Python,使用者可以馬上開始讀。較大的數學套件(numpy/scipy/pandas,含 openblas)
+      // 與分析程式改在背景載入;真正按下②③④的分析時,ready() 會自動等到它就緒。
+      setStatus("運算核心就緒 ✓", 100);
+      hideOverlay();
+      buildPill();
 
-      setStatus("正在載入分析程式…", 72);
-      // 平行抓取所有 .py 來源(網路 I/O 可並行),抓完才寫入檔案系統。
-      var sources = await Promise.all(PY_MODULES.map(function (name) {
+      // 套件下載(CDN)與分析程式抓取(同源)並行跑,縮短總等待。
+      var fetchP = Promise.all(PY_MODULES.map(function (name) {
         return fetch("py/" + name + ".py?v=" + PY_VER).then(function (resp) {
           if (!resp.ok) throw new Error("載入 " + name + ".py 失敗(" + resp.status + ")");
           return resp.text().then(function (src) { return [name, src]; });
         });
       }));
+      await pyodide.loadPackage(["numpy", "scipy", "pandas"]);
+      var sources = await fetchP;
       sources.forEach(function (ns) { pyodide.FS.writeFile(ns[0] + ".py", ns[1]); });
       await pyodide.runPythonAsync("import api");
       routeFn = pyodide.runPython("api.route");
 
-      // 引擎就緒,立刻放使用者進來(教學/互動分頁可用,分析端點也已可呼叫)。
-      setStatus("準備就緒 ✓", 100);
-      hideOverlay();
+      removePill();
 
-      // 預熱改在背景「慢慢跑」:逐一觸發各方法分析以編譯 numpy/scipy 熱路徑,
+      // 預熱在背景「慢慢跑」:逐一觸發各方法分析以編譯 numpy/scipy 熱路徑,
       // 每跑一個就讓出主執行緒,避免凍住 UI。使用者不必等預熱就能開始用。
       backgroundWarmup();
     } catch (err) {
       setStatus("載入失敗：" + (err && err.message ? err.message : err), null);
+      setPill("載入失敗：" + (err && err.message ? err.message : err));
       console.error("[pyodide-bridge] init failed", err);
       throw err;
     }
