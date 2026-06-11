@@ -72,6 +72,9 @@ import tmle_assumptions
 import gm_core
 import gm_gen
 import gm_assumptions
+import tnd_core
+import tnd_gen
+import tnd_assumptions
 
 EXAMPLE_DEFAULTS = {
     "outcome": "health_score_change",
@@ -1274,6 +1277,47 @@ def _gm_ml(q: dict) -> dict:
     return gm_ml.ml_gmethods_demo(seed=int(q.get("seed", 11)), lang=q.get("lang", "zh"))
 
 
+# ---------------------------------------------------------------------------
+# Test-Negative Design (TND)
+# ---------------------------------------------------------------------------
+def _load_tnd(source: str):
+    if source in ("example_tnd", "example"):
+        return tnd_gen.generate()
+    df = _UPLOADS.get(source)
+    if df is None:
+        raise ValueError("找不到資料，請重新上傳。")
+    return df
+
+
+def _tnd_example() -> dict:
+    df = tnd_gen.generate()
+    return {"columns": list(df.columns), "defaults": {}, "n": len(df),
+            "synthetic": True, "disclaimer": DISCLAIMER, "preview": df.head(8).to_dict(orient="records"),
+            "story": {"vaccinated": "接種 1／否 0", "tested": "是否因症狀就醫檢驗",
+                      "case": "檢驗陽性＝目標病原 1／陰性＝其他病原 0（僅 tested 者）",
+                      "infected": "真的得到目標病原（供天真世代對照）"}}
+
+
+def _tnd_analyze(req: dict) -> dict:
+    df = _load_tnd(req.get("source", "example_tnd"))
+    return tnd_core.full_tnd(df, lang=req.get("lang", "zh"))
+
+
+def _tnd_assumptions(req: dict) -> dict:
+    df = _load_tnd(req.get("source", "example_tnd"))
+    return tnd_assumptions.run_dashboard(df, lang=req.get("lang", "zh"))
+
+
+def _tnd_interactive(q: dict) -> dict:
+    cs = float(np.clip(float(q.get("cseek", 1.0)), 0.0, 1.5))
+    return tnd_core.tnd_interactive(cs, lang=q.get("lang", "zh"))
+
+
+def _tnd_ml(q: dict) -> dict:
+    import tnd_ml
+    return tnd_ml.ml_tnd_demo(seed=int(q.get("seed", 9)), lang=q.get("lang", "zh"))
+
+
 def _tit_interactive(q: dict) -> dict:
     trend = float(np.clip(float(q.get("trend", 1.0)), 0.2, 1.5))
     df = tit_gen.generate(n=2500, trend=trend)   # smaller sample → snappy slider
@@ -1393,6 +1437,11 @@ _ROUTES = {
     ("POST", "/api/gm_assumptions"): lambda q, b: _gm_assumptions(b),
     ("GET", "/api/gm_interactive"): lambda q, b: _gm_interactive(q),
     ("GET", "/api/gm_ml"): lambda q, b: _gm_ml(q),
+    ("GET", "/api/tnd_example"): lambda q, b: _tnd_example(),
+    ("POST", "/api/tnd_analyze"): lambda q, b: _tnd_analyze(b),
+    ("POST", "/api/tnd_assumptions"): lambda q, b: _tnd_assumptions(b),
+    ("GET", "/api/tnd_interactive"): lambda q, b: _tnd_interactive(q),
+    ("GET", "/api/tnd_ml"): lambda q, b: _tnd_ml(q),
 }
 
 

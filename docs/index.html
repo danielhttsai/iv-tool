@@ -4,15 +4,15 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>真實世界證據與準實驗工具箱 RWE and Quasi-experimental Toolbox</title>
-<link rel="stylesheet" href="styles.css?v=92" />
+<link rel="stylesheet" href="styles.css?v=93" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
-<script src="pyodide-bridge.js?v=34"></script>
+<script src="pyodide-bridge.js?v=35"></script>
 <!-- 本檔由 build_docs.py 產生,請勿手改;來源為 frontend/index.html -->
 </head>
 <body>
 <header class="topbar">
-  <div class="brand"><img class="brand-logo" src="assets/phdc-logo.png" alt="PHDc · Population Health Data Center" title="Population Health Data Center" /><span data-en="RWE &amp; Quasi-experimental toolbox">真實世界證據與準實驗工具箱</span> <span>IV</span> · <span>RDD</span> · <span>DiD</span> · <span>PERR</span> · <span>ITS</span> · <span>TiT</span> · <span>CCW</span> · <span>Seq</span> · <span>CCTC</span> · <span>CC</span> · <span>SCCS</span> · <span>ACNU</span> · <span>PNU</span> · <span>NC</span> · <span>MED</span> · <span>PS</span> · <span>TMLE</span> · <span>GM</span></div>
+  <div class="brand"><img class="brand-logo" src="assets/phdc-logo.png" alt="PHDc · Population Health Data Center" title="Population Health Data Center" /><span data-en="RWE &amp; Quasi-experimental toolbox">真實世界證據與準實驗工具箱</span> <span>IV</span> · <span>RDD</span> · <span>DiD</span> · <span>PERR</span> · <span>ITS</span> · <span>TiT</span> · <span>CCW</span> · <span>Seq</span> · <span>CCTC</span> · <span>CC</span> · <span>SCCS</span> · <span>ACNU</span> · <span>PNU</span> · <span>NC</span> · <span>MED</span> · <span>PS</span> · <span>TMLE</span> · <span>GM</span> · <span>TND</span></div>
   <nav class="tabs">
     <label class="method-pick"><span data-en="Method">方法</span>
       <select id="methodSelect">
@@ -34,6 +34,7 @@
         <option value="ps" data-en="PS · Propensity score">PS · 傾向分數</option>
         <option value="tmle" data-en="TMLE · Doubly-robust / targeted ML">TMLE · 雙重穩健／目標式</option>
         <option value="gm" data-en="GM · G-methods (time-varying confounding)">GM · G-methods（時變混淆）</option>
+        <option value="tnd" data-en="TND · Test-negative design">TND · 陰性檢驗設計</option>
       </select>
     </label>
     <div class="subtabs">
@@ -4088,6 +4089,113 @@
     </div>
   </section>
 
+  <!-- ===================== TND ① 是什麼 ===================== -->
+  <section id="tndlearn" class="panel">
+    <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1 data-en="Test-negative design: estimate vaccine effectiveness among the tested">陰性檢驗設計：在「有來檢驗的人」裡估疫苗效力</h1>
+    <p class="lead" data-en="We want a vaccine's effectiveness (VE) against a <b>target pathogen</b> (say influenza). The trouble is <b>care-seeking</b>: people who readily seek care are <b>both</b> more likely to be vaccinated <b>and</b> more likely to have their infection tested and detected. A naive case-control with general-population controls is biased by this. The <b>test-negative design (TND)</b> compares only <b>among those who sought care and were tested</b>: <b>cases</b> test positive for the target, <b>controls</b> test negative (another pathogen). Because both groups were tested, care-seeking is conditioned out, and the vaccination odds ratio gives <b>VE = 1 − OR</b> (Jackson &amp; Nelson 2013; Sullivan, Tchetgen Tchetgen &amp; Cowling 2016).">
+      我們想估疫苗對<b>目標病原</b>（如流感）的效力 VE。麻煩在<b>就醫傾向</b>：愛就醫的人<b>既</b>較常接種、<b>也</b>較常因症狀就醫而被檢驗、被發現感染。
+      用「一般族群」當對照的天真病例對照會被它偏掉。<b>陰性檢驗設計（TND）</b>只在「<b>有來就醫並檢驗</b>」的人裡比：<b>case</b>＝目標病原檢驗陽性、
+      <b>control</b>＝檢驗陰性（其他病原）。因為兩組都來檢驗過，就醫傾向被條件掉，接種勝算比就給出 <b>VE ＝ 1 − OR</b>（Jackson &amp; Nelson 2013；Sullivan, Tchetgen Tchetgen &amp; Cowling 2016）。
+    </p>
+    <div class="card scene"><h3 data-en="Care-seeking H drives both vaccination and being tested; TND conditions on 'tested'">就醫傾向 H 同時驅動接種與被檢驗；TND 條件在「有檢驗」上</h3>
+      <div id="tndScene" class="chart"></div></div>
+    <details class="term">
+      <summary data-en="Show terminology">看專有名詞解釋</summary>
+      <div class="tdef"><h4>陰性檢驗設計／VE＝1−OR <span class="en">test-negative design / VE = 1 − OR</span></h4>
+        <p data-en="<b>Plain:</b> among people who sought care and were tested, compare vaccination in those who tested positive for the target (cases) vs negative (controls). The odds ratio of vaccination → VE = 1 − OR.<br /><b>Why it works:</b> both cases and controls passed through the same care-seeking filter, so the vaccination–care-seeking association cancels in the odds ratio.">
+          <b>白話：</b>在來就醫並檢驗的人裡，比「目標病原陽性（case）」與「陰性（control）」兩組的接種狀況；接種勝算比 → VE ＝ 1 − OR。<br />
+          <b>為什麼有效：</b>case 與 control 都通過了同一道「就醫」濾網，接種與就醫傾向的關聯在勝算比裡相消。</p></div>
+      <div class="tdef"><h4>就醫傾向混淆 <span class="en">care-seeking (health-care-seeking) confounding</span></h4>
+        <p data-en="<b>Plain:</b> the propensity to seek medical care drives both vaccination and whether an infection is detected. It biases naive vaccine-effectiveness estimates; the TND is designed specifically to remove it.">
+          <b>白話：</b>「會不會去看醫生」同時影響接種與「感染會不會被檢驗發現」。它會偏掉天真的疫苗效力估計；TND 正是為了去掉它而設計。</p></div>
+      <div class="tdef"><h4>對照疾病中性 <span class="en">neutral control disease</span></h4>
+        <p data-en="<b>Plain:</b> the test-negative controls have another illness the vaccine does not affect. If the vaccine also changed that control illness, the controls would be contaminated (see ④, C2).">
+          <b>白話：</b>檢驗陰性的對照得的是疫苗<b>不影響</b>的其他病。若疫苗也改變了對照疾病，對照就被污染（見 ④ C2）。</p></div>
+    </details>
+  </section>
+
+  <!-- ===================== TND ② 互動講解 ===================== -->
+  <section id="tndplay" class="panel">
+    <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1 data-en="Interactive: strengthen care-seeking, watch the naive VE sink but the TND hold">互動：加強就醫傾向，看天真 VE 下沉、TND 卻穩住</h1>
+    <p class="lead" data-en="Drag the slider for the strength of <b>care-seeking confounding</b> (how strongly the propensity to seek care drives both vaccination and testing). As it grows, the <b>naive case-control VE</b> sinks ever further below the truth (it under-states the protection), while the <b>TND VE</b> stays locked on the true effect. At 0 there is no care-seeking confounding and the two agree.">
+      拉動滑桿改變<b>就醫傾向混淆</b>的強度（就醫傾向同時驅動接種與被檢驗的力道）。強度越大，<b>天真病例對照 VE</b> 越來越低於真值（低估保護），
+      而 <b>TND VE</b> 始終鎖在真正的效果上。為 0 時沒有就醫傾向混淆、兩者一致。
+    </p>
+    <div class="controls"><label>
+      <span data-en="Care-seeking confounding strength:">就醫傾向混淆強度：</span><b id="tndCsVal">1.0</b>
+      <input type="range" id="tndCsSlider" min="0" max="1.5" value="1" step="0.05" />
+      <small data-en="0 = care-seeking doesn't differ by vaccination (no confounding). Larger = care-seeking drives vaccination &amp; testing more, so the naive VE is more biased — but the TND holds.">0＝就醫傾向不隨接種而異（無混淆）。越大＝就醫傾向越強地驅動接種與被檢驗，天真 VE 越偏——但 TND 穩住。</small>
+    </label></div>
+    <div class="play-grid">
+      <div class="stat"><div class="stat-label" data-en="Naive VE">天真 VE</div><div class="stat-num" id="tndNaive">–</div><div class="stat-foot" data-en="care-seeking biased">就醫傾向偏</div></div>
+      <div class="stat"><div class="stat-label" data-en="TND VE">TND VE</div><div class="stat-num" id="tndVe">–</div><div class="stat-foot" data-en="recovers truth">還原真值</div></div>
+      <div class="stat"><div class="stat-label" data-en="True VE">真值 VE</div><div class="stat-num" id="tndTrue">–</div><div class="stat-foot" data-en="target">目標</div></div>
+    </div>
+    <div id="tndPlayChart" class="chart"></div>
+    <p class="caption" id="tndPlayReading"></p>
+  </section>
+
+  <!-- ===================== TND ③ 資料分析 ===================== -->
+  <section id="tndanalyze" class="panel">
+    <h1 data-en="Data analysis: naive case-control vs test-negative design">資料分析：天真病例對照 vs 陰性檢驗設計</h1>
+    <p class="lead" data-en="Load the built-in cohort (vaccination, whether tested on seeking care, the test result, the true target infection). The tool reports the <b>naive</b> VE (case-control with population controls — biased by care-seeking) and the <b>TND</b> VE = 1 − OR from the vaccination odds ratio of test-positive cases vs test-negative controls, with a 95% CI, plus the 2×2 table behind it.">
+      載入內建世代（接種、就醫時是否被檢驗、檢驗結果、真實的目標感染）。工具回報<b>天真</b> VE（一般族群對照——被就醫傾向偏）與
+      <b>TND</b> VE ＝ 1 − OR（檢驗陽性 case vs 陰性 control 的接種勝算比），附 95% CI 與背後的 2×2 表。
+    </p>
+    <div class="datasource">
+      <button id="useTndExample" class="btn primary" data-en="Load built-in cohort">載入內建世代範例</button>
+      <span class="or" data-en="or">或</span>
+      <label class="btn"><span data-en="Upload CSV">上傳 CSV</span><input type="file" id="tndFileInput" accept=".csv" hidden /></label>
+      <span id="tndDataStatus" class="muted" data-en="No data loaded yet">尚未載入資料</span>
+    </div>
+    <div id="tndAnalyzeOut" class="hidden">
+      <h2 data-en="Estimates of vaccine effectiveness (VE)">疫苗效力（VE）估計</h2>
+      <div class="result-cards" id="tndAnalyzeCards"></div>
+      <div id="tndAnalyzeChart" class="chart"></div>
+      <p class="caption" data-en="The naive bar is dragged below the dashed truth line by care-seeking; the TND VE sits on the truth. The 2×2 table shows vaccination among test-positive cases vs test-negative controls.">
+        天真那條被就醫傾向拉到虛線真值之下；TND VE 落在真值上。2×2 表是檢驗陽性 case 與陰性 control 的接種分布。</p>
+    </div>
+  </section>
+
+  <!-- ===================== TND ④ 假設檢驗 ===================== -->
+  <section id="tndassume" class="panel">
+    <h1 data-en="Can we trust this TND? Five checks">這個 TND 可不可信？五道體檢</h1>
+    <p class="lead" data-en="The TND removes care-seeking confounding, but rests on conditions that are mostly design judgement (blue): an accurate test, the vaccine not affecting the control illness, equal care-seeking given symptoms, and a shared symptom profile. What you can check: enough cases and controls among the tested. Green = fine, amber = watch out, red = problem, blue = needs domain judgement.">
+      TND 去掉就醫傾向混淆，但它建立在多半屬於設計判斷的條件上（藍）：檢驗準確、疫苗不影響對照疾病、症狀相同下就醫無差別、症狀輪廓相似。
+      可以檢的是：檢驗者中有足夠的 case 與 control。綠燈沒問題、黃燈要留意、紅燈有狀況、藍燈需領域判斷。
+    </p>
+    <div id="tndOverall" class="overall hidden"></div>
+    <div id="tndAssumeCards" class="assume-cards"></div>
+    <p id="tndAssumeHint" class="muted" data-en="Loading…">載入中…</p>
+  </section>
+
+  <!-- ===================== TND ⑤ 用 AI 強化 ===================== -->
+  <section id="tndml" class="panel">
+    <h1 data-en="Boost with AI: a causal (adjusted) TND with an ML propensity score">用 AI 強化：因果（調整式）TND＋機器學習傾向分數</h1>
+    <details class="term causalml">
+      <summary data-en="Causal ML in one box: from the average effect (ATE) to individualised effects (CATE)">因果機器學習一次看懂：從平均效果（ATE）到個體化效果（CATE）</summary>
+      <div class="tdef"><p data-en="<b>Beyond the ATE.</b> Causal ML aims at <b>individualised / conditional effects (CATE)</b>. <b>Meta-learners</b> plug flexible ML into the <b>nuisance</b> pieces while identification still rests on the design's assumptions. Here the ⑤ demo uses an ML propensity score to adjust a TND for a measured confounder. <i>Sources: Feuerriegel et al., Nature Medicine 2024; Schnitzer 2022, Epidemiology.</i>">
+        <b>超越單一平均效果。</b>因果機器學習瞄準<b>個體化／條件效果（CATE）</b>。<b>Meta-learners</b> 把彈性 ML 放進<b>輔助</b>模型，識別仍靠設計的假設。本頁 ⑤ 用 ML 傾向分數，為 TND 調整一個已測混淆。<i>出處：Feuerriegel 等, Nature Medicine 2024；Schnitzer 2022, Epidemiology。</i></p></div>
+    </details>
+    <p class="lead" data-en="The TND removes <b>care-seeking</b>, but not other <b>measured</b> confounders (e.g. age, comorbidity). When such a confounder affects vaccination and infection <b>non-linearly</b>, the unadjusted TND OR is still biased. A <b>causal TND</b> adjusts for it by inverse-probability weighting on a propensity score; with a <b>gradient-boosting</b> PS the VE returns to the truth, where a main-effects logistic PS only half-fixes it. Click to run (loads scikit-learn the first time, ~5–10 s):">
+      TND 去掉<b>就醫傾向</b>，但去不掉其他<b>已測</b>混淆（如年齡、共病）。當這種混淆對接種與感染是<b>非線性</b>影響時，未調整的 TND OR 仍偏。<b>因果 TND</b> 用傾向分數做反機率加權來調整它；PS 用<b>梯度提升</b>時 VE 回到真值，而主效應邏輯斯 PS 只修一半。按下執行（首次會載入 scikit-learn，約 5–10 秒）：
+    </p>
+    <button id="runTndMl" class="btn primary" data-en="Run the real-ML causal-TND demo">跑真正的 ML 因果 TND 示範</button>
+    <div id="tndMlOut" class="hidden">
+      <div id="tndMlChart" class="chart"></div>
+      <p class="caption" id="tndMlReading"></p>
+    </div>
+    <h2 data-en="Notes from the literature">文獻中的注意事項</h2>
+    <div class="cards">
+      <div class="card"><h3 data-en="① TND removes care-seeking, not every confounder">① TND 去就醫傾向，不是去掉所有混淆</h3>
+        <p data-en="The design removes confounding by health-care-seeking. Other measured confounders (age, comorbidity, calendar time) still need adjustment — a causal TND (IPW / g-computation) does this (Schnitzer 2022; Rowley et al. 2025).">設計去掉的是就醫傾向混淆。其他已測混淆（年齡、共病、日曆時間）仍要調整——因果 TND（IPW／g-computation）就是在做這個（Schnitzer 2022；Rowley 等 2025）。</p></div>
+      <div class="card"><h3 data-en="② Validated against trials">② 以試驗為標準驗證過</h3>
+        <p data-en="When benchmarked against randomized-trial estimates, the TND recovers COVID-19 VE well under its assumptions — and adjustment for measured confounders matters (Andrews et al. 2025).">以隨機試驗為標準對照時，TND 在其假設下能良好還原 COVID-19 VE——而對已測混淆做調整很重要（Andrews 等 2025）。</p></div>
+    </div>
+  </section>
+
   <!-- ===================== ⑥ What if（每法一個面板）===================== -->
   <!-- 內容為原創白話改寫的因果推論概念，標註出處《Causal Inference: What If》(Hernán & Robins 2020)，未照抄原文。 -->
 
@@ -4571,6 +4679,30 @@
       <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Sequential</b> exchangeability (no unmeasured time-varying confounding) at each time; <b>positivity</b> at each time and history; <b>consistency</b> / well-defined regimes. These replace the single-time versions used by PS.">每個時點的<b>序列</b>可交換（無未測時變混淆）；每個時點與史的<b>正性</b>；<b>一致性</b>／策略定義明確。這是 PS 單時點版本的時變推廣。</p></div>
       <div class="card"><h3 data-en="③ Why ordinary regression fails">③ 為什麼一般迴歸會失敗</h3><p data-en="Conditioning on L₁ blocks the A₀→L₁→Y part of the effect (it's a mediator) and opens a collider (L₁←A₀, L₁←U→Y); NOT conditioning leaves L₁ confounding A₁. No single regression can do both — only standardisation or weighting can.">條件在 L₁ 上會擋掉 A₀→L₁→Y 那段效果（它是中介）又開啟對撞（L₁←A₀、L₁←U→Y）；不條件又讓 L₁ 混淆 A₁。沒有單一迴歸能同時做到——只有標準化或加權可以。</p></div>
       <div class="card"><h3 data-en="④ In What If &amp; the g-methods literature">④ 對應《What If》與 g-methods 文獻</h3><p data-en="Time-varying treatments, the g-formula, MSMs &amp; IPW, g-estimation (Hernán &amp; Robins, <i>What If</i>, Part III); Robins, Hernán &amp; Brumback 2000; Naimi, Cole &amp; Kennedy 2017; Daniel et al. 2013. Free book online.">時變治療、g-formula、MSM 與 IPW、g-estimation（Hernán &amp; Robins, <i>What If</i>, 第三部）；Robins, Hernán &amp; Brumback 2000；Naimi, Cole &amp; Kennedy 2017；Daniel 等 2013。<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">免費電子書</a>。</p></div>
+    </div>
+  </section>
+
+  <section id="tndwhatif" class="panel">
+    <h1 data-en="⑥ What if…? The test-negative design in the language of counterfactuals">⑥ 如果……？用反事實的語言看「陰性檢驗設計 TND」</h1>
+    <p class="lead" data-en="The estimand is a vaccine-effect contrast (VE), but the design is really a clever way to handle <b>selection</b>. Being tested is a <b>collider</b>: symptoms (from the target infection or another) AND care-seeking both point into 'tested'. Sampling on 'tested' could open bias — but choosing <b>test-negative controls</b> (who passed the same care-seeking filter) makes the selection <b>non-differential</b> with respect to vaccination, so the odds ratio still identifies VE.">
+      估計目標是疫苗效果的對比（VE），但這個設計其實是處理<b>選樣</b>的巧招。「有被檢驗」是一個<b>對撞</b>：症狀（來自目標感染或其他）與就醫傾向都指向「被檢驗」。
+      對「被檢驗」抽樣本可能開啟偏誤——但選<b>檢驗陰性對照</b>（通過了同一道就醫濾網）讓這個選樣相對於接種是<b>非差別</b>的，勝算比因此仍辨識 VE。
+    </p>
+    <div class="card scene"><h3 data-en="The TND DAG: H (care-seeking) → vaccination &amp; testing; conditioning on 'tested' (a collider)">TND 的 DAG：就醫傾向 H → 接種與被檢驗；條件在「被檢驗」（對撞）上</h3>
+      <p class="caption" data-en="Causal structure (DAG)">因果結構圖（DAG）</p><div id="whatifScene_tnd" class="chart"></div>
+      <p class="caption" data-en="Counterfactual intervention graph (SWIG): set vaccination to a → counterfactual Yᵃ (target infection)">反事實介入圖（SWIG）：把接種設成 a → 反事實 Yᵃ（目標感染）</p><div id="swigScene_tnd" class="chart"></div></div>
+    <details class="term">
+      <summary data-en="New to these two diagrams? A plain-language guide to DAGs &amp; SWIGs">看不懂這兩張圖？DAG 與 SWIG 的白話導讀</summary>
+      <div class="tdef"><h4>因果結構圖 DAG <span class="en">directed acyclic graph</span></h4>
+        <p data-en="<b>Think of it as a &quot;who-causes-who&quot; map.</b> Each circle is a variable; each arrow a direct cause. A node that two arrows point INTO is a <b>collider</b> — conditioning on it (here, restricting to people who were 'tested') can create a spurious association unless the controls are chosen to keep it non-differential.">​<b>把它想成「誰造成誰」的地圖。</b>每個圓圈是一個變數；每個箭頭是一個直接因果。有兩個箭頭<b>指進去</b>的節點是<b>對撞</b>——條件在它上（這裡是只取「被檢驗」的人）可能造出假關聯，除非對照選得讓它維持非差別。</p></div>
+      <div class="tdef"><h4>反事實介入圖 SWIG <span class="en">single-world intervention graph</span></h4>
+        <p data-en="<b>A SWIG is a DAG after you ‘operate’ on it.</b> Set vaccination to a and read the counterfactual target-infection Yᵃ. The TND identifies VE = 1 − OR if, among the tested, vaccination is independent of Yᵃ — which holds when the test-negative controls share the cases' care-seeking and the vaccine doesn't affect the control illness.">​<b>SWIG 是把 DAG「動一刀」之後的反事實圖。</b>把接種設成 a，讀反事實的目標感染 Yᵃ。若在被檢驗者中接種與 Yᵃ 獨立，TND 就辨識 VE ＝ 1 − OR——這在「陰性對照與 case 共享就醫傾向、且疫苗不影響對照疾病」時成立。</p></div>
+    </details>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="VE = 1 − the risk (odds) ratio of target infection comparing vaccinated vs not — a contrast of Yᵃ⁼¹ vs Yᵃ⁼⁰ for the target pathogen. The OR among the tested estimates this when the controls are valid.">VE ＝ 1 −（接種 vs 未接種的目標感染風險／勝算比）——目標病原的 Yᵃ⁼¹ vs Yᵃ⁼⁰ 對比。對照有效時，檢驗者中的 OR 就估它。</p></div>
+      <div class="card"><h3 data-en="② Exchangeability via selection">② 靠選樣換來可交換</h3><p data-en="Unlike PS (which conditions on covariates), the TND achieves comparability by <b>who it samples</b>: restricting to the tested makes care-seeking common to cases and controls, so it no longer confounds vaccination.">和 PS（條件在共變項）不同，TND 靠<b>抽樣對象</b>達成可比：限制在被檢驗者，讓就醫傾向成為 case 與 control 共有，於是不再混淆接種。</p></div>
+      <div class="card"><h3 data-en="③ Where it can still break">③ 哪裡仍可能破</h3><p data-en="If the vaccine affects the control illness (C2), if vaccinees seek testing differently given symptoms (C3), or if the test misclassifies (C1), the selection becomes differential and VE is biased. Other measured confounders still need adjustment (⑤).">若疫苗影響對照疾病（C2）、接種者在相同症狀下就醫不同（C3）、或檢驗錯分（C1），選樣就變差別、VE 偏。其他已測混淆仍要調整（⑤）。</p></div>
+      <div class="card"><h3 data-en="④ In the TND literature">④ 對應 TND 文獻</h3><p data-en="The test-negative design &amp; its causal basis (Jackson &amp; Nelson 2013; Sullivan, Tchetgen Tchetgen &amp; Cowling 2016; Vandenbroucke &amp; Pearce 2019; Schnitzer 2022; Andrews et al. 2025). Selection / collider bias also appears in Hernán &amp; Robins, <i>What If</i>, Ch 8.">陰性檢驗設計與其因果基礎（Jackson &amp; Nelson 2013；Sullivan, Tchetgen Tchetgen &amp; Cowling 2016；Vandenbroucke &amp; Pearce 2019；Schnitzer 2022；Andrews 等 2025）。選樣／對撞偏誤亦見 Hernán &amp; Robins, <i>What If</i>, 第 8 章。</p></div>
     </div>
   </section>
 
@@ -5145,6 +5277,36 @@ gformula(obs_data = long, id = "pid", time_var = "t",
       <p data-en="The g-formula fits how Lₜ evolves and how Y depends on history, then Monte-Carlo simulates the 'always' and 'never' regimes and contrasts the standardised means. ltmle adds double robustness + Super Learner.">g-formula 配「Lₜ 怎麼演變、Y 怎麼依賴史」，再蒙地卡羅模擬 always 與 never 兩個策略、對比標準化後的平均。ltmle 再加上雙重穩健＋Super Learner。</p></div>
   </section>
 
+  <section id="tndsas" class="panel">
+    <h1 data-en="⑦ SAS code: the key steps for the test-negative design">⑦ SAS 程式：陰性檢驗設計的關鍵步驟</h1>
+    <p class="lead" data-en="The TND is, mechanically, a logistic regression of vaccination on case status among the tested; VE = 1 − OR. Adjust for measured confounders (age, calendar time) in the same model, or with IPW for a causal TND.">TND 本質上就是「在被檢驗者中，把接種對 case 狀態做邏輯斯迴歸」；VE ＝ 1 − OR。把已測混淆（年齡、日曆時間）放進同一模型，或用 IPW 做因果 TND。</p>
+    <div class="sas-note" data-en="Illustrative <b>key steps</b>, not a full runnable program — swap in your own dataset / variable names.">教學用的<b>關鍵步驟</b>示意，非可直接執行的完整程式；資料集／變數名稱請換成你自己的。</div>
+    <div class="card"><h3 data-en="Step 0 — restrict to the tested; define case &amp; control">步驟 0 — 限制在被檢驗者；定義 case 與 control</h3>
+      <pre class="sas"><code><span class="cm">/* keep only people who sought care for eligible symptoms (e.g. ARI) AND were tested. */</span>
+data tnd; set encounters;
+   if eligible_symptoms and tested;       <span class="cm">/* the care-seeking filter that TND conditions on */</span>
+   case = (target_positive = 1);          <span class="cm">/* 1 = target pathogen +, 0 = test-negative control */</span>
+run;</code></pre>
+      <p data-en="Everything hinges on Step 0: cases and controls must both come from people tested for the same clinical syndrome, so care-seeking is shared and cancels.">成敗在步驟 0：case 與 control 都要來自「因相同症候群被檢驗」的人，就醫傾向才共有、才會相消。</p></div>
+    <div class="card"><h3 data-en="Step 1 — VE = 1 − OR (adjusted logistic)">步驟 1 — VE ＝ 1 − OR（調整式邏輯斯）</h3>
+      <pre class="sas"><code>proc logistic data=tnd;
+   class agegrp calendar_month / param=ref;
+   model case(event='1') = vaccinated agegrp calendar_month;   <span class="cm">/* adjust measured confounders */</span>
+   <span class="cm">/* OR for 'vaccinated' = odds of vaccination in cases vs controls; VE = 1 - OR */</span>
+run;   <span class="cm">/* e.g. OR 0.40 -> VE = 60% (95% CI from the OR's CI) */</span></code></pre>
+      <p data-en="The coefficient on <code>vaccinated</code> gives the OR; VE = 1 − OR. Adjusting for age and calendar month removes measured confounders the design itself does not (the TND only removes care-seeking).">​<code>vaccinated</code> 的係數給出 OR；VE ＝ 1 − OR。校正年齡與日曆月，去掉設計本身不處理的已測混淆（TND 只去就醫傾向）。</p></div>
+    <div class="card"><h3 data-en="Step 2 — a causal TND by IPW (optional)">步驟 2 — 用 IPW 的因果 TND（選用）</h3>
+      <pre class="sas"><code><span class="cm">/* causal TND: weight by inverse propensity of vaccination, then a weighted OR */</span>
+proc logistic data=tnd;  model vaccinated = age age*age comorbidity;
+   output out=ps p=ps; run;
+data w; set ps; iptw = vaccinated/ps + (1-vaccinated)/(1-ps); run;
+proc genmod data=w;  class pid;
+   model case(event='1') = vaccinated / dist=bin link=logit;
+   weight iptw;  <span class="cm">/* VE = 1 - exp(beta_vaccinated) ; ML/Super-Learner PS = the ⑤ demo */</span>
+run;</code></pre>
+      <p data-en="For a causal TND (Schnitzer 2022), weight by an inverse propensity score for vaccination (optionally an ML / Super-Learner PS, as in ⑤), then take the weighted OR → VE. R: logistic + survey/ipw, or the tnd / DR-TND packages.">因果 TND（Schnitzer 2022）用接種的反傾向分數加權（PS 可用 ML／Super Learner，如 ⑤），再取加權 OR → VE。R：logistic ＋ survey/ipw，或 DR-TND 套件。</p></div>
+  </section>
+
   <!-- ===================== 8. IV vs RDD：怎麼選 ===================== -->
   <section id="choose" class="panel">
     <h1 data-en="Many designs, one vaccine question — which to use?">怎麼選：同一個疫苗問題，多種攻法</h1>
@@ -5544,11 +5706,14 @@ gformula(obs_data = long, id = "pid", time_var = "t",
       <li data-ref="gm">Naimi, A. I., Cole, S. R., &amp; Kennedy, E. H. (2017). An introduction to g methods. <i>International Journal of Epidemiology, 46</i>(2), 756–762. https://doi.org/10.1093/ije/dyw323. <span data-en="〔the canonical plain-language intro to the g-formula, IPTW-MSM &amp; g-estimation — GM tabs ①–④〕">〔g-formula、IPTW-MSM 與 g-estimation 的經典白話入門 —— GM 分頁 ①–④〕</span></li>
       <li data-ref="gm">Daniel, R. M., Cousens, S. N., De Stavola, B. L., Kenward, M. G., &amp; Sterne, J. A. C. (2013). Methods for dealing with time-dependent confounding. <i>Statistics in Medicine, 32</i>(9), 1584–1618. https://doi.org/10.1002/sim.5686. · Keil, A. P., Edwards, J. K., Richardson, D. R., Naimi, A. I., &amp; Cole, S. R. (2014). The parametric g-formula for time-to-event data. <i>Epidemiology, 25</i>(6), 889–897. <span data-en="〔a tutorial on time-dependent confounding; the parametric g-formula worked example — GM tabs ③④〕">〔時變混淆方法教學；參數 g-formula 範例 —— GM 分頁 ③④〕</span></li>
       <li data-ref="gm"><b data-en="ML / g-computation">機器學習／g-computation</b> · Naimi, A. I., Mishler, A. E., &amp; Kennedy, E. H. (2021). Challenges in Obtaining Valid Causal Effect Estimates With Machine Learning Algorithms. <i>American Journal of Epidemiology</i>. · Scientific Reports studies on g-computation, propensity-score methods &amp; TMLE with machine learning (2020, 10:9219; 2021, 11:1435). <span data-en="〔ML-assisted g-formula &amp; the need for cross-fitting / doubly-robust estimation — GM tab ⑤〕">〔ML 輔助 g-formula 與交叉擬合／雙重穩健的必要性 —— GM 分頁 ⑤〕</span></li>
+      <li data-ref="tnd"><b data-en="Foundational">奠基</b> · Jackson, M. L., &amp; Nelson, J. C. (2013). The test-negative design for estimating influenza vaccine effectiveness. <i>Vaccine, 31</i>(17), 2165–2168. https://doi.org/10.1016/j.vaccine.2013.02.053. <span data-en="〔the design &amp; its rationale — TND tabs ①③〕">〔設計與其理據 —— TND 分頁 ①③〕</span></li>
+      <li data-ref="tnd">Sullivan, S. G., Tchetgen Tchetgen, E. J., &amp; Cowling, B. J. (2016). Theoretical Basis of the Test-Negative Study Design for Assessment of Influenza Vaccine Effectiveness. <i>American Journal of Epidemiology, 184</i>(5), 345–353. https://doi.org/10.1093/aje/kww064. · Vandenbroucke, J. P., &amp; Pearce, N. (2019). Test-Negative Designs: Differences and Commonalities With Other Case-Control Studies With &quot;Other Patient&quot; Controls. <i>Epidemiology, 30</i>(6), 838–844. <span data-en="〔the causal/theoretical basis &amp; how it relates to case-control designs — TND tabs ①④⑥〕">〔因果／理論基礎與其和病例對照的關係 —— TND 分頁 ①④⑥〕</span></li>
+      <li data-ref="tnd"><b data-en="Causal / adjusted TND &amp; validation">因果／調整式 TND 與驗證</b> · Schnitzer, M. E. (2022). Estimands and Estimation of COVID-19 Vaccine Effectiveness Under the Test-Negative Design. <i>Epidemiology, 33</i>(3), 325–333. · Rowley, E. A. K., et al. (2025). Methods to Adjust for Confounding in Test-Negative Design COVID-19 Effectiveness Studies: Simulation Study. <i>JMIR Formative Research</i>. · Andrews, N., et al. (2025). Evaluating the Test-Negative Design for COVID-19 Vaccine Effectiveness Using Randomized Trial Data. <i>JAMA Network Open</i>. <span data-en="〔IPW / g-computation adjustment, confounding-adjustment simulations &amp; validation against trials — TND tabs ④⑤〕">〔IPW／g-computation 調整、混淆調整模擬與以試驗驗證 —— TND 分頁 ④⑤〕</span></li>
     </ul>
   </footer>
 </main>
 
-<script src="i18n.js?v=92"></script>
-<script src="app.js?v=92"></script>
+<script src="i18n.js?v=93"></script>
+<script src="app.js?v=93"></script>
 </body>
 </html>

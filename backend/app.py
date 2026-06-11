@@ -80,6 +80,10 @@ import gm_core
 import gm_gen
 import gm_assumptions
 import gm_ml
+import tnd_core
+import tnd_gen
+import tnd_assumptions
+import tnd_ml
 import seq_core
 import seq_gen
 import seq_assumptions
@@ -1441,6 +1445,54 @@ def gm_interactive(feedback: float = 1.0, lang: str = "zh"):
 def gm_ml_endpoint(seed: int = 11, lang: str = "zh"):
     """G-methods ⑤: real-sklearn ML-assisted g-formula (gradient boosting vs linear nuisances)."""
     return _clean(gm_ml.ml_gmethods_demo(seed=seed, lang=lang))
+
+
+# ------------------------------- Test-Negative Design (TND) -------------------------------
+class TndRequest(BaseModel):
+    source: str = "example_tnd"
+    lang: str = "zh"
+
+
+def _load_tnd(source: str) -> pd.DataFrame:
+    if source in ("example_tnd", "example"):
+        return tnd_gen.generate()
+    df = _UPLOADS.get(source)
+    if df is None:
+        raise HTTPException(404, "找不到資料，請重新上傳。")
+    return df
+
+
+@app.get("/api/tnd_example")
+def tnd_example():
+    df = tnd_gen.generate()
+    return _clean({
+        "columns": list(df.columns), "defaults": {},
+        "n": len(df), "synthetic": True, "disclaimer": DISCLAIMER,
+        "preview": df.head(8).to_dict(orient="records"),
+        "story": {"vaccinated": "接種 1／否 0", "tested": "是否因症狀就醫檢驗",
+                  "case": "檢驗陽性＝目標病原 1／陰性＝其他病原 0", "infected": "真的得到目標病原（天真對照用）"},
+    })
+
+
+@app.post("/api/tnd_analyze")
+def tnd_analyze(req: TndRequest):
+    return _clean(tnd_core.full_tnd(_load_tnd(req.source), lang=req.lang))
+
+
+@app.post("/api/tnd_assumptions")
+def tnd_assumptions_check(req: TndRequest):
+    return _clean(tnd_assumptions.run_dashboard(_load_tnd(req.source), lang=req.lang))
+
+
+@app.get("/api/tnd_interactive")
+def tnd_interactive(cseek: float = 1.0, lang: str = "zh"):
+    return _clean(tnd_core.tnd_interactive(float(np.clip(cseek, 0.0, 1.5)), lang=lang))
+
+
+@app.get("/api/tnd_ml")
+def tnd_ml_endpoint(seed: int = 9, lang: str = "zh"):
+    """TND ⑤: real-sklearn causal TND (IPW with logistic vs gradient-boosting propensity)."""
+    return _clean(tnd_ml.ml_tnd_demo(seed=seed, lang=lang))
 
 
 @app.get("/api/tit_interactive")
