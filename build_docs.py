@@ -64,7 +64,7 @@ def _build_index():
     # 2) 在 </head> 前注入 Pyodide 與橋接(必須在 app.js 之前先攔截 fetch)
     inject = (
         f'<script src="{PYODIDE_SCRIPT}"></script>\n'
-        '<script src="pyodide-bridge.js?v=43"></script>\n'
+        '<script src="pyodide-bridge.js?v=44"></script>\n'
         "<!-- 本檔由 build_docs.py 產生,請勿手改;來源為 frontend/index.html -->\n"
     )
     html = re.sub(r"</head>", inject + "</head>", html, count=1)

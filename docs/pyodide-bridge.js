@@ -143,73 +143,39 @@
     return readyPromise;
   }
 
-  // 跑幾個常用端點一次,讓 Pyodide 先把熱路徑編譯好(結果丟棄)。
-  // 在背景逐一執行、每次之間讓出主執行緒,使 UI 不被凍住(「慢慢跑」)。
+  // 預熱:只跑「預設可見的 IV」一個方法(example + analyze)。
+  // 共用的 numpy/scipy/pandas 熱路徑被第一個 analyze 編譯後就熱了,其餘 21 個
+  // 方法各自的程式碼很小,等使用者第一次切到時即時編譯即可(單一呼叫、可接受)。
+  // 不再把 22 個方法全跑一遍——那會讓重運算(ccw/seq/tmle 等)在啟動時一個接一個
+  // 凍住主執行緒,造成「網頁有點當」。
+  // 另外:在瀏覽器空檔(requestIdleCallback)才跑、跑前讓頁面先穩定,進一步降低卡頓。
   var warmupDone = false;
   async function backgroundWarmup() {
     if (warmupDone) return;
     var calls = [
       ["GET", "/api/example", "{}", "{}"],
-      ["GET", "/api/rdd_example", "{}", "{}"],
       ["POST", "/api/analyze", "{}", JSON.stringify({ source: "example", lang: "zh" })],
-      ["POST", "/api/rdd_analyze", "{}", JSON.stringify({
-        source: "example_rdd", running: "age", outcome: "health_score_change",
-        treatment: "vaccinated", cutoff: 65, time: "event_time", event: "event",
-        covariates: ["female", "bmi", "chronic_conditions", "income_band"], lang: "zh",
-      })],
-      ["POST", "/api/rdd_assumptions", "{}", JSON.stringify({ source: "example_rdd", lang: "zh" })],
-      ["GET", "/api/did_example", "{}", "{}"],
-      ["POST", "/api/did_analyze", "{}", JSON.stringify({ source: "example_did", lang: "zh" })],
-      ["POST", "/api/did_assumptions", "{}", JSON.stringify({ source: "example_did", lang: "zh" })],
-      ["GET", "/api/tit_example", "{}", "{}"],
-      ["POST", "/api/tit_analyze", "{}", JSON.stringify({ source: "example_tit", lang: "zh" })],
-      ["GET", "/api/its_example", "{}", "{}"],
-      ["POST", "/api/its_analyze", "{}", JSON.stringify({ source: "example_its", lang: "zh" })],
-      ["GET", "/api/perr_example", "{}", "{}"],
-      ["POST", "/api/perr_analyze", "{}", JSON.stringify({ source: "example_perr", lang: "zh" })],
-      ["GET", "/api/ccw_example", "{}", "{}"],
-      ["POST", "/api/ccw_analyze", "{}", JSON.stringify({ source: "example_ccw", lang: "zh" })],
-      ["GET", "/api/cctc_example", "{}", "{}"],
-      ["POST", "/api/cctc_analyze", "{}", JSON.stringify({ source: "example_cctc", lang: "zh" })],
-      ["GET", "/api/seq_example", "{}", "{}"],
-      ["POST", "/api/seq_analyze", "{}", JSON.stringify({ source: "example_seq", lang: "zh" })],
-      ["GET", "/api/cc_example", "{}", "{}"],
-      ["POST", "/api/cc_analyze", "{}", JSON.stringify({ source: "example_cc", lang: "zh" })],
-      ["GET", "/api/sccs_example", "{}", "{}"],
-      ["POST", "/api/sccs_analyze", "{}", JSON.stringify({ source: "example_sccs", lang: "zh" })],
-      ["GET", "/api/acnu_example", "{}", "{}"],
-      ["POST", "/api/acnu_analyze", "{}", JSON.stringify({ source: "example_acnu", lang: "zh" })],
-      ["GET", "/api/pnu_example", "{}", "{}"],
-      ["POST", "/api/pnu_analyze", "{}", JSON.stringify({ source: "example_pnu", lang: "zh" })],
-      ["GET", "/api/nc_example", "{}", "{}"],
-      ["POST", "/api/nc_analyze", "{}", JSON.stringify({ source: "example_nc", lang: "zh" })],
-      ["GET", "/api/med_example", "{}", "{}"],
-      ["POST", "/api/med_analyze", "{}", JSON.stringify({ source: "example_med", lang: "zh" })],
-      ["GET", "/api/ps_example", "{}", "{}"],
-      ["POST", "/api/ps_analyze", "{}", JSON.stringify({ source: "example_ps", lang: "zh" })],
-      ["GET", "/api/tmle_example", "{}", "{}"],
-      ["POST", "/api/tmle_analyze", "{}", JSON.stringify({ source: "example_tmle", lang: "zh" })],
-      ["GET", "/api/gm_example", "{}", "{}"],
-      ["POST", "/api/gm_analyze", "{}", JSON.stringify({ source: "example_gm", lang: "zh" })],
-      ["GET", "/api/tnd_example", "{}", "{}"],
-      ["POST", "/api/tnd_analyze", "{}", JSON.stringify({ source: "example_tnd", lang: "zh" })],
-      ["GET", "/api/pssa_example", "{}", "{}"],
-      ["POST", "/api/pssa_analyze", "{}", JSON.stringify({ source: "example_pssa", lang: "zh" })],
-      ["GET", "/api/tscan_example", "{}", "{}"],
-      ["POST", "/api/tscan_analyze", "{}", JSON.stringify({ source: "example_tscan", lang: "zh" })],
-      ["GET", "/api/wce_example", "{}", "{}"],
-      ["POST", "/api/wce_analyze", "{}", JSON.stringify({ source: "example_wce", lang: "zh" })],
     ];
+    await sleep(400);            // 讓首屏先繪好、互動先就緒
     for (var i = 0; i < calls.length; i++) {
       // 若使用者正在主動操作(有待處理的 /api 呼叫),先讓路給他,避免和預熱搶主執行緒。
-      while (pendingApiCalls > 0) { await sleep(60); }
+      while (pendingApiCalls > 0) { await sleep(80); }
+      await idle();              // 等到瀏覽器空檔再跑這一個同步呼叫
       try { routeFn(calls[i][0], calls[i][1], calls[i][2], calls[i][3]); }
       catch (e) { /* 預熱失敗不影響功能,忽略 */ }
-      await sleep(30);   // 讓出主執行緒,UI 保持回應
+      await sleep(50);           // 讓出主執行緒,UI 保持回應
     }
     warmupDone = true;
   }
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  // 等到瀏覽器主執行緒空檔(無 requestIdleCallback 時退回 setTimeout)。
+  function idle() {
+    return new Promise(function (r) {
+      if (typeof requestIdleCallback === "function") {
+        requestIdleCallback(function () { r(); }, { timeout: 1000 });
+      } else { setTimeout(r, 50); }
+    });
+  }
 
   async function ensureSklearn() {
     if (sklearnLoaded) return;
