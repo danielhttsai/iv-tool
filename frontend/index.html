@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>真實世界證據與準實驗工具箱 RWE and Quasi-experimental Toolbox</title>
-<link rel="stylesheet" href="/styles.css?v=119" />
+<link rel="stylesheet" href="/styles.css?v=120" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 </head>
 <body>
@@ -6231,6 +6231,50 @@ X_filled = imp.fit_transform(df[["A", "Y", "X"]])    <span class="cm"># include 
       <div class="card"><h3 data-en="⑥ Synthesis &amp; GRADE">⑥ 合併與 GRADE</h3><p data-en="Synthesise — narratively, or with a <b>meta-analysis</b> if the studies are similar enough. Then rate the <b>certainty</b> of the body of evidence with GRADE, and report to PRISMA 2020.">做合併——可以是敘述式，或在研究夠相似時做<b>統合分析</b>。再用 GRADE 評估整體證據的<b>強度</b>，並依 PRISMA 2020 報告。</p></div>
     </div>
 
+    <h2 data-en="The Cochrane Handbook, chapter by chapter">逐章看 Cochrane Handbook</h2>
+    <p class="lead" data-en="The <b>Cochrane Handbook for Systematic Reviews of Interventions</b> (v6.5, 2024) is the field's reference text. Its <b>Part 2 — Core Methods</b> is the backbone every review follows; Parts 1, 3 and 4 add planning, special topics and non-randomised evidence. An original chapter-by-chapter map (cite the Handbook; we don't reproduce it):"><b>Cochrane Handbook for Systematic Reviews of Interventions</b>（v6.5，2024）是這個領域的標準教科書。其中<b>第 2 部 —— 核心方法</b>是每篇回顧都遵循的骨幹；第 1、3、4 部補上規劃、特殊主題與非隨機證據。以下是原創的逐章對照（標出處，不照抄原文）：</p>
+    <div class="table-wrap">
+      <table class="cmp">
+        <thead><tr><th data-en="Chapter">章</th><th data-en="What it covers (plain summary)">在講什麼（白話）</th></tr></thead>
+        <tbody>
+          <tr><td colspan="2" class="famhdr" data-en="Part 2 · Core methods (the backbone)">第 2 部 · 核心方法（骨幹）</td></tr>
+          <tr><td>1</td><td data-en="Starting a review — team, scope, protocol &amp; registration (PROSPERO) before any data is touched.">開始一篇回顧——團隊、範圍、在碰資料前先寫好計畫書並登錄（PROSPERO）。</td></tr>
+          <tr><td>2</td><td data-en="Determining scope &amp; the question — building a precise PICO (population, intervention, comparator, outcome).">決定範圍與問題——寫出精準的 PICO（族群、介入、對照、結果）。</td></tr>
+          <tr><td>3</td><td data-en="Inclusion criteria &amp; grouping — eligibility rules and how interventions/outcomes are grouped for synthesis.">納入條件與分組——資格規則，以及介入／結果如何分組以利合併。</td></tr>
+          <tr><td>4</td><td data-en="Searching &amp; selecting studies — comprehensive multi-database searches + dual screening (the PRISMA flow).">搜尋與選文——跨資料庫的全面檢索＋雙人篩選（PRISMA 流程）。</td></tr>
+          <tr><td>5</td><td data-en="Collecting data — structured, piloted, duplicated extraction of estimates &amp; study characteristics.">蒐集資料——結構化、先試做、重複的萃取（估計值與研究特徵）。</td></tr>
+          <tr><td>6</td><td data-en="Effect measures — RR, OR, RD, HR (binary/time-to-event), mean difference &amp; SMD (continuous).">效果量——RR、OR、RD、HR（二元／存活），平均差與 SMD（連續）。</td></tr>
+          <tr><td>7</td><td data-en="Bias &amp; conflicts of interest — the conceptual frame for what threatens each study's validity.">偏誤與利益衝突——威脅每篇研究效度的概念框架。</td></tr>
+          <tr><td>8</td><td data-en="Risk of bias in randomised trials — the RoB 2 tool (5 domains; see below).">隨機試驗的偏誤風險——RoB 2 工具（5 個領域；見下）。</td></tr>
+          <tr><td>9</td><td data-en="Preparing for synthesis — checking comparability, handling units &amp; missing summary data.">合併前準備——檢查可比性、處理單位與缺失的摘要資料。</td></tr>
+          <tr><td>10</td><td data-en="Meta-analysis — inverse-variance pooling, fixed vs random effects, heterogeneity (the demo below).">統合分析——反變異加權合併、固定 vs 隨機效果、異質性（下方示範）。</td></tr>
+          <tr><td>11</td><td data-en="Network meta-analysis — compare 3+ treatments at once using direct + indirect evidence.">網絡統合分析——用直接＋間接證據一次比較 3 個以上的治療。</td></tr>
+          <tr><td>12</td><td data-en="Synthesis using other methods — when meta-analysis isn't appropriate (SWiM, vote counting…).">用其他方法合併——不適合做統合分析時（SWiM、計票……）。</td></tr>
+          <tr><td>13</td><td data-en="Bias due to missing results — reporting/publication bias, funnel plots, Egger (the funnel below).">結果缺失造成的偏誤——報告／發表偏誤、漏斗圖、Egger（下方漏斗圖）。</td></tr>
+          <tr><td>14</td><td data-en="&quot;Summary of findings&quot; tables &amp; GRADE — rating the certainty of the body of evidence (see below).">「結果摘要」表與 GRADE——評估整體證據的強度（見下）。</td></tr>
+          <tr><td>15</td><td data-en="Interpreting results &amp; conclusions — from a pooled number to what it means for decisions.">解讀結果與結論——從一個合併數字到它對決策的意義。</td></tr>
+          <tr><td colspan="2" class="famhdr" data-en="Parts 1, 3 &amp; 4 · planning, special topics &amp; non-randomised evidence">第 1、3、4 部 · 規劃、特殊主題與非隨機證據</td></tr>
+          <tr><td data-en="I–V">I–V</td><td data-en="About Cochrane reviews — introduction, planning, reporting, updating, overviews of reviews.">關於 Cochrane 回顧——介紹、規劃、報告、更新、回顧之回顧（overview）。</td></tr>
+          <tr><td>16–21</td><td data-en="Specific perspectives — equity &amp; specific populations, intervention complexity, patient-reported outcomes, adverse effects, economic evidence, qualitative evidence.">特殊視角——公平性與特定族群、介入複雜度、病人自陳結果、不良反應、經濟證據、質性證據。</td></tr>
+          <tr><td>22–26</td><td data-en="Other topics — prospective / living evidence, variants on RCTs, non-randomised studies of effects, risk of bias in non-randomised studies (ROBINS-I), individual participant data (IPD).">其他主題——前瞻／活證據、RCT 的變形、非隨機研究的效果、非隨機研究的偏誤風險（ROBINS-I）、個別病患資料（IPD）。</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 data-en="Cochrane's family of handbooks &amp; standards">Cochrane 的手冊與標準家族</h2>
+    <div class="cards cards-3">
+      <div class="card"><h3 data-en="Other review types">其他回顧類型</h3><p data-en="Beyond interventions, Cochrane publishes handbooks for <b>Diagnostic Test Accuracy</b> (sensitivity/specificity meta-analysis), <b>Prognosis &amp; Prediction Models</b> (PROBAST), and the Cochrane–Campbell handbook for <b>Qualitative Evidence Synthesis</b>. Each has its own bias tools and pooling methods.">除了介入，Cochrane 還出版<b>診斷試驗準確度</b>（敏感度／特異度的統合分析）、<b>預後與預測模型</b>（PROBAST）、以及 Cochrane–Campbell 的<b>質性證據合併</b>手冊。各有自己的偏誤工具與合併方法。</p></div>
+      <div class="card"><h3 data-en="MECIR standards">MECIR 標準</h3><p data-en="<b>Methodological Expectations of Cochrane Intervention Reviews</b> — the explicit, auditable conduct &amp; reporting standards a Cochrane review must meet (mandatory vs highly desirable items), keeping reviews consistent and rigorous."><b>Cochrane 介入回顧的方法學期望</b>——一篇 Cochrane 回顧必須達到的、明確可稽核的執行與報告標準（必要 vs 高度建議項目），讓回顧一致而嚴謹。</p></div>
+      <div class="card"><h3 data-en="Style &amp; tools">風格與工具</h3><p data-en="The <b>Cochrane Style Manual</b> / Style Essentials standardise writing &amp; plain-language summaries; <b>RevMan</b> is the authoring/meta-analysis software; <b>GRADE</b> (its own handbook/book) rates certainty. Reporting follows <b>PRISMA 2020</b>."><b>Cochrane 風格手冊</b>／Style Essentials 統一寫作與白話摘要；<b>RevMan</b> 是撰寫／統合分析軟體；<b>GRADE</b>（有自己的手冊）評估證據強度。報告依 <b>PRISMA 2020</b>。</p></div>
+    </div>
+
+    <h2 data-en="Effect measures &amp; risk of bias (Handbook Ch 6–8, 25)">效果量與偏誤風險（手冊第 6–8、25 章）</h2>
+    <div class="cards cards-3">
+      <div class="card"><h3 data-en="Pick the right effect measure (Ch 6)">選對效果量（第 6 章）</h3><p data-en="<b>Binary:</b> risk ratio (RR), odds ratio (OR), risk difference (RD). <b>Time-to-event:</b> hazard ratio (HR). <b>Continuous:</b> mean difference (MD) when the scale is shared, standardised mean difference (SMD) when scales differ. Ratio measures (RR/OR/HR) are pooled on the <b>log</b> scale. Mind <b>non-collapsibility</b> of OR/HR (see the &quot;Which one?&quot; tab)."><b>二元：</b>風險比 RR、勝算比 OR、風險差 RD。<b>存活：</b>風險比 HR。<b>連續：</b>同尺度用平均差 MD、不同尺度用標準化平均差 SMD。比值型（RR／OR／HR）在 <b>log</b> 尺度上合併。注意 OR／HR 的<b>不可塌縮性</b>（見「怎麼選」分頁）。</p></div>
+      <div class="card"><h3 data-en="RoB 2 — randomised trials (Ch 8)">RoB 2 —— 隨機試驗（第 8 章）</h3><p data-en="Five domains, each rated low / some-concerns / high, then an overall judgement: ① the <b>randomisation</b> process, ② deviations from intended interventions, ③ <b>missing outcome data</b>, ④ measurement of the outcome, ⑤ <b>selective reporting</b> of the result. Per-outcome, not per-study.">五個領域，各評低／有疑慮／高，再給整體判斷：① <b>隨機分派</b>過程、② 偏離預定介入、③ <b>結果資料缺失</b>、④ 結果的測量、⑤ 結果的<b>選擇性報告</b>。是逐結果、不是逐研究。</p></div>
+      <div class="card"><h3 data-en="ROBINS-I — non-randomised studies (Ch 25)">ROBINS-I —— 非隨機研究（第 25 章）</h3><p data-en="Seven domains, benchmarked against a hypothetical target trial: ① <b>confounding</b>, ② selection of participants, ③ classification of interventions, ④ deviations from intended interventions, ⑤ missing data, ⑥ measurement of outcomes, ⑦ selective reporting. This is exactly where your IV / RDD / cohort knowledge does the work.">七個領域，以一個假想的目標試驗為基準：① <b>混淆</b>、② 參與者選擇、③ 介入分類、④ 偏離預定介入、⑤ 資料缺失、⑥ 結果測量、⑦ 選擇性報告。這正是你的 IV／RDD／世代知識派上用場的地方。</p></div>
+    </div>
+
     <h2 data-en="Live meta-analysis: fixed vs random effects">即時統合分析：固定 vs 隨機效果</h2>
     <p class="lead" data-en="12 synthetic vaccine trials, each a log risk ratio with its own precision. The <b>forest plot</b> shows each trial (box = estimate, box size = weight, whiskers = 95% CI) and two pooled diamonds. <b>Fixed-effect</b> assumes every trial estimates the identical effect and weights only by precision — a narrow, over-confident interval when trials truly differ. <b>Random-effects</b> (DerSimonian–Laird) adds the between-study variance τ², widening the interval honestly. Drag the slider to change how much the trials genuinely differ.">12 場合成的疫苗試驗，每場是一個帶自己精度的 log 風險比。<b>森林圖</b>顯示每場試驗（方塊＝估計、方塊大小＝權重、鬚＝95% CI）與兩個合併菱形。<b>固定效果</b>假設每場估的是相同效果、只用精度加權——當試驗其實有差異時，區間會窄而過度自信。<b>隨機效果</b>（DerSimonian–Laird）把研究間變異 τ² 加進去，誠實地把區間放寬。拖動滑桿改變試驗之間真正的差異程度。</p>
     <div class="controls">
@@ -6258,6 +6302,13 @@ X_filled = imp.fit_transform(df[["A", "Y", "X"]])    <span class="cm"># include 
       <div class="card"><h3 data-en="Fixed or random?">固定還是隨機？</h3><p data-en="Choose by the <b>question</b>, not the p-value: fixed-effect targets &quot;the one common effect&quot; (rarely true across diverse trials); random-effects targets &quot;the mean of a distribution of effects&quot;. Most clinical meta-analyses default to random-effects, and report a <b>prediction interval</b> for where a new study's effect might land.">用<b>問題</b>來選、不是用 p 值：固定效果瞄準「唯一的共同效果」（在多樣的試驗間很少成立）；隨機效果瞄準「一群效果分布的平均」。多數臨床統合分析預設用隨機效果，並報一個<b>預測區間</b>，指出未來一篇新研究的效果可能落在哪。</p></div>
     </div>
 
+    <h2 data-en="Beyond a single pooled number (Handbook Ch 11–13)">不只一個合併數字（手冊第 11–13 章）</h2>
+    <div class="cards cards-3">
+      <div class="card"><h3 data-en="When meta-analysis isn't appropriate (Ch 12)">不適合做統合分析時（第 12 章）</h3><p data-en="If studies are too diverse to pool a single number, don't force one. Structured alternatives: <b>SWiM</b> (synthesis without meta-analysis, reported transparently), <b>vote counting based on the direction of effect</b>, combining p-values, or summarising the range &amp; distribution of effects. A misleading pooled estimate is worse than an honest narrative.">如果研究太異質、合不出一個數字，就別硬合。結構化的替代：<b>SWiM</b>（不做統合分析的合併，透明報告）、<b>依效果方向計票</b>、合併 p 值、或摘要效果的範圍與分布。一個誤導的合併估計，比誠實的敘述更糟。</p></div>
+      <div class="card"><h3 data-en="Network meta-analysis (Ch 11)">網絡統合分析（第 11 章）</h3><p data-en="Compare <b>three or more</b> treatments at once by combining <b>direct</b> evidence (head-to-head trials) with <b>indirect</b> evidence (via a common comparator). It can rank treatments — but rests on <b>transitivity</b> (the networks are comparable) and <b>coherence</b> (direct and indirect agree); check both before trusting a ranking.">一次比較<b>三個以上</b>治療，結合<b>直接</b>證據（正面對決試驗）與<b>間接</b>證據（透過共同對照）。它能對治療排名——但建立在<b>可遞移性</b>（網絡彼此可比）與<b>一致性</b>（直接與間接相符）上；信任排名前先檢查這兩者。</p></div>
+      <div class="card"><h3 data-en="Bias due to missing results (Ch 13)">結果缺失造成的偏誤（第 13 章）</h3><p data-en="Whole studies (or outcomes) going unpublished because results were unwelcome <b>biases the pool upward</b>. Defences: a comprehensive search incl. trial registries &amp; grey literature, the funnel plot &amp; Egger test (below), and selection-model / trim-and-fill sensitivity analyses. Prevention beats correction — register protocols.">整篇研究（或某結果）因結果不討喜而未發表，會<b>把合併往上偏</b>。防線：含試驗登錄與灰色文獻的全面檢索、漏斗圖與 Egger 檢定（下方）、以及選擇模型／trim-and-fill 敏感度分析。預防勝於校正——登錄計畫書。</p></div>
+    </div>
+
     <h2 data-en="GRADE: how certain is the pooled answer?">GRADE：這個合併答案有多確定？</h2>
     <div class="card info">
       <p data-en="A pooled estimate is not the end — GRADE rates the <b>certainty</b> (high / moderate / low / very low) of the evidence for each outcome. Bodies of evidence <b>start</b> high for randomised trials and low for observational studies, then move:">合併估計不是終點——GRADE 為每個結果評估證據的<b>強度</b>（高／中／低／極低）。整體證據對隨機試驗<b>起始</b>為高、觀察性研究起始為低，然後上下調整：</p>
@@ -6271,7 +6322,7 @@ X_filled = imp.fit_transform(df[["A", "Y", "X"]])    <span class="cm"># include 
     <h2 data-en="AI &amp; automation — what actually helps (and its limits)">AI 與自動化 —— 真正幫得上什麼（與其限制）</h2>
     <p class="lead" data-en="Screening thousands of titles is the most labour-intensive step, so it is where automation is furthest along. Honest reading of the evidence:">篩選數千筆標題是最耗人力的一步，所以自動化在這裡最成熟。對證據的誠實解讀：</p>
     <div class="cards cards-3">
-      <div class="card"><h3 data-en="Rayyan &amp; active learning">Rayyan 與主動學習</h3><p data-en="Tools like <b>Rayyan</b> let two reviewers screen in parallel, blind to each other, and rank the unscreened pile by predicted relevance (active learning): you label a few, the model re-prioritises, and the relevant records surface early. It <b>accelerates</b> human screening — it does not replace the dual-reviewer judgement."><b>Rayyan</b> 之類的工具讓兩位審閱者平行、互盲地篩選，並用「預測相關性」把未篩的堆排序（主動學習）：你標一些、模型重新排序，相關的記錄就提早浮上來。它<b>加速</b>人工篩選——但不取代雙人審閱的判斷。</p></div>
+      <div class="card"><h3 data-en="Rayyan &amp; active learning">Rayyan 與主動學習</h3><p data-en="<b>Rayyan</b> (1M+ reviewers, 3M+ reviews) lets two reviewers screen in parallel, <b>blind</b> to each other, auto-deduplicates large reference sets, and ranks the unscreened pile by predicted relevance (a 5-star / zero-shot relevance rating): you label a few, the model re-prioritises, and the relevant records surface early. It <b>accelerates</b> human screening — it does not replace the dual-reviewer judgement, and you still resolve conflicts."><b>Rayyan</b>（逾百萬審閱者、逾三百萬篇回顧）讓兩位審閱者平行、<b>互盲</b>地篩選，自動去重大型參考集，並用「預測相關性」（五星／zero-shot 評分）把未篩的堆排序：你標一些、模型重新排序，相關的記錄就提早浮上來。它<b>加速</b>人工篩選——但不取代雙人審閱的判斷，衝突仍要你裁定。</p></div>
       <div class="card"><h3 data-en="Machine-learning classifiers">機器學習分類器</h3><p data-en="Trained on your labelled decisions, ML classifiers reach high recall (≈98% in a preclinical review) at the screening stage, and can even <b>flag likely human errors</b> by surfacing records where the model and the human disagree. You set a recall target (miss as few includes as possible) and accept the workload saved.">用你標好的決定訓練，ML 分類器在篩選階段可達高召回（某動物研究回顧約 98%），甚至能<b>標出可能的人為錯誤</b>——把「模型與人不一致」的記錄挑出來。你設定召回目標（盡量不漏該納入的），換取省下的工作量。</p></div>
       <div class="card"><h3 data-en="Large language models (LLMs)">大型語言模型（LLM）</h3><p data-en="Recent studies test LLMs (GPT-class) to screen abstracts directly from the eligibility criteria, with promising sensitivity but variable precision — prompts and thresholds matter, and a human still adjudicates. The motivation is real: even <b>human</b> inter-reviewer agreement is imperfect, which is exactly why two reviewers + a tie-breaker exist.">近期研究測試用 LLM（GPT 級）直接依納入條件篩摘要，敏感度看好但精準度浮動——提示詞與門檻很關鍵，仍需人最終裁定。動機很實在：連<b>人類</b>審閱者之間的一致性都不完美，這正是要兩位審閱＋一位仲裁的原因。</p></div>
     </div>
@@ -6281,7 +6332,7 @@ m &lt;- metagen(TE = yi, seADTE = sei, studlab = trial,
              sm = "RR", common = TRUE, random = TRUE)   <span class="cm"># common = fixed, random = DL</span>
 forest(m); funnel(m); metabias(m, method = "linreg")     <span class="cm"># forest, funnel, Egger</span>
 <span class="cm"># library(metafor): rma(yi, vi, method = "REML"); the doing-meta.guide book walks this end-to-end</span></code></pre>
-      <p data-en="Harrer et al.'s free guide &quot;Doing Meta-Analysis in R&quot; (doing-meta.guide) is a hands-on companion: effect sizes, pooling, heterogeneity, subgroups/meta-regression, publication bias, and risk-of-bias plots.">Harrer 等人的免費指南《Doing Meta-Analysis in R》（doing-meta.guide）是很實用的搭配：效果量、合併、異質性、次群／統合迴歸、發表偏誤與偏誤風險圖。</p></div>
+      <p data-en="Harrer et al.'s free guide &quot;Doing Meta-Analysis in R&quot; (doing-meta.guide) is a hands-on companion. Its roadmap mirrors the workflow above: <b>effect sizes</b> (Ch 3) → <b>pooling</b> (Ch 4) → <b>between-study heterogeneity</b> (Ch 5) → <b>forest plots</b> (Ch 6) → <b>subgroup analysis</b> (Ch 7) → <b>meta-regression</b> (Ch 8) → <b>publication bias</b> (Ch 9), then advanced topics: <b>multilevel</b> (Ch 10), <b>SEM</b> (Ch 11), <b>network</b> (Ch 12) &amp; <b>Bayesian</b> (Ch 13) meta-analysis, plus power analysis, risk-of-bias plots, and reproducible reporting.">Harrer 等人的免費指南《Doing Meta-Analysis in R》（doing-meta.guide）是很實用的搭配。它的路線圖對應上面的流程：<b>效果量</b>（第 3 章）→ <b>合併</b>（第 4 章）→ <b>研究間異質性</b>（第 5 章）→ <b>森林圖</b>（第 6 章）→ <b>次群分析</b>（第 7 章）→ <b>統合迴歸</b>（第 8 章）→ <b>發表偏誤</b>（第 9 章），再到進階主題：<b>多層次</b>（第 10 章）、<b>SEM</b>（第 11 章）、<b>網絡</b>（第 12 章）與<b>貝氏</b>（第 13 章）統合分析，外加檢定力分析、偏誤風險圖與可重現報告。</p></div>
 
     <div class="card info"><h3 data-en="The honest bottom line">誠實的結論</h3>
       <p data-en="A meta-analysis turns many studies into one number with a confidence (and prediction) interval — but its credibility rests entirely on a transparent, pre-registered method, a careful risk-of-bias appraisal, and a GRADE rating that doesn't oversell. AI speeds up the grind of screening; it doesn't supply the judgement. Pool comparable, well-conducted studies — and when they aren't comparable, say so and explore why rather than forcing a single number.">統合分析把許多研究變成一個帶信賴（與預測）區間的數字——但它的可信度完全取決於透明、事先登錄的方法、謹慎的偏誤風險評讀，以及一個不浮誇的 GRADE 評等。AI 加速篩選的苦工；它不提供判斷。合併的應是可比、執行良好的研究——當它們不可比時，就明說並去探究原因，而不是硬湊出一個數字。</p></div>
@@ -6438,7 +6489,7 @@ forest(m); funnel(m); metabias(m, method = "linreg")     <span class="cm"># fore
   </footer>
 </main>
 
-<script src="i18n.js?v=119"></script>
-<script src="app.js?v=119"></script>
+<script src="i18n.js?v=120"></script>
+<script src="app.js?v=120"></script>
 </body>
 </html>
