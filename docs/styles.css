@@ -254,6 +254,15 @@ main { max-width: 1280px; margin: 0 auto; padding: 1.5rem 2rem; }
 .dp-table th { background: #f3f6fb; color: #334155; font-weight: 600; position: sticky; top: 0; }
 .dp-table tbody tr:nth-child(even) { background: #fafcff; }
 .dp-table td:first-child, .dp-table th:first-child { text-align: left; color: var(--muted); }
+/* ④ E-value sensitivity card */
+.evalue-card { margin-top: 1.2rem; }
+.evalue-card h4 { margin: .8rem 0 .3rem; }
+.ev-inputs, .ev-sliders { display: flex; flex-wrap: wrap; gap: 1rem 1.6rem; margin: .5rem 0; }
+.ev-inputs label, .ev-sliders label { display: flex; align-items: center; gap: .5rem; font-size: .92rem; }
+.ev-inputs input[type="number"] { width: 5rem; padding: .25rem .4rem; border: 1px solid var(--line); border-radius: 6px; }
+.ev-sliders input[type="range"] { width: 11rem; vertical-align: middle; }
+.ev-sliders b { min-width: 2.2rem; }
+.ev-out, .ev-verdict { background: #f7f9fd; border: 1px solid var(--line); border-radius: 8px; padding: .55rem .75rem; line-height: 1.7; margin: .5rem 0; }
 /* divider between the analysis and the merged SAS/R code section */
 .merge-sep { border: none; border-top: 2px dashed var(--line); margin: 2rem 0 1rem; }
 .merge-sas { margin-top: .3rem; }

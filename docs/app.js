@@ -85,6 +85,7 @@ function showMethodSub() {
   subtabBtns.forEach((b) => b.classList.toggle("active", b.dataset.sub === curSub));
   showPanel(METHOD_PREFIX[curMethod] + curSub);
   if (curSub === "analyze") renderDataPreview(curMethod);   // ③: show the real data rows on top
+  if (curSub === "assume" && EVALUE_METHODS.includes(curMethod)) ensureEvalueCard(curMethod);  // ④: E-value sensitivity
   if (typeof filterRefs === "function") filterRefs(curMethod);
 }
 methodSelect.addEventListener("change", () => { curMethod = methodSelect.value; showMethodSub(); });
@@ -218,6 +219,67 @@ async function renderDataPreview(method) {
     `<h3 class="dp-title">${tr("實際資料長什麼樣子（內建範例的前幾列）", "What the actual data looks like (first rows of the built-in example)")}</h3>` +
     `<div class="dp-scroll"><table class="dp-table"><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>` +
     `<p class="caption">${tr("每一列是一個觀測（人／人-時段）；下面就用這份資料跑分析。純屬合成的示範資料。", "Each row is one observation (person / person-period); the analysis below runs on exactly this data. Purely synthetic demo data.")}</p>`;
+}
+
+// ----------------------------------------------------------------------
+// ④ E-value sensitivity analysis — cross-method. For the designs whose KEY
+// untestable assumption is "no unmeasured (time-varying) confounding", add an
+// interactive E-value card: how strong would an unmeasured confounder have to be
+// (associated with BOTH treatment and outcome) to explain away the result?
+// Closed-form, pure JS (VanderWeele & Ding 2017; Haneuse et al. 2019, JAMA).
+// ----------------------------------------------------------------------
+const EVALUE_METHODS = ["ps", "tmle", "gm", "acnu", "pnu", "med", "ccw", "seq", "nc", "wce"];
+function _evalue(rr) {                       // E-value of a risk ratio
+  rr = (rr > 0 && rr < 1) ? 1 / rr : rr;     // E-value is symmetric: invert protective effects
+  if (!(rr > 1)) return 1;
+  return rr + Math.sqrt(rr * (rr - 1));
+}
+function _evRecompute(card) {
+  const num = (sel, d) => { const v = parseFloat(card.querySelector(sel).value); return isFinite(v) ? v : d; };
+  const rr = num(".ev-rr", 2), ci = num(".ev-ci", 1.4), eu = num(".ev-eu", 2), ud = num(".ev-ud", 2);
+  card.querySelector(".ev-euv").textContent = eu.toFixed(1);
+  card.querySelector(".ev-udv").textContent = ud.toFixed(1);
+  const ev = _evalue(rr).toFixed(2), evci = _evalue(ci).toFixed(2);
+  card.querySelector(".ev-out").innerHTML = tr(
+    `一個未測混淆要<b>同時</b>和「接種」與「結果」各關聯到風險比 ≥ <b>${ev}</b>，才足以把這個效果完全解釋掉（把 RR 推回 1）；只要各關聯 ≥ <b>${evci}</b>，就能把信賴區間推到涵蓋 1（不再顯著）。<b>E-value 越大＝結果越穩</b>，越難被未測混淆推翻。`,
+    `An unmeasured confounder would have to be associated with <b>both</b> vaccination and the outcome by a risk ratio ≥ <b>${ev}</b> (each) to fully explain away this effect (push the RR to 1); only ≥ <b>${evci}</b> is needed to push the CI to include 1. <b>A bigger E-value = a more robust result</b> — harder for unmeasured confounding to overturn.`);
+  const B = (eu * ud) / (eu + ud - 1);       // Ding–VanderWeele bounding factor
+  const adj = rr >= 1 ? rr / B : rr * B;
+  const overturned = rr >= 1 ? adj <= 1 : adj >= 1;
+  card.querySelector(".ev-verdict").innerHTML = tr(
+    `這個強度的混淆（偏誤因子 B＝${B.toFixed(2)}）最多把 RR 從 ${rr} 拉到 <b>${adj.toFixed(2)}</b> → ` +
+      (overturned ? `<b style="color:#b91c1c">足以推翻（跨過 1）</b>` : `<b style="color:#1d6f57">仍在 1 的同側，結果存活</b>`),
+    `Confounding this strong (bias factor B = ${B.toFixed(2)}) can move the RR from ${rr} only as far as <b>${adj.toFixed(2)}</b> → ` +
+      (overturned ? `<b style="color:#b91c1c">enough to overturn it (crosses 1)</b>` : `<b style="color:#1d6f57">still on the same side of 1 — the result survives</b>`));
+}
+function ensureEvalueCard(method) {
+  const prefix = METHOD_PREFIX[method];
+  const panel = document.getElementById(prefix + "assume");
+  if (!panel) return;
+  let card = document.getElementById(prefix + "_evalue");
+  if (!card) {
+    card = document.createElement("div");
+    card.id = prefix + "_evalue";
+    card.className = "card info evalue-card";
+    card.innerHTML =
+      `<h3 data-en="Sensitivity: the E-value — how strong must unmeasured confounding be to overturn this?">敏感度分析：E-value —— 未測混淆要多強，才能推翻這個結果？</h3>` +
+      `<p class="lead" data-en="This design's key assumption — no unmeasured (time-varying) confounding — cannot be tested from the data. The E-value quantifies how strong such confounding would have to be to undo your finding. Type in the effect you got (as a risk ratio; for an OR/HR treat it as an approximate RR) and the CI limit nearest 1.">這個設計最關鍵的假設——沒有未測（時變）混淆——無法用資料檢驗。E-value 把「混淆要多強才能翻盤」量化出來。把你算到的效果（以風險比 RR 填入；OR／HR 可近似當 RR）與信賴區間靠近 1 的那端填進去。</p>` +
+      `<div class="ev-inputs">` +
+        `<label data-en="Observed effect (risk ratio)">觀察到的效果（風險比 RR）<input type="number" class="ev-rr" step="0.05" min="0.05" value="2.0"></label>` +
+        `<label data-en="CI limit nearest 1">信賴區間靠近 1 的那端<input type="number" class="ev-ci" step="0.05" min="0.05" value="1.4"></label>` +
+      `</div>` +
+      `<p class="ev-out"></p>` +
+      `<h4 data-en="Try it: a hypothetical unmeasured confounder">試試看：一個假想的未測混淆</h4>` +
+      `<div class="ev-sliders">` +
+        `<label data-en="Confounder ↔ vaccination (RR_EU)">混淆 ↔ 接種（RR_EU）<input type="range" class="ev-eu" min="1" max="5" step="0.1" value="2"> <b class="ev-euv">2.0</b></label>` +
+        `<label data-en="Confounder ↔ outcome (RR_UD)">混淆 ↔ 結果（RR_UD）<input type="range" class="ev-ud" min="1" max="5" step="0.1" value="2"> <b class="ev-udv">2.0</b></label>` +
+      `</div>` +
+      `<p class="ev-verdict"></p>` +
+      `<p class="caption" data-en="E-value = RR + √(RR×(RR−1)); bounding factor B = (RR_EU·RR_UD)/(RR_EU+RR_UD−1). VanderWeele &amp; Ding (2017), Ann Intern Med; Haneuse, VanderWeele &amp; Arterburn (2019), JAMA.">E-value ＝ RR ＋ √(RR×(RR−1))；偏誤因子 B ＝ (RR_EU·RR_UD)／(RR_EU＋RR_UD−1)。VanderWeele &amp; Ding（2017），Ann Intern Med；Haneuse、VanderWeele &amp; Arterburn（2019），JAMA。</p>`;
+    panel.appendChild(card);
+    card.querySelectorAll("input").forEach((inp) => inp.addEventListener("input", () => _evRecompute(card)));
+  }
+  _evRecompute(card);
 }
 
 // ======================================================================
@@ -7454,6 +7516,7 @@ window.addEventListener("iv-lang", async () => {
   whatifShown.forEach((m) => drawWhatif(m));            // ⑥ What-if DAGs (re-render)
   swigShown.forEach((m) => drawSwig(m));                // ⑥ SWIGs (re-render)
   if (curSub === "analyze") renderDataPreview(curMethod); // ③ data-preview table (re-translate header/caption)
+  EVALUE_METHODS.forEach((m) => { const c = document.getElementById(METHOD_PREFIX[m] + "_evalue"); if (c) _evRecompute(c); }); // ④ E-value readings
   if (chooseReady) { drawChooseChart(); renderDtree(); } // six-method chart + decision tree
   autolinkMethods();                                   // re-apply inline method cross-links (applyStatic wiped them)
 });
