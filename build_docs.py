@@ -64,10 +64,11 @@ def _build_index():
     #    這種帶問號的字串比對不到,會原封不動留下絕對路徑而在 Pages 上 404。
     html = re.sub(r'(href|src)="/(styles\.css|i18n\.js|app\.js)', r'\1="\2', html)
 
-    # 2) 在 </head> 前注入 Pyodide 與橋接(必須在 app.js 之前先攔截 fetch)
+    # 2) 在 </head> 前注入橋接(必須在 app.js 之前先攔截 fetch)。
+    #    Pyodide 本身改由 pyodide-worker.js 在背景執行緒以 importScripts 載入,
+    #    主頁不再載入 pyodide.js,避免主執行緒解析大檔。
     inject = (
-        f'<script src="{PYODIDE_SCRIPT}"></script>\n'
-        '<script src="pyodide-bridge.js?v=47"></script>\n'
+        '<script src="pyodide-bridge.js?v=48"></script>\n'
         "<!-- 本檔由 build_docs.py 產生,請勿手改;來源為 frontend/index.html -->\n"
     )
     html = re.sub(r"</head>", inject + "</head>", html, count=1)
@@ -81,6 +82,7 @@ def _copy_assets():
     shutil.copyfile(os.path.join(FRONTEND, "i18n.js"), os.path.join(DOCS, "i18n.js"))
     shutil.copyfile(os.path.join(FRONTEND, "styles.css"), os.path.join(DOCS, "styles.css"))
     shutil.copyfile(os.path.join(WEB, "pyodide-bridge.js"), os.path.join(DOCS, "pyodide-bridge.js"))
+    shutil.copyfile(os.path.join(WEB, "pyodide-worker.js"), os.path.join(DOCS, "pyodide-worker.js"))
 
     # 靜態資產(logo 等):整個 frontend/assets 目錄原樣複製到 docs/assets
     assets_src = os.path.join(FRONTEND, "assets")

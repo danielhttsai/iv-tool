@@ -85,6 +85,7 @@ function showPanel(panelId) {
   window.scrollTo(0, 0);
 }
 function showMethodSub() {
+  if (methodSelect.value !== curMethod) methodSelect.value = curMethod;  // resync dropdown if we came from a topic panel
   chooseTab.classList.remove("active");
   if (dataTab) dataTab.classList.remove("active");
   if (missTab) missTab.classList.remove("active");
@@ -95,7 +96,14 @@ function showMethodSub() {
   if (curSub === "assume" && EVALUE_METHODS.includes(curMethod)) ensureEvalueCard(curMethod);  // ④: E-value sensitivity
   if (typeof filterRefs === "function") filterRefs(curMethod);
 }
-methodSelect.addEventListener("change", () => { curMethod = methodSelect.value; showMethodSub(); });
+methodSelect.addEventListener("change", () => {
+  const v = methodSelect.value;
+  // The dropdown also lists the two cross-method teaching topics; route those to
+  // their standalone panels instead of the per-method ①–⑥ sub-tabs.
+  if (v === "miss" && missTab) { missTab.click(); return; }
+  if (v === "srma" && srmaTab) { srmaTab.click(); return; }
+  curMethod = v; showMethodSub();
+});
 subtabBtns.forEach((b) => b.addEventListener("click", () => { curSub = b.dataset.sub; showMethodSub(); }));
 chooseTab.addEventListener("click", () => {
   subtabBtns.forEach((x) => x.classList.remove("active"));
@@ -121,6 +129,7 @@ if (missTab) missTab.addEventListener("click", () => {
   if (dataTab) dataTab.classList.remove("active");
   if (srmaTab) srmaTab.classList.remove("active");
   missTab.classList.add("active");
+  if (methodSelect) methodSelect.value = "miss";
   showPanel("misspanel");
   initMiss();
   if (typeof filterRefs === "function") filterRefs("miss");
@@ -131,6 +140,7 @@ if (srmaTab) srmaTab.addEventListener("click", () => {
   if (dataTab) dataTab.classList.remove("active");
   if (missTab) missTab.classList.remove("active");
   srmaTab.classList.add("active");
+  if (methodSelect) methodSelect.value = "srma";
   showPanel("srmapanel");
   initSrma();
   if (typeof filterRefs === "function") filterRefs("srma");
@@ -2319,7 +2329,7 @@ const CHOOSE_FAMILIES = [
   { zh: "共變項校正／傾向分數／雙重穩健", en: "adjustment / propensity / doubly-robust", members: [["PS", 1.52, 1.01], ["TMLE", 1.46, 1.02]] },
   { zh: "時變治療／g-methods", en: "time-varying treatment / g-methods", members: [["GM", 0.58, 0.97], ["WCE", 0.58, 1.01]] },
   { zh: "訊號偵測（產生假說）", en: "signal detection (hypothesis-generating)", members: [["PSSA", 2.37, 1.00], ["TreeScan", 3.00, 1.00]] },
-  { zh: "可轉移性／泛化", en: "transportability / generalizability", members: [["Transport", 0.39, 0.91]] },
+  { zh: "可轉移性／泛化", en: "transportability / generalizability", members: [["Transportability", 0.39, 0.91]] },
 ];
 function drawChooseChart() {
   if (!document.getElementById("chooseChart")) return;
@@ -7642,6 +7652,8 @@ function drawSeqDemo(s) {
 // Language switch — re-render any dynamic content already on screen
 // ======================================================================
 window.addEventListener("iv-lang", async () => {
+  const tg = document.getElementById("topicGroup");
+  if (tg) tg.label = tr("跨方法主題", "Cross-method topics");  // <optgroup> label (data-en can't reach it)
   filterRefs(refsContext);                         // re-scope refs + citation in new language
   refreshPlay();                                   // interactive tab
   if (state.lastReq) {                             // analysis + dashboard
@@ -7796,3 +7808,4 @@ window.addEventListener("iv-lang", async () => {
 
 // initial render of interactive tab data
 refreshPlay();
+{ const tg = document.getElementById("topicGroup"); if (tg) tg.label = tr("跨方法主題", "Cross-method topics"); }  // initial <optgroup> label

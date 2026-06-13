@@ -1,27 +1,29 @@
 /*
- * Pyodide 橋接：讓這個工具的 Python 後端完全在瀏覽器裡跑,不需要伺服器。
+ * Pyodide 橋接（主執行緒）：把這個工具的 Python 後端跑在背景 Web Worker 裡，
+ * 不需要伺服器、也不阻塞 UI。
  *
- * 作法:載入 Pyodide 與數學套件,把 backend 的 .py 寫進 Pyodide 檔案系統,
- * 然後攔截所有對 /api/* 的 fetch,改交給 py/api.py 的 route() 處理。
- * 這樣原本的 app.js 一行都不用改 —— 它以為自己還在呼叫真的後端。
+ * 作法：spawn 一個 Worker（pyodide-worker.js）載入 Pyodide 與數學套件、把
+ * backend 的 .py 寫進 Pyodide 檔案系統。本檔只負責：①載入遮罩與進度，②攔截
+ * 所有對 /api/* 的 fetch、透過 postMessage 丟給 Worker、再把結果包成 Response。
+ * 原本的 app.js 一行都不用改 —— 它以為自己還在呼叫真的後端。
  *
- * 此檔由 build_docs.py 複製到 docs/。Python 來源仍是 backend/*.py(單一來源)。
+ * 重點：Python 運算在 Worker 執行緒上跑，主執行緒永遠不會被「暖機」或「分析」
+ * 凍住，所以一開始進頁面或按下分析時不再卡頓。
+ *
+ * 此檔由 build_docs.py 複製到 docs/。Python 來源仍是 backend/*.py（單一來源）。
  */
 (function () {
   "use strict";
 
-  // Pyodide 套件版本需與 index.html 載入的 pyodide.js 相符
-  var PYODIDE_INDEX = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
-  // Cache-bust for the Python sources fetched below. Bump whenever any backend
-  // .py changes so returning browsers don't run a stale module from HTTP cache.
-  var PY_VER = "90";
-  var PY_MODULES = ["i18n", "iv_core", "assumptions", "ml_iv", "gen_data", "rdd_core", "rdd_survival", "rdd_assumptions", "rdd_gen", "rdd_ml", "did_core", "did_gen", "did_assumptions", "did_ml", "tit_core", "tit_gen", "tit_assumptions", "tit_realmle", "its_core", "its_gen", "its_assumptions", "its_ml", "perr_core", "perr_gen", "perr_assumptions", "ccw_core", "ccw_gen", "ccw_assumptions", "cctc_core", "cctc_gen", "cctc_assumptions", "seq_core", "seq_gen", "seq_assumptions", "cc_core", "cc_gen", "cc_assumptions", "cc_ml", "sccs_core", "sccs_gen", "sccs_assumptions", "sccs_ml", "acnu_core", "acnu_gen", "acnu_assumptions", "acnu_ml", "pnu_core", "pnu_gen", "pnu_assumptions", "pnu_ml", "nc_core", "nc_gen", "nc_assumptions", "nc_ml", "med_core", "med_gen", "med_assumptions", "med_ml", "ps_core", "ps_gen", "ps_assumptions", "ps_ml", "tmle_core", "tmle_gen", "tmle_assumptions", "tmle_ml", "gm_core", "gm_gen", "gm_assumptions", "gm_ml", "tnd_core", "tnd_gen", "tnd_assumptions", "tnd_ml", "pssa_core", "pssa_gen", "pssa_assumptions", "tscan_core", "tscan_gen", "tscan_assumptions", "wce_core", "wce_gen", "wce_assumptions", "missing_core", "missing_gen", "transport_core", "transport_gen", "transport_assumptions", "srma_core", "srma_gen", "api"];
+  // Worker 檔的快取破壞；改動 worker 或 bridge 邏輯時 bump（py 來源版本在 worker 內的 PY_VER）。
+  var WORKER_VER = "1";
 
-  var pyodide = null;
-  var routeFn = null;
-  var readyPromise = null;
-  var sklearnLoaded = false;
-  var pendingApiCalls = 0;   // >0 時背景預熱會讓路給使用者主動觸發的分析
+  // ⑤「用 AI 強化」等需要 scikit-learn 的端點：首次呼叫時請 Worker 載入 sklearn。
+  var SKLEARN_PATHS = {
+    "/api/ml_forbidden": 1, "/api/did_dml": 1, "/api/its_mlcf": 1, "/api/cc_forest": 1,
+    "/api/sccs_selfmatch": 1, "/api/acnu_psml": 1, "/api/pnu_psml": 1, "/api/med_natural_ml": 1,
+    "/api/ps_ml": 1, "/api/tmle_ml": 1, "/api/gm_ml": 1, "/api/tnd_ml": 1,
+  };
 
   // ---- 載入進度遮罩 -------------------------------------------------------
   function buildOverlay() {
@@ -66,8 +68,6 @@
   }
 
   // ---- 背景載入小提示(角落膠囊)------------------------------------------
-  // 主遮罩在「運算核心」就緒後就移除,讓使用者馬上閱讀教學;數學套件改在背景載入,
-  // 這顆膠囊只是告知「運算還在熱機」,不擋住畫面。
   function buildPill() {
     if (document.getElementById("pycompute")) return;
     var en = (document.documentElement.lang || "").indexOf("en") === 0;
@@ -94,106 +94,59 @@
     setTimeout(function () { if (p.parentNode) p.parentNode.removeChild(p); }, 400);
   }
 
-  // ---- 初始化 Pyodide -----------------------------------------------------
-  async function init() {
-    // 先同步蓋上遮罩(此時還在 <head> 解析、<body> 尚未繪出),
-    // 避免第一頁(IV)先閃一下才被 loading 介面蓋住。
-    buildOverlay();
-    if (document.readyState === "loading") {
-      await new Promise(function (r) { document.addEventListener("DOMContentLoaded", r); });
+  // ---- Worker：所有 Python 都在這顆背景執行緒裡跑 -------------------------
+  buildOverlay();   // 同步蓋上遮罩（此時 <body> 尚未繪出，避免閃第一頁）
+
+  var worker = new Worker("pyodide-worker.js?v=" + WORKER_VER);
+  var nextId = 1;
+  var pending = {};         // id -> {resolve, reject}
+  var coreReadyResolve;
+  var coreReady = new Promise(function (r) { coreReadyResolve = r; });
+
+  worker.onmessage = function (e) {
+    var m = e.data || {};
+    switch (m.type) {
+      case "status": setStatus(m.msg, m.pct); break;
+      case "ready":
+        setStatus("運算核心就緒 ✓", 100);
+        hideOverlay();
+        buildPill();
+        coreReadyResolve();
+        break;
+      case "warmup-done": removePill(); break;
+      case "init-error":
+        setStatus("載入失敗：" + m.message, null);
+        setPill("載入失敗：" + m.message);
+        console.error("[pyodide-bridge] worker init failed", m.message);
+        break;
+      case "result": {
+        var pr = pending[m.id];
+        if (pr) { delete pending[m.id]; pr.resolve(m.out); }
+        break;
+      }
+      case "error": {
+        var pe = pending[m.id];
+        if (pe) { delete pending[m.id]; pe.reject(new Error(m.message)); }
+        break;
+      }
     }
-    try {
-      setStatus("正在載入運算核心(Pyodide)…", 25);
-      pyodide = await loadPyodide({ indexURL: PYODIDE_INDEX });
+  };
+  worker.onerror = function (err) {
+    setStatus("載入失敗：" + (err && err.message ? err.message : "worker error"), null);
+    console.error("[pyodide-bridge] worker error", err);
+  };
 
-      // 核心就緒就立刻撤遮罩:①是什麼、⑥如果……、⑦SAS、怎麼選 等教學內容都是純前端、
-      // 不需 Python,使用者可以馬上開始讀。較大的數學套件(numpy/scipy/pandas,含 openblas)
-      // 與分析程式改在背景載入;真正按下②③④的分析時,ready() 會自動等到它就緒。
-      setStatus("運算核心就緒 ✓", 100);
-      hideOverlay();
-      buildPill();
-
-      // 套件下載(CDN)與分析程式抓取(同源)並行跑,縮短總等待。
-      var fetchP = Promise.all(PY_MODULES.map(function (name) {
-        return fetch("py/" + name + ".py?v=" + PY_VER).then(function (resp) {
-          if (!resp.ok) throw new Error("載入 " + name + ".py 失敗(" + resp.status + ")");
-          return resp.text().then(function (src) { return [name, src]; });
-        });
-      }));
-      await pyodide.loadPackage(["numpy", "scipy", "pandas"]);
-      var sources = await fetchP;
-      sources.forEach(function (ns) { pyodide.FS.writeFile(ns[0] + ".py", ns[1]); });
-      await pyodide.runPythonAsync("import api");
-      routeFn = pyodide.runPython("api.route");
-
-      removePill();
-
-      // 預熱在背景「慢慢跑」:逐一觸發各方法分析以編譯 numpy/scipy 熱路徑,
-      // 每跑一個就讓出主執行緒,避免凍住 UI。使用者不必等預熱就能開始用。
-      backgroundWarmup();
-    } catch (err) {
-      setStatus("載入失敗：" + (err && err.message ? err.message : err), null);
-      setPill("載入失敗：" + (err && err.message ? err.message : err));
-      console.error("[pyodide-bridge] init failed", err);
-      throw err;
-    }
-  }
-  function ready() {
-    if (!readyPromise) readyPromise = init();
-    return readyPromise;
-  }
-
-  // 預熱:只跑「預設可見的 IV」一個方法(example + analyze)。
-  // 共用的 numpy/scipy/pandas 熱路徑被第一個 analyze 編譯後就熱了,其餘 21 個
-  // 方法各自的程式碼很小,等使用者第一次切到時即時編譯即可(單一呼叫、可接受)。
-  // 不再把 22 個方法全跑一遍——那會讓重運算(ccw/seq/tmle 等)在啟動時一個接一個
-  // 凍住主執行緒,造成「網頁有點當」。
-  // 另外:在瀏覽器空檔(requestIdleCallback)才跑、跑前讓頁面先穩定,進一步降低卡頓。
-  var warmupDone = false;
-  async function backgroundWarmup() {
-    if (warmupDone) return;
-    var calls = [
-      ["GET", "/api/example", "{}", "{}"],
-      ["POST", "/api/analyze", "{}", JSON.stringify({ source: "example", lang: "zh" })],
-    ];
-    await sleep(400);            // 讓首屏先繪好、互動先就緒
-    for (var i = 0; i < calls.length; i++) {
-      // 若使用者正在主動操作(有待處理的 /api 呼叫),先讓路給他,避免和預熱搶主執行緒。
-      while (pendingApiCalls > 0) { await sleep(80); }
-      await idle();              // 等到瀏覽器空檔再跑這一個同步呼叫
-      try { routeFn(calls[i][0], calls[i][1], calls[i][2], calls[i][3]); }
-      catch (e) { /* 預熱失敗不影響功能,忽略 */ }
-      await sleep(50);           // 讓出主執行緒,UI 保持回應
-    }
-    warmupDone = true;
-  }
-  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
-  // 等到瀏覽器主執行緒空檔(無 requestIdleCallback 時退回 setTimeout)。
-  function idle() {
-    return new Promise(function (r) {
-      if (typeof requestIdleCallback === "function") {
-        requestIdleCallback(function () { r(); }, { timeout: 1000 });
-      } else { setTimeout(r, 50); }
+  function callRoute(method, path, query, body, needSklearn) {
+    return new Promise(function (resolve, reject) {
+      var id = nextId++;
+      pending[id] = { resolve: resolve, reject: reject };
+      worker.postMessage({ type: "route", id: id, method: method, path: path,
+        query: query, body: body, needSklearn: !!needSklearn });
     });
-  }
-
-  async function ensureSklearn() {
-    if (sklearnLoaded) return;
-    await pyodide.loadPackage("scikit-learn");
-    sklearnLoaded = true;
   }
 
   // ---- 處理一個 /api/* 請求 ----------------------------------------------
   async function handleApi(method, url, init) {
-    pendingApiCalls++;
-    try {
-      return await _handleApi(method, url, init);
-    } finally {
-      pendingApiCalls--;
-    }
-  }
-  async function _handleApi(method, url, init) {
-    await ready();
     var u = new URL(url, location.href);
     var path = u.pathname;
     var query = {};
@@ -209,12 +162,8 @@
       }
     }
 
-    if (path === "/api/ml_forbidden" || path === "/api/did_dml" || path === "/api/its_mlcf" || path === "/api/cc_forest" || path === "/api/sccs_selfmatch" || path === "/api/acnu_psml" || path === "/api/pnu_psml" || path === "/api/med_natural_ml" || path === "/api/ps_ml" || path === "/api/tmle_ml" || path === "/api/gm_ml" || path === "/api/tnd_ml") {
-      setStatus && null; // sklearn 首次載入(無遮罩,由按鈕顯示「計算中」)
-      await ensureSklearn();
-    }
-
-    var out = routeFn(method, path, JSON.stringify(query), JSON.stringify(bodyObj));
+    var out = await callRoute(method, path, JSON.stringify(query), JSON.stringify(bodyObj),
+      SKLEARN_PATHS[path] === 1);
     var env = JSON.parse(out);
     return new Response(JSON.stringify(env.body), {
       status: env.status,
@@ -234,6 +183,6 @@
     return realFetch(input, init);
   };
 
-  // 立刻開始載入(背景),這樣 app.js 載入時遮罩已在跑
-  ready();
+  // 讓 app.js（若有需要）能等核心就緒；目前各分頁都靠 fetch 攔截即可。
+  window.__pyReady = coreReady;
 })();

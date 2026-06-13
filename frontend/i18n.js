@@ -24,8 +24,8 @@
   window.IV = IV;
 
   // --- the document-level bits that aren't covered by [data-en] ---
-  const TITLE = { zh: "真實世界證據與準實驗工具箱：IV · RDD · DiD · PERR · ITS · TiT · CCW · Seq · CCTC · CC · SCCS · ACNU · PNU · NC · MED · PS · TMLE · GM · TND · PSSA · TreeScan · WCE · Transport",
-                  en: "RWE and Quasi-experimental Toolbox: IV · RDD · DiD · PERR · ITS · TiT · CCW · Seq · CCTC · CC · SCCS · ACNU · PNU · NC · MED · PS · TMLE · GM · TND · PSSA · TreeScan · WCE · Transport" };
+  const TITLE = { zh: "真實世界證據與準實驗工具箱：IV · RDD · DiD · PERR · ITS · TiT · CCW · Seq · CCTC · CC · SCCS · ACNU · PNU · NC · MED · PS · TMLE · GM · TND · PSSA · TreeScan · WCE · Transportability",
+                  en: "RWE and Quasi-experimental Toolbox: IV · RDD · DiD · PERR · ITS · TiT · CCW · Seq · CCTC · CC · SCCS · ACNU · PNU · NC · MED · PS · TMLE · GM · TND · PSSA · TreeScan · WCE · Transportability" };
   const HTMLLANG = { zh: "zh-Hant", en: "en" };
   const BTN = { zh: "EN", en: "中文" };          // button shows the OTHER language
   const BTNTITLE = { zh: "切換到英文", en: "切換到中文" };

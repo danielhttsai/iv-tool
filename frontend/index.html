@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>真實世界證據與準實驗工具箱 RWE and Quasi-experimental Toolbox</title>
-<link rel="stylesheet" href="/styles.css?v=120" />
+<link rel="stylesheet" href="/styles.css?v=121" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 </head>
 <body>
@@ -36,6 +36,10 @@
         <option value="tscan" data-en="TreeScan · Tree-based scan statistic">TreeScan · 樹狀掃描統計</option>
         <option value="wce" data-en="WCE · Weighted cumulative exposure">WCE · 加權累積暴露</option>
         <option value="transport" data-en="Transportability · extend to a target population">可轉移性 · 搬到目標族群</option>
+        <optgroup id="topicGroup" label="跨方法主題">
+          <option value="miss" data-en="Missing data &amp; imputation">缺失資料與多重插補</option>
+          <option value="srma" data-en="SR &amp; meta-analysis">系統性回顧與統合分析</option>
+        </optgroup>
       </select>
     </label>
     <div class="subtabs">
@@ -5995,7 +5999,7 @@ mean(d1 - d0)                                  <span class="cm"># transported ta
             <td data-en="No single effect — a label-permutation null is the control; scan the whole tree for the most extreme node (multiplicity-controlled)">不估單一效果——用「打亂暴露標籤的排列虛無」當對照，掃描整棵樹找最極端節點（已控多重比較）</td>
             <td data-en="A meaningful tree, a constant baseline across nodes, and no unmodelled confounding (else the permutation null is wrong)">樹有意義、各節點基準為常數、無未建模混淆（否則排列虛無不對）</td></tr>
           <tr><td colspan="4" class="famhdr" data-en="Family · transportability / generalizability (carry an effect to a different target population)">家族 · 可轉移性／泛化（把效果搬到不同的目標族群）</td></tr>
-          <tr><td>Transport</td>
+          <tr><td>Transportability</td>
             <td data-en="A vaccine's efficacy was measured in a (randomised) study in one population, but your target population has a different mix of effect modifiers (e.g. older, more comorbid)">疫苗效力是在某個族群的（隨機）研究裡量到的，但你的目標族群效果修飾子分布不同（例如更年長、共病更多）</td>
             <td data-en="Not for confounding — the study is already unbiased; you borrow the measured effect-modifier distribution to re-weight / standardise to the target">不是用來校混淆——研究本身已無偏；借的是已測效果修飾子的分布，用來把效果加權／標準化到目標族群</td>
             <td data-en="Conditional transportability: every effect modifier that differs between the two populations is measured, plus overlap of their distributions">條件可轉移性：兩族群間有差異的效果修飾子全部都測得到，且兩者分布有重疊</td></tr>
@@ -6046,7 +6050,7 @@ mean(d1 - d0)                                  <span class="cm"># transported ta
           <tr><td>PSSA</td><td data-en="New-start dates of two drugs for the same people, within an observation window">同一群人兩種藥的新起始日期，一段觀察窗</td><td data-en="A trend-adjusted order-asymmetry ratio (aSR) as an A→B signal">校正趨勢後的「先後不對稱」比（aSR），作為 A→B 訊號</td></tr>
           <tr><td>TreeScan</td><td data-en="Exposure vs not, plus many outcomes arranged on a hierarchical tree (e.g. ICD codes)">暴露 vs 否，以及落在一棵階層樹上的多種結果（如 ICD 碼）</td><td data-en="Not a single effect — which outcome nodes carry a signal (after controlling multiplicity)">不是單一效果，而是「哪些結果節點有訊號」（控制多重比較後）</td></tr>
           <tr><td colspan="3" class="famhdr" data-en="Family · transportability / generalizability">家族 · 可轉移性／泛化</td></tr>
-          <tr><td>Transport</td><td data-en="Individual-level study data (treatment, outcome, effect modifiers) + the effect-modifier distribution of the target population">研究的個體層資料（治療、結果、效果修飾子）＋目標族群的效果修飾子分布</td><td data-en="The effect in the target population (standardise / inverse-odds-of-selection weighting)">目標族群裡的效果（用標準化／反選樣勝算加權）</td></tr>
+          <tr><td>Transportability</td><td data-en="Individual-level study data (treatment, outcome, effect modifiers) + the effect-modifier distribution of the target population">研究的個體層資料（治療、結果、效果修飾子）＋目標族群的效果修飾子分布</td><td data-en="The effect in the target population (standardise / inverse-odds-of-selection weighting)">目標族群裡的效果（用標準化／反選樣勝算加權）</td></tr>
         </tbody>
       </table>
     </div>
@@ -6489,7 +6493,7 @@ forest(m); funnel(m); metabias(m, method = "linreg")     <span class="cm"># fore
   </footer>
 </main>
 
-<script src="i18n.js?v=120"></script>
-<script src="app.js?v=120"></script>
+<script src="i18n.js?v=121"></script>
+<script src="app.js?v=121"></script>
 </body>
 </html>
