@@ -46,7 +46,8 @@ BACKEND_PY = ["i18n.py", "iv_core.py", "assumptions.py", "ml_iv.py", "gen_data.p
               "wce_core.py", "wce_gen.py", "wce_assumptions.py",
               "missing_core.py", "missing_gen.py",
               "transport_core.py", "transport_gen.py", "transport_assumptions.py",
-              "srma_core.py", "srma_gen.py"]
+              "srma_core.py", "srma_gen.py",
+              "extctrl_core.py", "extctrl_gen.py", "extctrl_assumptions.py"]
 
 
 def _clean_docs():
@@ -68,7 +69,7 @@ def _build_index():
     #    Pyodide 本身改由 pyodide-worker.js 在背景執行緒以 importScripts 載入,
     #    主頁不再載入 pyodide.js,避免主執行緒解析大檔。
     inject = (
-        '<script src="pyodide-bridge.js?v=48"></script>\n'
+        '<script src="pyodide-bridge.js?v=49"></script>\n'
         "<!-- 本檔由 build_docs.py 產生,請勿手改;來源為 frontend/index.html -->\n"
     )
     html = re.sub(r"</head>", inject + "</head>", html, count=1)

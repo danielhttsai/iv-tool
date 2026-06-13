@@ -89,6 +89,9 @@ import transport_core
 import transport_gen
 import transport_assumptions
 import srma_core
+import extctrl_core
+import extctrl_gen
+import extctrl_assumptions
 
 EXAMPLE_DEFAULTS = {
     "outcome": "health_score_change",
@@ -1477,6 +1480,32 @@ def _srma_interactive(q: dict) -> dict:
     return srma_core.srma_interactive(tau, lang=q.get("lang", "zh"))
 
 
+def _extctrl_example() -> dict:
+    d = extctrl_gen.generate()
+    rows = []
+    for i in range(4):
+        rows.append({"arm": "trial", "X": round(float(d["trial_X"][i]), 2),
+                     "treated": 1, "Y": round(float(d["trial_Y"][i]), 2)})
+    for i in range(4):
+        rows.append({"arm": "external", "X": round(float(d["ext_X"][i]), 2),
+                     "treated": 0, "Y": round(float(d["ext_Y"][i]), 2)})
+    return {"columns": ["arm", "X", "treated", "Y"], "preview": rows,
+            "n": int(len(d["trial_X"]) + len(d["ext_X"])), "synthetic": True}
+
+
+def _extctrl_analyze(b: dict) -> dict:
+    return extctrl_core.full_extctrl(lang=b.get("lang", "zh"))
+
+
+def _extctrl_assumptions(b: dict) -> dict:
+    return extctrl_assumptions.run_dashboard(lang=b.get("lang", "zh"))
+
+
+def _extctrl_interactive(q: dict) -> dict:
+    me = float(np.clip(float(q.get("mu_ext", -0.5)), -1.5, 0.5))
+    return extctrl_core.extctrl_interactive(me, lang=q.get("lang", "zh"))
+
+
 def _tit_interactive(q: dict) -> dict:
     trend = float(np.clip(float(q.get("trend", 1.0)), 0.2, 1.5))
     df = tit_gen.generate(n=2500, trend=trend)   # smaller sample → snappy slider
@@ -1620,6 +1649,10 @@ _ROUTES = {
     ("GET", "/api/transport_interactive"): lambda q, b: _transport_interactive(q),
     ("GET", "/api/srma_analyze"): lambda q, b: _srma_analyze(q),
     ("GET", "/api/srma_interactive"): lambda q, b: _srma_interactive(q),
+    ("GET", "/api/extctrl_example"): lambda q, b: _extctrl_example(),
+    ("POST", "/api/extctrl_analyze"): lambda q, b: _extctrl_analyze(b),
+    ("POST", "/api/extctrl_assumptions"): lambda q, b: _extctrl_assumptions(b),
+    ("GET", "/api/extctrl_interactive"): lambda q, b: _extctrl_interactive(q),
 }
 
 

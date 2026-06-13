@@ -98,6 +98,9 @@ import transport_core
 import transport_assumptions
 import transport_gen
 import srma_core
+import extctrl_core
+import extctrl_gen
+import extctrl_assumptions
 import seq_core
 import seq_gen
 import seq_assumptions
@@ -1673,6 +1676,32 @@ def srma_analyze(lang: str = "zh"):
 @app.get("/api/srma_interactive")
 def srma_interactive(tau: float = 0.20, lang: str = "zh"):
     return _clean(srma_core.srma_interactive(float(np.clip(tau, 0.0, 0.6)), lang=lang))
+
+
+@app.get("/api/extctrl_example")
+def extctrl_example():
+    d = extctrl_gen.generate()
+    rows = [{"arm": "trial", "X": round(float(d["trial_X"][i]), 2), "treated": 1,
+             "Y": round(float(d["trial_Y"][i]), 2)} for i in range(4)]
+    rows += [{"arm": "external", "X": round(float(d["ext_X"][i]), 2), "treated": 0,
+              "Y": round(float(d["ext_Y"][i]), 2)} for i in range(4)]
+    return {"columns": ["arm", "X", "treated", "Y"], "preview": rows,
+            "n": int(len(d["trial_X"]) + len(d["ext_X"])), "synthetic": True}
+
+
+@app.post("/api/extctrl_analyze")
+def extctrl_analyze(req: dict = Body(...)):
+    return _clean(extctrl_core.full_extctrl(lang=req.get("lang", "zh")))
+
+
+@app.post("/api/extctrl_assumptions")
+def extctrl_assumptions_route(req: dict = Body(...)):
+    return _clean(extctrl_assumptions.run_dashboard(lang=req.get("lang", "zh")))
+
+
+@app.get("/api/extctrl_interactive")
+def extctrl_interactive(mu_ext: float = -0.5, lang: str = "zh"):
+    return _clean(extctrl_core.extctrl_interactive(float(np.clip(mu_ext, -1.5, 0.5)), lang=lang))
 
 
 @app.get("/api/tit_interactive")

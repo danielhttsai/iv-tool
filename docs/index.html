@@ -4,9 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>真實世界證據與準實驗工具箱 RWE and Quasi-experimental Toolbox</title>
-<link rel="stylesheet" href="styles.css?v=121" />
+<link rel="stylesheet" href="styles.css?v=122" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
-<script src="pyodide-bridge.js?v=48"></script>
+<script src="pyodide-bridge.js?v=49"></script>
 <!-- 本檔由 build_docs.py 產生,請勿手改;來源為 frontend/index.html -->
 </head>
 <body>
@@ -38,6 +38,7 @@
         <option value="tscan" data-en="TreeScan · Tree-based scan statistic">TreeScan · 樹狀掃描統計</option>
         <option value="wce" data-en="WCE · Weighted cumulative exposure">WCE · 加權累積暴露</option>
         <option value="transport" data-en="Transportability · extend to a target population">可轉移性 · 搬到目標族群</option>
+        <option value="extctrl" data-en="External control · borrow a control arm">外部對照 · 借一個對照組</option>
         <optgroup id="topicGroup" label="跨方法主題">
           <option value="miss" data-en="Missing data &amp; imputation">缺失資料與多重插補</option>
           <option value="srma" data-en="SR &amp; meta-analysis">系統性回顧與統合分析</option>
@@ -5209,6 +5210,93 @@ mean(d1 - d0)                                  <span class="cm"># transported ta
     <div class="card info"><h3 data-en="② Transporting prediction models across sites">② 跨機構搬動預測模型</h3><p data-en="A risk model trained at hospital A often degrades at hospital B (different case-mix, coding, equipment). Work on <b>model transportability</b> studies when and how a model holds up, and uses explainable-AI to diagnose the shift — e.g. acute-kidney-injury prediction across sites (Song et al. 2020, Nat Commun) and adolescent-suicide prediction (Zang et al. 2024). This is about transporting a <b>predictor</b>, a cousin of transporting an <b>effect</b>.">在 A 醫院訓練的風險模型，到 B 醫院常常變差（病人組成、編碼、儀器不同）。<b>模型可轉移性</b>研究模型何時／如何撐得住，並用可解釋 AI 診斷偏移——例如跨機構的急性腎損傷預測（Song 等 2020, Nat Commun）與青少年自殺預測（Zang 等 2024）。這是搬動<b>預測模型</b>，與搬動<b>效果</b>是表親。</p></div>
   </section>
 
+  <!-- ===================== External control ① 是什麼 ===================== -->
+  <section id="extctrllearn" class="panel">
+    <h1 data-en="External control: a single-arm study borrows a comparator arm">外部對照：單臂研究借一個對照組</h1>
+    <p class="lead" data-en="Sometimes you can only run a <b>single-arm</b> study — every patient gets the new treatment, with no concurrent control (common in rare diseases and oncology, where withholding treatment is hard). To estimate an effect you borrow an <b>external control</b>: untreated patients from a historical trial, a registry, or real-world data. The danger is that those external controls differ from your trial patients (sicker, an earlier era, coded differently), so a naive comparison is confounded. You adjust for the measured differences — by standardisation or propensity weighting — to make them comparable.">有時你只能做<b>單臂</b>研究——每個病人都接受新治療、沒有同期對照（在罕病與腫瘤很常見，因為很難不給治療）。要估效果，你借一個<b>外部對照</b>：來自歷史試驗、登錄或真實世界資料的未治療病人。風險是這些外部對照和你的試驗病人不一樣（更重、更早的年代、編碼不同），所以直接比較會被混淆。你用標準化或傾向加權校正已測的差異，讓兩組可比。</p>
+    <div class="card scene"><h3 data-en="One treated arm + a borrowed control arm — the comparison only holds after you balance who differs">一個治療臂＋借來的對照臂——把「誰不一樣」平衡掉之後，比較才站得住</h3>
+      <div id="extctrlScene" class="chart"></div>
+      <p class="caption" data-en="The single-arm trial (teal) sits at one covariate mean; the external controls (amber) sit lower (e.g. sicker). Because the covariate drives the outcome, the raw arm difference ≠ the treatment effect until you adjust. Synthetic teaching data.">單臂試驗（青）在某個共變項平均；外部對照（琥珀）較低（如更重）。因為共變項會影響結果，未校正前兩臂的差 ≠ 治療效果。合成教學資料。</p></div>
+    <div class="card info"><h3 data-en="Where external controls fit (and the regulatory frame)">外部對照的定位（與法規框架）</h3>
+      <p data-en="External / historical controls are recognised but cautioned against in <b>ICH E10</b>: only acceptable when the treatment effect is large and the disease course is predictable, because non-comparability and era effects are hard to rule out. Modern practice uses a <b>hybrid</b> (a small concurrent control + borrowed external) and Bayesian dynamic borrowing (power priors, commensurate priors) that <b>down-weight</b> the external data when it disagrees. Closely related to <b>transportability</b> — here you borrow a control <i>arm</i> rather than carry an effect to a new population.">外部／歷史對照在 <b>ICH E10</b> 被承認但也被警告：只有在治療效果很大、疾病自然史可預測時才可接受，因為很難排除不可比性與時代效應。現代做法用<b>混合對照</b>（少量同期對照＋借來的外部）與貝氏動態借用（power prior、commensurate prior），當外部資料不一致時<b>降權</b>。與<b>可轉移性</b>是近親——這裡借的是一個對照<i>臂</i>，而非把效果搬到新族群。</p></div>
+    <details class="term"><summary data-en="Show terminology">看專有名詞解釋</summary>
+      <div class="tdef"><h4>外部／歷史對照 <span class="en">external / historical control</span></h4><p data-en="An untreated comparison group that did NOT come from the same randomised study — drawn from earlier trials, registries, or routine-care databases. It rescues a single-arm design, but trades the protection of concurrent randomisation for assumptions about comparability and stable outcomes over time.">一個沒有來自同一個隨機研究的未治療對照組——取自更早的試驗、登錄或常規照護資料庫。它救了單臂設計，但用「同期隨機化的保護」換來「可比性與結果隨時間穩定」的假設。</p></div>
+      <div class="tdef"><h4>選樣反機率加權 <span class="en">inverse probability of selection weighting (IPSW)</span></h4><p data-en="Fit a model for &quot;trial vs external&quot; membership from covariates, then weight the external controls by the odds of looking like a trial patient. The re-weighted external arm now matches the trial's covariate mix, so the contrast estimates the treatment effect. The twin approach is standardisation: model the untreated outcome and predict it at the trial patients' covariates.">用共變項建「屬於試驗 vs 外部」的模型，再用「長得像試驗病人的勝算」加權外部對照。重新加權後的外部臂就和試驗的共變項組成相符，對比估的就是治療效果。孿生做法是標準化：把未治療的結果建模，再預測到試驗病人的共變項上。</p></div>
+    </details>
+  </section>
+
+  <!-- ===================== External control ② 互動講解 ===================== -->
+  <section id="extctrlplay" class="panel">
+    <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1 data-en="Interactive: slide how different the external controls are, watch the naive comparison break and adjustment fix it">互動：拉動外部對照「有多不一樣」，看天真比較崩掉、校正把它救回</h1>
+    <p class="lead" data-en="The single-arm trial sits at a fixed covariate mean. Drag the <b>external controls'</b> mean. When the two arms match, the naive comparison is fine; pull them apart and the naive effect drifts away from the truth, while <b>standardisation</b> and <b>IPSW</b> stay on the true effect — until the arms barely overlap, where every method strains.">單臂試驗固定在某個共變項平均。拖動<b>外部對照</b>的平均。兩臂相同時，天真比較沒問題；拉開後，天真效果就離真值越來越遠，而<b>標準化</b>與 <b>IPSW</b> 仍守在真實效果上——直到兩臂幾乎不重疊，這時每個方法都吃力。</p>
+    <div class="controls"><label><span data-en="External controls' mean on the covariate X:">外部對照在共變項 X 的平均：</span><b id="extctrlMtVal">-0.5</b>
+      <input type="range" id="extctrlMtSlider" min="-1.5" max="0.5" value="-0.5" step="0.1" /></label></div>
+    <div class="play-grid">
+      <div class="stat"><div class="stat-label" data-en="True effect">真實效果</div><div class="stat-num" id="extctrlTruth">–</div><div class="stat-foot" data-en="the answer we want">我們要的答案</div></div>
+      <div class="stat"><div class="stat-label" data-en="Naive (raw arm diff)">天真（兩臂直接差）</div><div class="stat-num" id="extctrlNaive">–</div><div class="stat-foot" data-en="confounded by imbalance">被不平衡混淆</div></div>
+      <div class="stat"><div class="stat-label" data-en="Standardisation">標準化</div><div class="stat-num" id="extctrlStd">–</div><div class="stat-foot" data-en="recovers the truth">救回真值</div></div>
+      <div class="stat"><div class="stat-label" data-en="IPSW">選樣反機率加權</div><div class="stat-num" id="extctrlIpsw">–</div><div class="stat-foot" data-en="recovers the truth">救回真值</div></div>
+    </div>
+    <div id="extctrlPlayChart" class="chart"></div>
+    <p class="caption" id="extctrlPlayReading"></p>
+  </section>
+
+  <!-- ===================== External control ③ 資料分析 ===================== -->
+  <section id="extctrlanalyze" class="panel">
+    <h1 data-en="Data analysis: estimate the effect against the external control arm">資料分析：對外部對照臂估效果</h1>
+    <p class="lead" data-en="Load the built-in example (a single-arm treated trial + an external untreated control pool), and the tool estimates the treatment effect three ways: the raw arm difference (naive), standardisation (g-formula), and inverse-probability-of-selection weighting.">載入內建範例（一個單臂的治療試驗＋一個外部的未治療對照池），工具用三種方式估治療效果：兩臂直接差（天真）、標準化（g-formula）、選樣反機率加權。</p>
+    <div class="datasource">
+      <button id="useExtctrlExample" class="btn primary" data-en="Load built-in example">載入內建範例</button>
+      <span id="extctrlDataStatus" class="muted" data-en="No data loaded yet">尚未載入資料</span>
+    </div>
+    <div id="extctrlAnalyzeOut" class="hidden">
+      <h2 data-en="The treatment effect, three ways">治療效果，三種算法</h2>
+      <div id="extctrlAnalyzeChart" class="chart"></div>
+      <div class="result-cards" id="extctrlAnalyzeCards"></div>
+    </div>
+    <hr class="merge-sep" />
+    <h2 class="merge-sas" data-en="R / SAS code: the key steps for an external-control analysis">R／SAS 程式：外部對照分析的關鍵步驟</h2>
+    <div class="sas-note" data-en="Illustrative <b>key steps</b>, not a full runnable program — swap in your own dataset / variable names.">教學用的<b>關鍵步驟</b>示意，非可直接執行的完整程式；資料集／變數名稱請換成你自己的。</div>
+    <div class="card"><h3 data-en="Step 0 — stack the trial + external pool with an arm indicator">步驟 0 — 把試驗＋外部池疊起來，加一個臂別指標</h3>
+      <pre class="sas"><code>data both; set trial(in=a) external(in=b);
+   inTrial = a;     <span class="cm">/* 1 = single-arm trial (treated), 0 = external control (untreated) */</span>
+run;</code></pre>
+      <p data-en="The trial rows are all treated; the external rows are all untreated. Both carry the same covariates X and the outcome Y.">試驗的列都是治療；外部的列都是未治療。兩者都帶相同共變項 X 與結果 Y。</p></div>
+    <div class="card"><h3 data-en="Step 1 — IPSW: weight the external controls to look like the trial">步驟 1 — IPSW：把外部對照加權成「像試驗病人」</h3>
+      <pre class="sas"><code><span class="cm"># R: weights = p/(1-p) where p = P(inTrial=1 | X), applied to the external controls</span>
+sel  &lt;- glm(inTrial ~ X, family = binomial, data = both)
+p    &lt;- predict(sel, newdata = external, type = "response")
+w    &lt;- p / (1 - p)
+y0_w &lt;- weighted.mean(external$Y, w)            <span class="cm"># counterfactual untreated mean</span>
+mean(trial$Y) - y0_w                            <span class="cm"># treatment effect</span></code></pre>
+      <p data-en="The weights bend the external arm's covariate distribution onto the trial's, so the contrast estimates the treatment effect for the trial population.">權重把外部臂的共變項分布扳成試驗的，於是這個對比估的就是試驗族群的治療效果。</p></div>
+    <div class="card"><h3 data-en="Step 2 — standardisation (g-formula): model the untreated outcome, predict at the trial's X">步驟 2 — 標準化（g-formula）：把未治療結果建模，預測到試驗的 X 上</h3>
+      <pre class="sas"><code><span class="cm"># R: fit Y(0) on the external controls, predict at the trial patients' covariates</span>
+out  &lt;- lm(Y ~ X, data = external)
+y0   &lt;- predict(out, newdata = trial)
+mean(trial$Y) - mean(y0)                        <span class="cm"># treatment effect</span>
+<span class="cm"># Hybrid / Bayesian dynamic borrowing: R packages psborrow2, RBesT (power / commensurate priors)</span></code></pre>
+      <p data-en="A doubly-robust version combines both; Bayesian dynamic borrowing (psborrow2, RBesT) down-weights the external arm when it conflicts with any concurrent controls.">雙重穩健版把兩者合起來；貝氏動態借用（psborrow2、RBesT）會在外部臂與同期對照衝突時降權。</p></div>
+  </section>
+
+  <!-- ===================== External control ④ 假設檢驗 ===================== -->
+  <section id="extctrlassume" class="panel">
+    <h1 data-en="Can we trust this external control? Five checks">這個外部對照可不可信？五道體檢</h1>
+    <p class="lead" data-en="External-control analysis rests on assumptions that are mostly <b>not testable from data</b> (blue): comparability given measured covariates, no era/source drift, and consistent outcome definitions. What you CAN check: positivity (the trial lies inside the external controls' covariate support) and how far apart the arms are. Green = fine, amber = watch out, red = problem, blue = needs domain judgement.">外部對照分析建立在大多<b>無法用資料檢驗</b>的假設上（藍卡）：扣掉已測共變項後可比、無時代／來源漂移、結果定義一致。可以檢的是：正性（試驗落在外部對照的共變項支持內）、以及兩臂差多遠。綠燈沒問題、黃燈要留意、紅燈有狀況、藍燈需領域判斷。</p>
+    <div id="extctrlOverall" class="overall hidden"></div>
+    <div id="extctrlAssumeCards" class="assume-cards"></div>
+    <p id="extctrlAssumeHint" class="muted" data-en="Loading…">載入中…</p>
+  </section>
+
+  <!-- ===================== External control ⑤ 用 AI 強化 ===================== -->
+  <section id="extctrlml" class="panel">
+    <h1 data-en="Boost with AI: flexible balancing &amp; dynamic borrowing">用 AI 強化：彈性平衡與動態借用</h1>
+    <p class="lead" data-en="The single biggest risk is residual imbalance and era drift. Machine learning and Bayesian borrowing both aim to use the external data <b>only as far as it is trustworthy</b>.">最大的風險是殘餘不平衡與時代漂移。機器學習與貝氏借用都想做到「外部資料<b>只用到可信的程度</b>」。</p>
+    <div class="card info"><h3 data-en="① Flexible, doubly-robust balancing">① 彈性、雙重穩健的平衡</h3><p data-en="Replace the logistic selection model and the linear outcome model with gradient boosting / Super Learner inside a doubly-robust estimator (TMLE / AIPW) — the effect stays valid if <b>either</b> model is right, and you capture non-linear differences between the arms. High-dimensional propensity scores can squeeze more comparability out of rich registries.">把選樣的 logistic 模型與結果的線性模型換成梯度提升／Super Learner，放進雙重穩健估計式（TMLE／AIPW）——只要<b>其一</b>對效果就有效，也能抓到兩臂間的非線性差異。高維傾向分數能從豐富的登錄資料榨出更多可比性。</p></div>
+    <div class="card info"><h3 data-en="② Bayesian dynamic borrowing">② 貝氏動態借用</h3><p data-en="Rather than trust the external arm fully, <b>power priors</b> and <b>commensurate priors</b> learn <i>how much</i> to borrow from how well the external data agrees with any concurrent controls — borrowing a lot when they match, little when they don't. This is the modern hybrid-control approach (Schmidli et al. 2014; psborrow2 / RBesT), and it directly addresses the era-effect worry that ICH E10 raises.">與其完全相信外部臂，<b>power prior</b> 與 <b>commensurate prior</b> 會從「外部資料與同期對照有多一致」<i>學出要借多少</i>——一致就多借、不一致就少借。這正是現代混合對照法（Schmidli 等 2014；psborrow2／RBesT），直接回應 ICH E10 對時代效應的擔憂。</p></div>
+  </section>
+
   <!-- ===================== ⑥ What if（每法一個面板）===================== -->
   <!-- 內容為原創白話改寫的因果推論概念，標註出處《Causal Inference: What If》(Hernán & Robins 2020)，未照抄原文。 -->
 
@@ -5780,6 +5868,21 @@ mean(d1 - d0)                                  <span class="cm"># transported ta
     </div>
   </section>
 
+  <!-- ===================== External control ⑥ What if ===================== -->
+  <section id="extctrlwhatif" class="panel">
+    <h1 data-en="⑥ What if…? External control in the language of counterfactuals">⑥ 如果……？用反事實的語言看「外部對照」</h1>
+    <p class="lead" data-en="You want the trial population's contrast Yᵃ⁼¹ − Yᵃ⁼⁰, but you only observed Yᵃ⁼¹ (everyone was treated). The external controls supply Yᵃ⁼⁰ — valid only if, <b>given the measured covariates X</b>, which arm a person is in (S: trial vs external) is independent of their untreated outcome Yᵃ⁼⁰. That is exchangeability of the borrowed controls; standardising or weighting over X is what makes it hold.">你要的是試驗族群的對比 Yᵃ⁼¹ − Yᵃ⁼⁰，但你只觀察到 Yᵃ⁼¹（大家都被治療）。外部對照提供 Yᵃ⁼⁰——但只有在<b>給定已測共變項 X</b> 下、一個人落在哪個臂（S：試驗 vs 外部）與他未治療的結果 Yᵃ⁼⁰ 獨立時才有效。這就是借來對照的可交換性；對 X 標準化／加權就是讓它成立的手段。</p>
+    <div class="card scene"><h3 data-en="The external-control DAG / SWIG — selection (arm) over the covariate">外部對照的 DAG／SWIG —— 選樣（臂別）壓在共變項上</h3>
+      <div class="whatif-pair"><div class="whatif-col"><p class="caption" data-en="Causal structure (DAG)">因果結構圖（DAG）</p><div id="whatifScene_extctrl" class="chart"></div></div><div class="whatif-col"><p class="caption" data-en="Counterfactual intervention graph (SWIG): set treatment to a → the borrowed arm supplies Yᵃ">反事實介入圖（SWIG）：把治療設成 a → 借來的臂提供 Yᵃ</p><div id="swigScene_extctrl" class="chart"></div></div></div>
+    </div>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Counterfactual &amp; estimand">① 反事實與估計目標</h3><p data-en="The treatment effect in the trial population E[Yᵃ⁼¹ − Yᵃ⁼⁰]; the trial gives Yᵃ⁼¹, the external arm gives Yᵃ⁼⁰.">試驗族群的治療效果 E[Yᵃ⁼¹ − Yᵃ⁼⁰]；試驗給 Yᵃ⁼¹，外部臂給 Yᵃ⁼⁰。</p></div>
+      <div class="card"><h3 data-en="② Identification conditions">② 辨識條件</h3><p data-en="Exchangeability of the external controls given X (S ⫫ Yᵃ⁼⁰ | X), positivity (trial ⊆ external support), consistent &amp; well-defined outcome, no era/source effect.">外部對照在 X 下可交換（S ⫫ Yᵃ⁼⁰ | X）、正性（試驗 ⊆ 外部支持）、結果定義一致且良好、無時代／來源效應。</p></div>
+      <div class="card"><h3 data-en="③ Where exchangeability comes from">③ 可交換性從哪借</h3><p data-en="From measuring every prognostic factor that differs between the arms — then standardising / weighting removes the imbalance. (Concurrent randomisation would supply it for free; here you must earn it.)">來自「量到每一個在兩臂間不同的預後因子」——標準化／加權再把不平衡消掉。（同期隨機化會免費給你；這裡得自己掙。）</p></div>
+      <div class="card"><h3 data-en="④ In the literature">④ 對應文獻</h3><p data-en="ICH E10; Pocock 1976; Schmidli et al. 2014 (dynamic borrowing); Burcu et al. 2020; Jahanshahi et al. 2021. Free book: Hernán &amp; Robins, <i>What If</i> (target-trial &amp; transportability).">ICH E10；Pocock 1976；Schmidli 等 2014（動態借用）；Burcu 等 2020；Jahanshahi 等 2021。免費書：Hernán &amp; Robins, <i>What If</i>（目標試驗與可轉移性）。</p></div>
+    </div>
+  </section>
+
   <!-- ===================== ⑦ SAS 程式（每法一個面板，關鍵步驟）===================== -->
   <!-- 教學用關鍵步驟示意；SAS PROC 語法為示範，非可直接執行的完整程式。 -->
 
@@ -5842,7 +5945,7 @@ mean(d1 - d0)                                  <span class="cm"># transported ta
     </div>
 
     <div class="card scene">
-      <h3 data-en="All 23 methods correct their naive bias back to the truth (grouped by family; mediation recovers the true direct effect, transportability the target-population effect)">二十三種方法，各自把「天真偏誤」修回真值（按家族分組；中介分析還原真正的直接效果，可轉移性還原目標族群的效果）</h3>
+      <h3 data-en="All 24 methods correct their naive bias back to the truth (grouped by family; mediation recovers the true direct effect, transportability/external-control the target-population effect)">二十四種方法，各自把「天真偏誤」修回真值（按家族分組；中介分析還原真正的直接效果，可轉移性／外部對照還原目標族群的效果）</h3>
       <p data-en="Each method's truth is on a <b>different scale</b> (an effect difference, an odds ratio, a rate ratio, a level change…), so here every estimate is divided by <b>its own truth</b>: 1.0 means perfectly recovered. <b>Amber</b> = the naive comparison (pulled off 1.0 by confounding / immortal time / depletion); <b>teal</b> = the method's corrected estimate (back near 1.0). The bars are grouped into design <b>families</b> (borrowed exogenous variation · borrowed timing · self-controlled · target-trial emulation · active-comparator new-user · sampling · proxies/negative controls · mechanism/mediation) — different ways of recovering the truth, all landing near 1.0.">
         每種方法的真值在<b>不同的尺度</b>上（效果差、勝算比、率比、水準變化……），所以這裡把每個估計都除以
         <b>它自己的真值</b>：1.0＝完全命中。<b>琥珀色</b>＝天真比較（被混淆／immortal time／易感者耗竭從 1.0 帶偏）；
@@ -6000,11 +6103,15 @@ mean(d1 - d0)                                  <span class="cm"># transported ta
             <td data-en="Screen one vaccine against a whole hierarchy of adverse events (an ICD tree) — which outcome nodes show an excess too extreme for the 'vaccine does nothing' world">用一劑疫苗對「一整棵分層的不良事件（ICD 樹）」做安全性篩檢——哪些結果節點的超額極端到不像「疫苗沒作用」的世界</td>
             <td data-en="No single effect — a label-permutation null is the control; scan the whole tree for the most extreme node (multiplicity-controlled)">不估單一效果——用「打亂暴露標籤的排列虛無」當對照，掃描整棵樹找最極端節點（已控多重比較）</td>
             <td data-en="A meaningful tree, a constant baseline across nodes, and no unmodelled confounding (else the permutation null is wrong)">樹有意義、各節點基準為常數、無未建模混淆（否則排列虛無不對）</td></tr>
-          <tr><td colspan="4" class="famhdr" data-en="Family · transportability / generalizability (carry an effect to a different target population)">家族 · 可轉移性／泛化（把效果搬到不同的目標族群）</td></tr>
+          <tr><td colspan="4" class="famhdr" data-en="Family · transportability / external control (borrow external info, then adjust for who differs)">家族 · 可轉移性／外部對照（借外部資訊，再校正「誰不一樣」）</td></tr>
           <tr><td>Transportability</td>
             <td data-en="A vaccine's efficacy was measured in a (randomised) study in one population, but your target population has a different mix of effect modifiers (e.g. older, more comorbid)">疫苗效力是在某個族群的（隨機）研究裡量到的，但你的目標族群效果修飾子分布不同（例如更年長、共病更多）</td>
             <td data-en="Not for confounding — the study is already unbiased; you borrow the measured effect-modifier distribution to re-weight / standardise to the target">不是用來校混淆——研究本身已無偏；借的是已測效果修飾子的分布，用來把效果加權／標準化到目標族群</td>
             <td data-en="Conditional transportability: every effect modifier that differs between the two populations is measured, plus overlap of their distributions">條件可轉移性：兩族群間有差異的效果修飾子全部都測得到，且兩者分布有重疊</td></tr>
+          <tr><td>External control</td>
+            <td data-en="A single-arm vaccine study (everyone vaccinated, no concurrent controls); you borrow an external/historical untreated cohort as the control arm">單臂疫苗研究（全部接種、沒有同期對照）；你借一個外部／歷史的未接種世代當對照臂</td>
+            <td data-en="Borrow a whole control arm — then standardise / propensity-weight the external controls to match the trial's covariates">借的是整個對照臂——再用標準化／傾向加權把外部對照校到試驗的共變項分布</td>
+            <td data-en="The external controls are exchangeable given measured covariates, with no era/source drift and consistent outcomes, plus overlap">扣掉已測共變項後外部對照可交換、無時代／來源漂移、結果定義一致，且有重疊</td></tr>
         </tbody>
       </table>
     </div>
@@ -6051,14 +6158,15 @@ mean(d1 - d0)                                  <span class="cm"># transported ta
           <tr><td colspan="3" class="famhdr" data-en="Family · signal detection (hypothesis-generating)">家族 · 訊號偵測（產生假說）</td></tr>
           <tr><td>PSSA</td><td data-en="New-start dates of two drugs for the same people, within an observation window">同一群人兩種藥的新起始日期，一段觀察窗</td><td data-en="A trend-adjusted order-asymmetry ratio (aSR) as an A→B signal">校正趨勢後的「先後不對稱」比（aSR），作為 A→B 訊號</td></tr>
           <tr><td>TreeScan</td><td data-en="Exposure vs not, plus many outcomes arranged on a hierarchical tree (e.g. ICD codes)">暴露 vs 否，以及落在一棵階層樹上的多種結果（如 ICD 碼）</td><td data-en="Not a single effect — which outcome nodes carry a signal (after controlling multiplicity)">不是單一效果，而是「哪些結果節點有訊號」（控制多重比較後）</td></tr>
-          <tr><td colspan="3" class="famhdr" data-en="Family · transportability / generalizability">家族 · 可轉移性／泛化</td></tr>
+          <tr><td colspan="3" class="famhdr" data-en="Family · transportability / external control">家族 · 可轉移性／外部對照</td></tr>
           <tr><td>Transportability</td><td data-en="Individual-level study data (treatment, outcome, effect modifiers) + the effect-modifier distribution of the target population">研究的個體層資料（治療、結果、效果修飾子）＋目標族群的效果修飾子分布</td><td data-en="The effect in the target population (standardise / inverse-odds-of-selection weighting)">目標族群裡的效果（用標準化／反選樣勝算加權）</td></tr>
+          <tr><td>External control</td><td data-en="A single treated (single-arm) cohort + an external untreated cohort, with shared prognostic covariates">一個治療的（單臂）世代＋一個外部未治療世代，含共同的預後共變項</td><td data-en="The treatment effect for the trial population (standardisation / IPSW; Bayesian dynamic borrowing)">試驗族群的治療效果（標準化／IPSW；貝氏動態借用）</td></tr>
         </tbody>
       </table>
     </div>
 
     <h2 data-en="Decision tree: click through to your best-fit design">決策樹：點一點，挑出最適合的設計</h2>
-    <p class="caption" data-en="Built on the pharmacoepidemiology &quot;anchor&quot; approach, this puts the common study designs and this toolbox's 23 methods (incl. mediation &amp; transportability) in <b>one clickable tree</b>. Answer each question about your study and it lands on the best-fit recommendation. <b>✓</b> = implemented here (jump straight to it); <b>↗</b> = related design, for reference.">建構在藥物流行病學的「錨點（anchor）」取向上，把<b>常見研究設計</b>與<b>本工具箱的 23 種方法（含中介分析與可轉移性）</b>合進<b>同一棵可點擊的樹</b>。順著你的研究情境一題一題點下去，最後會落在最適合的建議。<b>✓</b>＝本工具箱已實作（可直接前往）；<b>↗</b>＝延伸設計，供參考。</p>
+    <p class="caption" data-en="Built on the pharmacoepidemiology &quot;anchor&quot; approach, this puts the common study designs and this toolbox's 24 methods (incl. mediation, transportability &amp; external control) in <b>one clickable tree</b>. Answer each question about your study and it lands on the best-fit recommendation. <b>✓</b> = implemented here (jump straight to it); <b>↗</b> = related design, for reference.">建構在藥物流行病學的「錨點（anchor）」取向上，把<b>常見研究設計</b>與<b>本工具箱的 24 種方法（含中介分析、可轉移性與外部對照）</b>合進<b>同一棵可點擊的樹</b>。順著你的研究情境一題一題點下去，最後會落在最適合的建議。<b>✓</b>＝本工具箱已實作（可直接前往）；<b>↗</b>＝延伸設計，供參考。</p>
     <div class="flow-legend">
       <span data-en="<b>✓</b> implemented in this toolbox (clickable)"><b>✓</b> 本工具箱已實作（可點擊前往）</span>
       <span data-en="<b>↗</b> other related design, for reference"><b>↗</b> 其他延伸設計，供參考</span>
@@ -6162,7 +6270,7 @@ mean(d1 - d0)                                  <span class="cm"># transported ta
         </tbody>
       </table>
     </div>
-    <p class="caption" data-en="Cross-regional networks (e.g. AsPEN; NeuroGEN — Tsai et al.) run the <b>same protocol</b> across several of these databases and meta-analyse, trading single-database depth for breadth, generalisability and replication.">跨區域網路（如 AsPEN；NeuroGEN —— Tsai 等）會把<b>同一套協定</b>跑在上述多個資料庫上再做合併分析，以單一資料庫的深度換取廣度、可推論性與可重複性。</p>
+    <p class="caption" data-en="Cross-regional networks (e.g. AsPEN, NeuroGEN) run the <b>same protocol</b> across several of these databases and meta-analyse, trading single-database depth for breadth, generalisability and replication.">跨區域網路（如 AsPEN, NeuroGEN）會把<b>同一套協定</b>跑在上述多個資料庫上再做合併分析，以單一資料庫的深度換取廣度、可推論性與可重複性。</p>
   </section>
 
   <!-- ===================== 缺失資料 / Missing data ===================== -->
@@ -6366,6 +6474,7 @@ forest(m); funnel(m); metabias(m, method = "linreg")     <span class="cm"># fore
       <li data-ref="transport"><b data-en="Framework">框架</b> · Adamson, B., Liu, W., Duffield, S., et al. (2026). Transportability Analyses in Comparative Effectiveness Research: A Conceptual Framework and Methodological Principles Endorsed by the International Society for Pharmacoepidemiology (ISPE). <i>Pharmacoepidemiology and Drug Safety, 35</i>, e70396. · Inoue, K., &amp; Hsu, W. (2024). Transportability Analysis — A Tool for Extending Trial Results to a Representative Target Population (Invited Commentary, Oncology). <span data-en="〔ISPE framework + plain-language framing — Transportability tabs〕">〔ISPE 框架＋白話導讀 —— 可轉移性分頁〕</span></li>
       <li data-ref="transport"><b data-en="Estimators &amp; theory">估計與理論</b> · Westreich, D., Edwards, J. K., Lesko, C. R., Stuart, E., &amp; Cole, S. R. (2017). Transportability of Trial Results Using Inverse Odds of Sampling Weights. <i>American Journal of Epidemiology, 186</i>(8), 1010–1014. · Dahabreh, I. J., Robertson, S. E., Steingrimsson, J. A., Stuart, E. A., &amp; Hernán, M. A. (2020). Extending inferences from a randomized trial to a new target population. <i>Statistics in Medicine, 39</i>(14), 1999–2014. · Bareinboim, E., &amp; Pearl, J. (2016). Causal inference and the data-fusion problem. <i>PNAS, 113</i>(27), 7345–7352. · Zuo, S., Josey, K. P., Raghavan, S., Yang, F., Juárez-Colunga, E., &amp; Ghosh, D. (2022). Transportability Methods for Time-to-Event Outcomes. <i>JCO Clinical Cancer Informatics, 6</i>, e2200088. <span data-en="〔IOSW, standardisation, doubly-robust, survival transport〕">〔IOSW、標準化、雙重穩健、存活轉移〕</span></li>
       <li data-ref="transport"><b data-en="Transporting prediction models (⑤)">搬動預測模型（⑤）</b> · Song, X., Yu, A. S. L., Kellum, J. A., et al. (2020). Cross-site transportability of an explainable AI model for acute kidney injury prediction. <i>Nature Communications, 11</i>, 5668. · Zang, C., Hou, Y., Lyu, D., et al. (2024). Accuracy and transportability of machine learning models for adolescent suicide prediction. <i>Translational Psychiatry, 14</i>. <span data-en="〔model transportability across sites — Transportability ⑤〕">〔跨機構的模型可轉移性 —— 可轉移性 ⑤〕</span></li>
+      <li data-ref="extctrl"><b data-en="External control (External-control tabs)">外部對照（外部對照分頁）</b> · International Council for Harmonisation. <i>ICH E10: Choice of Control Group and Related Issues in Clinical Trials</i> (2000). · Pocock, S. J. (1976). The combination of randomized and historical controls in clinical trials. <i>Journal of Chronic Diseases, 29</i>(3), 175–188. · Schmidli, H., Gsteiger, S., Roychoudhury, S., O'Hagan, A., Spiegelhalter, D., &amp; Neuenschwander, B. (2014). Robust meta-analytic-predictive priors in clinical trials with historical control information. <i>Biometrics, 70</i>(4), 1023–1032. · Burcu, M., Dreyer, N. A., Franklin, J. M., et al. (2020). Real-world evidence to support regulatory decision-making for medicines: considerations for external control arms. <i>Pharmacoepidemiology and Drug Safety, 29</i>(10), 1228–1235. · Jahanshahi, M., Gregg, K., Davis, G., et al. (2021). The use of external controls in FDA regulatory decision making. <i>Therapeutic Innovation &amp; Regulatory Science, 55</i>, 1019–1035. <span data-en="〔single-arm + borrowed control arm; standardisation / IPSW; Bayesian dynamic borrowing — External-control tabs〕">〔單臂＋借來的對照臂；標準化／IPSW；貝氏動態借用 —— 外部對照分頁〕</span></li>
       <li data-ref="srma"><b data-en="Methods &amp; reporting (SR &amp; meta-analysis tab)">方法與報告（系統性回顧分頁）</b> · Higgins, J. P. T., Thomas, J., Chandler, J., Cumpston, M., Li, T., Page, M. J., &amp; Welch, V. A. (Eds.) (2024). <i>Cochrane Handbook for Systematic Reviews of Interventions</i> (v6.5). Cochrane. <a href="https://www.cochrane.org/authors/handbooks-and-manuals/handbook" target="_blank" rel="noopener">cochrane.org/authors/handbooks-and-manuals</a>. · Page, M. J., McKenzie, J. E., Bossuyt, P. M., et al. (2021). The PRISMA 2020 statement: an updated guideline for reporting systematic reviews. <i>BMJ, 372</i>, n71. <span data-en="〔workflow, PRISMA flow diagram, reporting — SR/MA tab steps ①–⑥〕">〔工作流程、PRISMA 流程圖、報告 —— 系統性回顧分頁步驟①–⑥〕</span></li>
       <li data-ref="srma"><b data-en="Pooling &amp; heterogeneity">合併與異質性</b> · DerSimonian, R., &amp; Laird, N. (1986). Meta-analysis in clinical trials. <i>Controlled Clinical Trials, 7</i>(3), 177–188. · Higgins, J. P. T., Thompson, S. G., Deeks, J. J., &amp; Altman, D. G. (2003). Measuring inconsistency in meta-analyses. <i>BMJ, 327</i>, 557–560 (I²). · Egger, M., Davey Smith, G., Schneider, M., &amp; Minder, C. (1997). Bias in meta-analysis detected by a simple, graphical test. <i>BMJ, 315</i>, 629–634. · Harrer, M., Cuijpers, P., Furukawa, T. A., &amp; Ebert, D. D. (2021). <i>Doing Meta-Analysis with R: A Hands-On Guide.</i> CRC Press. <a href="https://doing-meta.guide/" target="_blank" rel="noopener">doing-meta.guide</a>. <span data-en="〔fixed vs random effects, I²/τ², funnel/Egger, R meta &amp; metafor — SR/MA interactive〕">〔固定 vs 隨機效果、I²/τ²、漏斗／Egger、R 的 meta 與 metafor —— 系統性回顧互動〕</span></li>
       <li data-ref="srma"><b data-en="Certainty of evidence (GRADE)">證據強度（GRADE）</b> · Guyatt, G. H., Oxman, A. D., Vist, G. E., et al. (2008). GRADE: an emerging consensus on rating quality of evidence and strength of recommendations. <i>BMJ, 336</i>, 924–926. · Guyatt, G., Oxman, A. D., Akl, E. A., et al. (2011). GRADE guidelines: 1. Introduction. <i>Journal of Clinical Epidemiology, 64</i>(4), 383–394. <a href="https://www.gradeworkinggroup.org/" target="_blank" rel="noopener">gradeworkinggroup.org</a>. <span data-en="〔certainty rating, downgrade/upgrade, Summary-of-Findings — SR/MA GRADE section〕">〔證據強度評等、降級／升級、結果摘要表 —— 系統性回顧 GRADE 段落〕</span></li>
@@ -6495,7 +6604,7 @@ forest(m); funnel(m); metabias(m, method = "linreg")     <span class="cm"># fore
   </footer>
 </main>
 
-<script src="i18n.js?v=121"></script>
-<script src="app.js?v=121"></script>
+<script src="i18n.js?v=122"></script>
+<script src="app.js?v=122"></script>
 </body>
 </html>
